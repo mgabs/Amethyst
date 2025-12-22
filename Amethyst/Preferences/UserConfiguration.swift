@@ -85,6 +85,7 @@ enum ConfigurationKey: String {
     case mouseResizesWindows = "mouse-resizes-windows"
     case layoutHUD = "enables-layout-hud"
     case layoutHUDOnSpaceChange = "enables-layout-hud-on-space-change"
+    case windowCountHUD = "enables-window-count-hud"
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
@@ -135,6 +136,8 @@ enum CommandKey: String {
     case reevaluateWindows = "reevaluate-windows"
     case toggleFocusFollowsMouse = "toggle-focus-follows-mouse"
     case relaunchAmethyst = "relaunch-amethyst"
+    case increaseWindowMaxCount = "increase-window-max-count"
+    case decreaseWindowMaxCount = "decrease-window-max-count"
 }
 
 protocol UserConfigurationDelegate: AnyObject {
@@ -643,6 +646,10 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .layoutHUDOnSpaceChange)
     }
 
+    func enablesWindowCountHUD() -> Bool {
+        return storage.bool(forKey: .windowCountHUD)
+    }
+
     func useCanaryBuild() -> Bool {
         return storage.bool(forKey: .useCanaryBuild)
     }
@@ -682,6 +689,30 @@ class UserConfiguration: NSObject {
     func windowMaxCount() -> Int? {
         let int = Int(storage.float(forKey: .windowMaxCount))
         return int == 0 ? nil : int
+    }
+
+    private func setConfigurationValueWithKVO(_ value: Any?, forKey key: ConfigurationKey) {
+        if let userDefaults = storage as? UserDefaults {
+            userDefaults.willChangeValue(forKey: key.rawValue)
+            userDefaults.set(value, forKey: key)
+            userDefaults.didChangeValue(forKey: key.rawValue)
+        } else {
+            storage.set(value, forKey: key)
+        }
+    }
+
+    func increaseWindowMaxCount() {
+        let currentCount = windowMaxCount() ?? 0
+        let newCount = currentCount + 1
+
+        setConfigurationValueWithKVO(Float(newCount), forKey: .windowMaxCount)
+    }
+
+    func decreaseWindowMaxCount() {
+        let currentCount = windowMaxCount() ?? 1
+        let newCount = max(0, currentCount - 1)
+
+        setConfigurationValueWithKVO(Float(newCount), forKey: .windowMaxCount)
     }
 
     func windowResizeStep() -> CGFloat {
