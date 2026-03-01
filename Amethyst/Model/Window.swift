@@ -202,6 +202,12 @@ final class AXWindowID: Hashable, Codable {
     }
 }
 
+extension AXWindowID: CustomStringConvertible {
+    var description: String {
+        return "\(window.title() ?? "unknown") (\(window.windowID()))"
+    }
+}
+
 /// Conformance of `AXWindow` as an Amethyst window.
 extension AXWindow: WindowType {
     typealias Screen = AMScreen
@@ -229,6 +235,10 @@ extension AXWindow: WindowType {
         }
 
         self.init(axElement: axElementRef)
+
+        if string(forKey: "AXRole" as CFString) != "AXWindow" {
+            return nil
+        }
     }
 
     func id() -> WindowID {
@@ -378,5 +388,11 @@ extension AXWindow: WindowType {
     }
 
     func move(toSpace spaceID: CGSSpaceID) {
+    }
+}
+
+extension AXWindow {
+    override var description: String {
+        return "\(super.description) (\(cgID()))"
     }
 }

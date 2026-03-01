@@ -218,7 +218,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                 return
             }
 
-            if let insertionPoint = lastKnownFocusedWindowID, window.id() != insertionPoint {
+            if let insertionPoint = lastKnownFocusedWindowID, window.id() != insertionPoint, rootNode.findWindowID(insertionPoint) != nil {
                 log.info("insert \(window) - \(window.id()) at point: \(insertionPoint)")
                 rootNode.insertWindowID(window.id(), atPoint: insertionPoint)
             } else {
@@ -245,7 +245,23 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
 
             windowNode.windowID = otherWindowID
             otherWindowNode.windowID = windowID
-        case .applicationDeactivate, .applicationActivate, .spaceChange, .layoutChange, .tabChange, .none, .unknown:
+        case let .tabChange(window, previousWindow):
+            if rootNode.findWindowID(window.id()) != nil {
+                log.warning("Trying to swap a tab in that is already in the tree: \(window)")
+                rootNode.removeWindowID(window.id())
+            }
+
+            guard let previousWindowNode = rootNode.findWindowID(previousWindow.id()) else {
+                log.error("Trying to change tab from a window that is not in the tree: \(previousWindow)")
+                return
+            }
+
+            if let windowNode = rootNode.findWindowID(window.id()) {
+                log.warning("Trying to swap a tab in from another node")
+            }
+
+            previousWindowNode.windowID = window.id()
+        case .applicationDeactivate, .applicationActivate, .spaceChange, .layoutChange, .none, .unknown:
             break
         }
     }

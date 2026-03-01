@@ -83,6 +83,16 @@ extension WindowManager {
             }
         }
 
+        func add(window: Window, afterWindow otherWindow: Window) -> Bool {
+            guard let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
+                return false
+            }
+
+            windows.insert(window, at: otherWindowIndex)
+
+            return true
+        }
+
         func remove(window: Window) {
             for (_, lastMainWindow) in lastMainWindows where lastMainWindow?.id() == window.id() {
                 if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace() {
@@ -98,6 +108,29 @@ extension WindowManager {
             windows.remove(at: windowIndex)
         }
 
+        @discardableResult func replace(window: Window, withWindow otherWindow: Window) -> Bool {
+            if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+               let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
+                if firstActiveWindow == window || firstActiveWindow == otherWindow {
+                    lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
+                }
+            }
+
+            guard let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
+                windows.append(otherWindow)
+                return false
+            }
+
+            let windowIndex = windows.firstIndex(of: window)
+            windows[otherWindowIndex] = window
+
+            if let windowIndex {
+                windows.remove(at: windowIndex)
+            }
+
+            return true
+        }
+
         @discardableResult func swap(window: Window, withWindow otherWindow: Window) -> Bool {
             if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
                let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
@@ -106,10 +139,11 @@ extension WindowManager {
                 }
             }
 
-            guard
-                let windowIndex = windows.firstIndex(where: { $0.id() == window.id() }),
-                let otherWindowIndex = windows.firstIndex(where: { $0.id() == otherWindow.id() })
-            else {
+            if windows.firstIndex(of: window) == nil {
+                windows.append(window)
+            }
+
+            guard let windowIndex = windows.firstIndex(of: window), let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
                 return false
             }
 
