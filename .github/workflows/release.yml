@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: |
+          brew bundle
+
+      - name: Get Version
+        id: get_version
+        run: |
+          VERSION=$(sed -n '/MARKETING_VERSION/{s/MARKETING_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' Amethyst.xcodeproj/project.pbxproj)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and Archive
+        # Building unsigned for CI. Configure signing secrets for production releases.
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Amethyst.xcworkspace \
+            -scheme Amethyst \
+            -configuration Release \
+            -archivePath ./build/Amethyst.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Zip Application
+        run: |
+          cd build/Amethyst.xcarchive/Products/Applications
+          zip -r ../../../Amethyst.zip Amethyst.app
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          files: build/Amethyst.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

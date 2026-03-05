@@ -92,7 +92,9 @@ class TwoPaneLayout<Window: WindowType>: Layout<Window>, PanedLayout {
                 frame: windowFrame,
                 window: window,
                 screenFrame: screenFrame,
-                resizeRules: resizeRules
+                resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
             )
 
             assignments.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))

@@ -44,6 +44,12 @@ class Layout<Window: WindowType>: Codable {
     /// The debug description of the layout.
     var layoutDescription: String { return "" }
 
+    /// Whether or not window margins should be applied.
+    var windowMargins: Bool = false
+
+    /// The size of the window margins.
+    var windowMarginSize: CGFloat = 0
+
     required init() {}
 
     required init(from decoder: Decoder) throws {}

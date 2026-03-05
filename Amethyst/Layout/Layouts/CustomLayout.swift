@@ -149,6 +149,8 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
         case .none:
             return nil
         case .layout(let layout):
+            layout.windowMargins = self.windowMargins
+            layout.windowMarginSize = self.windowMarginSize
             return layout.frameAssignments(windowSet, on: screen)
         }
     }
@@ -233,7 +235,9 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
                 frame: frame.toRoundedRect(),
                 window: jsWindow.window,
                 screenFrame: screenFrame,
-                resizeRules: resizeRules
+                resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
             )
             return FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet)
         }

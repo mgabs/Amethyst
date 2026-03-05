@@ -253,7 +253,9 @@ class FourColumnLayout<Window: WindowType>: Layout<Window> {
                 frame: windowFrame,
                 window: window,
                 screenFrame: screenFrame,
-                resizeRules: resizeRules
+                resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
             )
 
             assignments.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))

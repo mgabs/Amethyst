@@ -264,7 +264,16 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        guard let layout = currentLayout, let frameAssignments = layout.frameAssignments(windows, on: screen) else {
+        guard let layout = currentLayout else {
+            return
+        }
+
+        // Calculate window margins based on the number of managed windows
+        let windowMargins = userConfiguration.windowMargins() && (userConfiguration.smartWindowMargins() ? windows.windows.count > 1 : true)
+        layout.windowMargins = windowMargins
+        layout.windowMarginSize = userConfiguration.windowMarginSize()
+
+        guard let frameAssignments = layout.frameAssignments(windows, on: screen) else {
             return
         }
 

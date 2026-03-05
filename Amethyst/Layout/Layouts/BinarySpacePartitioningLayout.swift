@@ -335,7 +335,9 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                     frame: traversalNode.frame,
                     window: window,
                     screenFrame: baseFrame,
-                    resizeRules: resizeRules
+                    resizeRules: resizeRules,
+                    windowMargins: self.windowMargins,
+                    windowMarginSize: self.windowMarginSize
                 )
                 ret.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))
             } else {

@@ -142,28 +142,36 @@ struct FrameAssignment<Window: WindowType> {
     /// If `true`, then  window margins won't be applied
     let disableWindowMargins: Bool
 
-    init(frame: CGRect, window: LayoutWindow<Window>, screenFrame: CGRect, resizeRules: ResizeRules) {
-        self.frame = frame
-        self.window =  window
-        self.screenFrame = screenFrame
-        self.resizeRules = resizeRules
-        self.disableWindowMargins = false
-    }
+    /// Whether or not window margins should be applied.
+    let windowMargins: Bool
 
-    init(frame: CGRect, window: LayoutWindow<Window>, screenFrame: CGRect, resizeRules: ResizeRules, disableWindowMargins: Bool) {
+    /// The size of the window margins.
+    let windowMarginSize: CGFloat
+
+    init(
+        frame: CGRect,
+        window: LayoutWindow<Window>,
+        screenFrame: CGRect,
+        resizeRules: ResizeRules,
+        windowMargins: Bool,
+        windowMarginSize: CGFloat,
+        disableWindowMargins: Bool = false
+    ) {
         self.frame = frame
         self.window =  window
         self.screenFrame = screenFrame
         self.resizeRules = resizeRules
+        self.windowMargins = windowMargins
+        self.windowMarginSize = windowMarginSize
         self.disableWindowMargins = disableWindowMargins
     }
 
     /// The final frame is the desired frame, but transformed to provide desired padding
     var finalFrame: CGRect {
         var ret = frame
-        let padding = floor(UserConfiguration.shared.windowMarginSize() / 2)
+        let padding = floor(windowMarginSize / 2)
 
-        if UserConfiguration.shared.windowMargins() && !disableWindowMargins {
+        if windowMargins && !disableWindowMargins {
             ret.origin.x += padding
             ret.origin.y += padding
             ret.size.width -= 2 * padding
@@ -215,9 +223,7 @@ struct FrameAssignment<Window: WindowType> {
             // Just resize the window first to see what the dimensions end up being
             // Sometimes applications have internal window requirements that are not exposed to us directly
             finalFrame.origin = window.frame().origin
-            DispatchQueue.main.sync {
-                window.setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1))
-            }
+            setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1), onWindow: window)
 
             // With the real height we can update the frame to account for the current size
             finalFrame.size = CGSize(
@@ -230,8 +236,16 @@ struct FrameAssignment<Window: WindowType> {
 
         // Move the window to its final frame
         finalFrame.origin = finalOrigin
-        DispatchQueue.main.sync {
-            window.setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1))
+        setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1), onWindow: window)
+    }
+
+    private func setFrame(_ frame: CGRect, withThreshold threshold: CGSize, onWindow window: Window) {
+        if Thread.isMainThread {
+            window.setFrame(frame, withThreshold: threshold)
+        } else {
+            DispatchQueue.main.sync {
+                window.setFrame(frame, withThreshold: threshold)
+            }
         }
     }
 }

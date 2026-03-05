@@ -23,6 +23,8 @@ class FullscreenLayout<Window: WindowType>: Layout<Window> {
                 window: window,
                 screenFrame: screenFrame,
                 resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize,
                 disableWindowMargins: UserConfiguration.shared.smartWindowMargins()
             )
             return FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet)
