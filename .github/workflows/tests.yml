@@ -6,17 +6,17 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: Build and run unit tests
+  test:
+    name: Run Tests
     runs-on: macos-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Dependencies
+
+      - name: Install Dependencies
         run: |
           brew bundle
-      - name: Test
-        run: |
-          set -o pipefail && xcodebuild -workspace Amethyst.xcworkspace -scheme Amethyst clean test | xcbeautify
 
+      - name: Run Tests
+        run: fastlane test

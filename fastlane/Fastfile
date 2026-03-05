@@ -24,3 +24,37 @@ lane :mac do
         export_options_plist: "./exportOptions.plist"
     )
 end
+
+desc "Build a local debug version of Amethyst without code signing"
+lane :local do
+    xcodebuild(
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        configuration: "Debug",
+        clean: true,
+        build: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
+    )
+end
+
+desc "Build a local release (optimized) version of Amethyst without code signing"
+lane :local_release do
+    xcodebuild(
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        configuration: "Release",
+        clean: true,
+        build: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
+    )
+end
+
+desc "Run tests"
+lane :test do
+    run_tests(
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        clean: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
+    )
+end

@@ -27,3 +27,5 @@ fastlane/report.xml
 # Homebrew
 Brewfile.lock.json
 
+# Fastlane
+fastlane/test_output/
