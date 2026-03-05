@@ -35,6 +35,12 @@ struct ResizeRules {
     /// the scale factor for the unconstrained dimension.
     let scaleFactor: CGFloat
 
+    /// Whether or not window margins should be applied.
+    let windowMargins: Bool
+
+    /// The size of the window margins.
+    let windowMarginSize: CGFloat
+
     /**
      Determines the new value of the dimension based on the scale factor.
      
@@ -52,7 +58,7 @@ struct ResizeRules {
             }
         }()
 
-        let padding = UserConfiguration.shared.windowMargins() ? UserConfiguration.shared.windowMarginSize() : 0
+        let padding = windowMargins ? windowMarginSize : 0
         return negatePadding ? dimension + padding : dimension
     }
 }
@@ -106,7 +112,7 @@ struct WindowSet<Window: WindowType> {
     }
 }
 
-class FrameAssignmentOperation<Window: WindowType>: Operation {
+class FrameAssignmentOperation<Window: WindowType>: Operation, @unchecked Sendable {
     let frameAssignment: FrameAssignment<Window>
     let windowSet: WindowSet<Window>
 

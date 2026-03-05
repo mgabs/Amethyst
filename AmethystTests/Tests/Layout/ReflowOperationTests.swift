@@ -22,7 +22,7 @@ class ReflowOperationTests: QuickSpec {
                     frame: CGRect(x: 0, y: 0, width: 1000, height: 1000),
                     window: layoutWindow,
                     screenFrame: screen.frame(),
-                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1),
+                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1, windowMargins: false, windowMarginSize: 0),
                     windowMargins: false,
                     windowMarginSize: 0
                 )
@@ -41,7 +41,7 @@ class ReflowOperationTests: QuickSpec {
                     frame: CGRect(x: 0, y: 0, width: 1000, height: 1000),
                     window: layoutWindow,
                     screenFrame: screen.frame(),
-                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1),
+                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1, windowMargins: false, windowMarginSize: 0),
                     windowMargins: false,
                     windowMarginSize: 0
                 )
@@ -60,7 +60,7 @@ class ReflowOperationTests: QuickSpec {
                     frame: CGRect(x: 0, y: 0, width: 1000, height: 1000),
                     window: layoutWindow,
                     screenFrame: screen.frame(),
-                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1),
+                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1, windowMargins: true, windowMarginSize: marginSize),
                     windowMargins: true,
                     windowMarginSize: marginSize
                 )
@@ -78,7 +78,7 @@ class ReflowOperationTests: QuickSpec {
                     frame: CGRect(x: 0, y: 0, width: 1000, height: 1000),
                     window: layoutWindow,
                     screenFrame: screen.frame(),
-                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1),
+                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1, windowMargins: false, windowMarginSize: marginSize),
                     windowMargins: false,
                     windowMarginSize: marginSize
                 )

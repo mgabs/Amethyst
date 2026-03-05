@@ -269,7 +269,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
 
         // Calculate window margins based on the number of managed windows
-        let windowMargins = userConfiguration.windowMargins() && (userConfiguration.smartWindowMargins() ? windows.windows.count > 1 : true)
+        let windowMargins = userConfiguration.windowMarginsEnabled() && (userConfiguration.smartWindowMargins() ? windows.windows.count > 1 : true)
         layout.windowMargins = windowMargins
         layout.windowMarginSize = userConfiguration.windowMarginSize()
 

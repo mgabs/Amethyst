@@ -84,7 +84,13 @@ class WidescreenTallLayout<Window: WindowType>: Layout<Window> {
                 }
             }
 
-            let resizeRules = ResizeRules(isMain: isMain, unconstrainedDimension: .horizontal, scaleFactor: scaleFactor)
+            let resizeRules = ResizeRules(
+                isMain: isMain,
+                unconstrainedDimension: .horizontal,
+                scaleFactor: scaleFactor,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
+            )
             let frameAssignment = FrameAssignment<Window>(
                 frame: windowFrame,
                 window: window,

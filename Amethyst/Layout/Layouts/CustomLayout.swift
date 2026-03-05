@@ -230,7 +230,13 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
             }
 
             let isMain = frame.objectForKeyedSubscript("isMain")?.toBool() ?? true
-            let resizeRules = ResizeRules(isMain: isMain, unconstrainedDimension: unconstrainedDimension, scaleFactor: scaleFactor)
+            let resizeRules = ResizeRules(
+                isMain: isMain,
+                unconstrainedDimension: unconstrainedDimension,
+                scaleFactor: scaleFactor,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
+            )
             let frameAssignment = FrameAssignment<Window>(
                 frame: frame.toRoundedRect(),
                 window: jsWindow.window,

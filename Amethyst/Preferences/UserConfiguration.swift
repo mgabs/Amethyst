@@ -680,6 +680,10 @@ class UserConfiguration: NSObject {
         return visibleWindows.count > 1
     }
 
+    func windowMarginsEnabled() -> Bool {
+        return storage.bool(forKey: .windowMargins)
+    }
+
     func smartWindowMargins() -> Bool {
         return storage.bool(forKey: .smartWindowMargins)
     }

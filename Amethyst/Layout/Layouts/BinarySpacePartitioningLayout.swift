@@ -256,7 +256,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                 return
             }
 
-            if let windowNode = rootNode.findWindowID(window.id()) {
+            if rootNode.findWindowID(window.id()) != nil {
                 log.warning("Trying to swap a tab in from another node")
             }
 
@@ -330,7 +330,13 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                     continue
                 }
 
-                let resizeRules = ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1)
+                let resizeRules = ResizeRules(
+                    isMain: true,
+                    unconstrainedDimension: .horizontal,
+                    scaleFactor: 1,
+                    windowMargins: self.windowMargins,
+                    windowMarginSize: self.windowMarginSize
+                )
                 let frameAssignment = FrameAssignment<Window>(
                     frame: traversalNode.frame,
                     window: window,

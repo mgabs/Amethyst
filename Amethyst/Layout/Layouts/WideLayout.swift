@@ -87,7 +87,13 @@ class WideLayout<Window: WindowType>: Layout<Window>, PanedLayout {
                 windowFrame.size.height = secondaryPaneWindowHeight
             }
 
-            let resizeRules = ResizeRules(isMain: isMain, unconstrainedDimension: .vertical, scaleFactor: scaleFactor)
+            let resizeRules = ResizeRules(
+                isMain: isMain,
+                unconstrainedDimension: .vertical,
+                scaleFactor: scaleFactor,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
+            )
             let frameAssignment = FrameAssignment<Window>(
                 frame: windowFrame,
                 window: window,
