@@ -102,7 +102,7 @@ class WideLayout<Window: WindowType>: Layout<Window>, PanedLayout {
                 windowMargins: self.windowMargins,
                 windowMarginSize: self.windowMarginSize
             )
-            
+
             assignments.append(frameAssignment)
 
             return assignments

@@ -3,12 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>method</key>
-	<string>developer-id</string>
+	<string>debugging</string>
+	<key>signingCertificate</key>
+	<string>43F1251A43FAD491C0C97E1D1FFE22B9BCEE87E6</string>
 	<key>teamID</key>
-	<string>82P2XLB4UH</string>
-	<key>compileBitcode</key>
-	<false/>
-	<key>destination</key>
-	<string>export</string>
+	<string>7X39ZNJZMN</string>
 </dict>
 </plist>

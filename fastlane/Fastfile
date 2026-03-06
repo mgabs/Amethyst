@@ -16,13 +16,9 @@
 default_platform(:mac)
 
 lane :mac do
-    build_mac_app
-    xcodebuild(
-        export_archive: true,
-        archive_path: "./build/Amethyst.xcarchive",
-        export_path: "./build",
-        export_options_plist: "./exportOptions.plist"
-    )
+  sh("xcodebuild -workspace ../Amethyst.xcworkspace -scheme Amethyst -destination 'generic/platform=macOS' -archivePath ../build/Amethyst.xcarchive DEVELOPMENT_TEAM='7X39ZNJZMN' archive | xcbeautify")
+  sh("cp -r ../build/Amethyst.xcarchive/Products/Applications/Amethyst.app ../build/Amethyst.app")
+  sh("cd ../build && zip -r Amethyst.zip Amethyst.app")
 end
 
 desc "Build a local debug version of Amethyst without code signing"

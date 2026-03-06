@@ -18,8 +18,6 @@ import SwiftyBeaver
 class AppDelegate: NSObject, NSApplicationDelegate {
     static let windowManagerEncodingKey = "EncodedWindowManager"
 
-    @IBOutlet var preferencesWindowController: PreferencesWindowController?
-
     fileprivate var windowManager: WindowManager<SIApplication>?
     private var hotKeyManager: HotKeyManager<SIApplication>?
 
@@ -60,8 +58,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             SUUpdater.shared().feedURL = URL(string: appcastURLString)
         #endif
-
-        preferencesWindowController?.window?.level = .floating
 
         if let encodedWindowManager = UserDefaults.standard.data(forKey: AppDelegate.windowManagerEncodingKey), UserConfiguration.shared.restoreLayoutsOnLaunch() {
             let decoder = JSONDecoder()
@@ -109,8 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             isFirstLaunch = false
             return
         }
-
-        showPreferencesWindow(self)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -150,37 +144,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppManager.relaunch()
     }
 
-    @IBAction func showPreferencesWindow(_ sender: AnyObject) {
-        guard let isVisible = preferencesWindowController?.window?.isVisible, !isVisible else {
-            return
-        }
-
-        preferencesWindowController?.showWindow(nil)
-        NSApp.activate(ignoringOtherApps: true)
-
-        presentDotfileWarningIfNecessary()
-    }
-
     @IBAction func checkForUpdates(_ sender: AnyObject) {
         #if RELEASE
             SUUpdater.shared().checkForUpdates(sender)
         #endif
-    }
-
-    private func presentDotfileWarningIfNecessary() {
-        let shouldWarn = !UserDefaults.standard.bool(forKey: "disable-dotfile-conflict-warning")
-        if shouldWarn && UserConfiguration.shared.hasCustomConfiguration() {
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Warning"
-            alert.informativeText = "You have a .amethyst file, which can override in-app preferences. You may encounter unexpected behavior."
-            alert.showsSuppressionButton = true
-            alert.runModal()
-
-            if alert.suppressionButton?.state == .on {
-                UserDefaults.standard.set(true, forKey: "disable-dotfile-conflict-warning")
-            }
-        }
     }
 
     private func populateLayoutsMenu() {
@@ -244,12 +211,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         screenManager.selectLayout(layoutKey)
         // Menu will be refreshed automatically when next opened via NSMenuDelegate
-    }
-}
-
-extension AppDelegate: NSWindowDelegate {
-    func windowWillClose(_ notification: Notification) {
-        windowManager?.preferencesDidClose()
     }
 }
 

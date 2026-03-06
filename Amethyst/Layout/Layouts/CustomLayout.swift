@@ -178,8 +178,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
             ]
         }
 
-        let extendedFrames: [[String: Any?]]? = extendedFrameAssignments(windowSet, on: screen)?.compactMap { frameAssignmentOperation in
-            let frameAssignment = frameAssignmentOperation.frameAssignment
+        let extendedFrames: [[String: Any?]]? = extendedFrameAssignments(windowSet, on: screen)?.compactMap { frameAssignment in
             guard let jsWindow = jsWindows[frameAssignment.window.id] else {
                 return nil
             }

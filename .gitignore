@@ -29,3 +29,4 @@ Brewfile.lock.json
 
 # Fastlane
 fastlane/test_output/
+cert.p12
