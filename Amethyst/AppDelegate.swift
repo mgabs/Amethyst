@@ -100,6 +100,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
+        let hasAccessibilityPermissions = UserConfiguration.shared.confirmAccessibilityPermissions()
+        if UserConfiguration.shared.hasAccessibilityPermissions != hasAccessibilityPermissions {
+            UserConfiguration.shared.hasAccessibilityPermissions = hasAccessibilityPermissions
+        }
+
         guard !isFirstLaunch else {
             isFirstLaunch = false
             return
