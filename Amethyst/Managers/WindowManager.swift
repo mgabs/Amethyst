@@ -943,6 +943,9 @@ extension WindowManager: WindowTransitionTarget {
             }
 
             let targetSpace = spaces[spaceIndex]
+            let allSpaces = CGSpacesInfo<Window>.spacesForAllScreens() ?? []
+            let targetSpaceIndex = allSpaces.firstIndex { $0.id == targetSpace.id } ?? spaceIndex
+
             guard let targetScreen = CGSpacesInfo<Window>.screenForSpace(space: targetSpace) else {
                 return
             }
@@ -954,8 +957,10 @@ extension WindowManager: WindowTransitionTarget {
                 window.moveScaled(to: targetScreen)
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                if !UserConfiguration.shared.followWindowsThrownBetweenSpaces() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + UserConfiguration.shared.focusFollowsWindowThrownBetweenSpacesDelay()) {
+                if UserConfiguration.shared.followWindowsThrownBetweenSpaces() {
+                    SISystemWideElement.switch(toSpace: UInt(targetSpaceIndex + 1))
+                } else {
                     SISystemWideElement.switch(toSpace: UInt(sourceSpaceIndex + 1))
                 }
             }

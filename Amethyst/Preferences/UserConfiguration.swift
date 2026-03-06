@@ -90,6 +90,7 @@ enum ConfigurationKey: String {
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
+    case focusFollowsWindowThrownBetweenSpacesDelay = "focus-follows-window-thrown-between-spaces-delay"
     case windowResizeStep = "window-resize-step"
     case screenPaddingLeft = "screen-padding-left"
     case screenPaddingRight = "screen-padding-right"
@@ -774,6 +775,11 @@ class UserConfiguration: NSObject {
 
     func followWindowsThrownBetweenSpaces() -> Bool {
         return storage.bool(forKey: .followSpaceThrownWindows)
+    }
+
+    func focusFollowsWindowThrownBetweenSpacesDelay() -> TimeInterval {
+        let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownBetweenSpacesDelay))
+        return delay > 0 ? delay : 0.5
     }
 
     func restoreLayoutsOnLaunch() -> Bool {
