@@ -70,7 +70,7 @@ class Layout<Window: WindowType>: Codable {
      - Returns:
      The assignments that would be performed given those windows on that screen.
      */
-    func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         fatalError("Must be implemented by subclass")
     }
 }
@@ -103,7 +103,6 @@ extension Layout {
      */
     func windowAtPoint(_ point: CGPoint, of windowSet: WindowSet<Window>, on screen: Screen) -> LayoutWindow<Window>? {
         return frameAssignments(windowSet, on: screen)?
-            .map { $0.frameAssignment }
             .first { $0.frame.contains(point) }?
             .window
     }
@@ -126,7 +125,7 @@ extension Layout {
             return nil
         }
 
-        return assignments.map { $0.frameAssignment }.first { $0.window.id == window.id() }
+        return assignments.first { $0.window.id == window.id() }
     }
 }
 

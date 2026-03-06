@@ -886,7 +886,7 @@ extension WindowManager: ApplicationObservationDelegate {
             selector: #selector(applicationActivated(_:)),
             object: nil
         )
-        perform(#selector(applicationActivated(_:)), with: nil, afterDelay: 0.2)
+        perform(#selector(applicationActivated(_:)), with: nil, afterDelay: UserConfiguration.shared.applicationActivationDelay())
     }
 }
 

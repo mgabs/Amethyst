@@ -112,25 +112,6 @@ struct WindowSet<Window: WindowType> {
     }
 }
 
-class FrameAssignmentOperation<Window: WindowType>: Operation, @unchecked Sendable {
-    let frameAssignment: FrameAssignment<Window>
-    let windowSet: WindowSet<Window>
-
-    init(frameAssignment: FrameAssignment<Window>, windowSet: WindowSet<Window>) {
-        self.frameAssignment = frameAssignment
-        self.windowSet = windowSet
-        super.init()
-    }
-
-    override func main() {
-        guard !isCancelled else {
-            return
-        }
-
-        windowSet.perform(frameAssignment: frameAssignment)
-    }
-}
-
 /// Encapsulation of an assignment of a frame to a window.
 struct FrameAssignment<Window: WindowType> {
     /// The frame to apply to the window.

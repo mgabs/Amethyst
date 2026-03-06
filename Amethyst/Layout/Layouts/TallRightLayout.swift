@@ -49,7 +49,7 @@ class TallRightLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         mainPaneCount = max(1, mainPaneCount - 1)
     }
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let windows = windowSet.windows
 
         guard !windows.isEmpty else {
@@ -68,7 +68,7 @@ class TallRightLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneWindowWidth = round(screenFrame.size.width * (hasSecondaryPane ? CGFloat(1.0 - mainPaneRatio) : 0))
         let mainPaneWindowWidth = screenFrame.size.width - secondaryPaneWindowWidth
 
-        return windows.reduce([]) { frameAssignments, window -> [FrameAssignmentOperation<Window>] in
+        return windows.reduce([]) { frameAssignments, window -> [FrameAssignment<Window>] in
             var assignments = frameAssignments
             var windowFrame = CGRect.zero
             let isMain = frameAssignments.count < mainPaneCount
@@ -104,7 +104,7 @@ class TallRightLayout<Window: WindowType>: Layout<Window>, PanedLayout {
                 windowMarginSize: self.windowMarginSize
             )
 
-            assignments.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))
+            assignments.append(frameAssignment)
 
             return assignments
         }

@@ -14,7 +14,7 @@ class FullscreenLayout<Window: WindowType>: Layout<Window> {
 
     override var layoutDescription: String { return "" }
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let screenFrame = screen.adjustedFrame(disableWindowMargins: UserConfiguration.shared.smartWindowMargins())
         return windowSet.windows.map { window in
             let resizeRules = ResizeRules(
@@ -33,7 +33,7 @@ class FullscreenLayout<Window: WindowType>: Layout<Window> {
                 windowMarginSize: self.windowMarginSize,
                 disableWindowMargins: UserConfiguration.shared.smartWindowMargins()
             )
-            return FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet)
+            return frameAssignment
         }
     }
 }

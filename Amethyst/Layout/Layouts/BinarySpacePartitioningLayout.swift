@@ -298,7 +298,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
         return orderedIDs[nextWindowIndex]
     }
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let windows = windowSet.windows
 
         guard !windows.isEmpty else {
@@ -316,7 +316,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
         }
 
         let baseFrame = screen.adjustedFrame()
-        var ret: [FrameAssignmentOperation<Window>] = []
+        var ret: [FrameAssignment<Window>] = []
         var traversalNodes: [TraversalNode] = [(node: rootNode, frame: baseFrame)]
 
         while !traversalNodes.isEmpty {
@@ -345,7 +345,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                     windowMargins: self.windowMargins,
                     windowMarginSize: self.windowMarginSize
                 )
-                ret.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))
+                ret.append(frameAssignment)
             } else {
                 guard let left = traversalNode.node.left, let right = traversalNode.node.right else {
                     log.error("Encountered an invalid node")

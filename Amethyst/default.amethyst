@@ -228,6 +228,7 @@
     "new-windows-to-main": false,
     "follow-space-thrown-windows": true,
     "focus-follows-window-thrown-between-spaces-delay": 0.5,
+    "application-activation-delay": 0.2,
     "screen-padding-top": 0,
     "screen-padding-bottom": 0,
     "screen-padding-left": 0,

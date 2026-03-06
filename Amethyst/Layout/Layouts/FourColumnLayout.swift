@@ -197,7 +197,7 @@ class FourColumnLayout<Window: WindowType>: Layout<Window> {
         try container.encode(mainPaneRatio, forKey: .mainPaneRatio)
     }
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let windows = windowSet.windows
 
         guard !windows.isEmpty else {
@@ -213,7 +213,7 @@ class FourColumnLayout<Window: WindowType>: Layout<Window> {
             mainPaneRatio: mainPaneRatio
         )
 
-        return windows.reduce([]) { frameAssignments, window -> [FrameAssignmentOperation<Window>] in
+        return windows.reduce([]) { frameAssignments, window -> [FrameAssignment<Window>] in
             var assignments = frameAssignments
             var windowFrame = CGRect.zero
             let windowIndex: UInt = UInt(frameAssignments.count)
@@ -264,7 +264,7 @@ class FourColumnLayout<Window: WindowType>: Layout<Window> {
                 windowMarginSize: self.windowMarginSize
             )
 
-            assignments.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))
+            assignments.append(frameAssignment)
 
             return assignments
         }

@@ -91,6 +91,7 @@ enum ConfigurationKey: String {
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
     case focusFollowsWindowThrownBetweenSpacesDelay = "focus-follows-window-thrown-between-spaces-delay"
+    case applicationActivationDelay = "application-activation-delay"
     case windowResizeStep = "window-resize-step"
     case screenPaddingLeft = "screen-padding-left"
     case screenPaddingRight = "screen-padding-right"
@@ -780,6 +781,11 @@ class UserConfiguration: NSObject {
     func focusFollowsWindowThrownBetweenSpacesDelay() -> TimeInterval {
         let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownBetweenSpacesDelay))
         return delay > 0 ? delay : 0.5
+    }
+
+    func applicationActivationDelay() -> TimeInterval {
+        let delay = TimeInterval(storage.float(forKey: .applicationActivationDelay))
+        return delay > 0 ? delay : 0.2
     }
 
     func restoreLayoutsOnLaunch() -> Bool {

@@ -280,6 +280,14 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         // TODO: fix mff
 //        let mouseFollowsFocus = userConfiguration.mouseFollowsFocus()
 
+        let batchOperation = BlockOperation {
+            DispatchQueue.main.sync {
+                for assignment in frameAssignments {
+                    windows.perform(frameAssignment: assignment)
+                }
+            }
+        }
+
         let completeOperation = BlockOperation()
 
         // The complete operation should execute the completion delegate call
@@ -300,11 +308,11 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
 
         // The completion should be dependent on all assignments finishing
-        frameAssignments.forEach { completeOperation.addDependency($0) }
+        completeOperation.addDependency(batchOperation)
 
         // Start the operation
         delegate?.onReflowInitiation()
-        reflowOperationQueue.addOperations(frameAssignments, waitUntilFinished: false)
+        reflowOperationQueue.addOperation(batchOperation)
         reflowOperationQueue.addOperation(completeOperation)
     }
 

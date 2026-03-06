@@ -47,7 +47,7 @@ class TwoPaneLayout<Window: WindowType>: Layout<Window>, PanedLayout {
 
     func decreaseMainPaneCount() {}
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let windows = windowSet.windows
 
         guard !windows.isEmpty else {
@@ -67,7 +67,7 @@ class TwoPaneLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let mainPaneWindowWidth = screenFrame.size.width * (isHorizontal && hasSecondaryPane ? mainPaneRatio : 1)
         let secondaryPaneWindowWidth = !isHorizontal ? mainPaneWindowWidth : screenFrame.size.width - mainPaneWindowWidth
 
-        return windows.reduce([]) { acc, window -> [FrameAssignmentOperation<Window>] in
+        return windows.reduce([]) { acc, window -> [FrameAssignment<Window>] in
             var assignments = acc
             var windowFrame = CGRect.zero
             let isMain = acc.count < mainPaneCount
@@ -103,7 +103,7 @@ class TwoPaneLayout<Window: WindowType>: Layout<Window>, PanedLayout {
                 windowMarginSize: self.windowMarginSize
             )
 
-            assignments.append(FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet))
+            assignments.append(frameAssignment)
 
             return assignments
         }

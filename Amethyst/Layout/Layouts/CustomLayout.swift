@@ -144,7 +144,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
         try container.encode(fileURL, forKey: .fileURL)
     }
 
-    private func extendedFrameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    private func extendedFrameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         switch layoutExtension {
         case .none:
             return nil
@@ -155,7 +155,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
         }
     }
 
-    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignmentOperation<Window>]? {
+    override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
         let windows = windowSet.windows
 
         guard !windows.isEmpty else {
@@ -204,7 +204,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
             return nil
         }
 
-        return windows.compactMap { window -> FrameAssignmentOperation<Window>? in
+        return windows.compactMap { window -> FrameAssignment<Window>? in
             guard let jsWindow = jsWindows[window.id] else {
                 return nil
             }
@@ -245,7 +245,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
                 windowMargins: self.windowMargins,
                 windowMarginSize: self.windowMarginSize
             )
-            return FrameAssignmentOperation(frameAssignment: frameAssignment, windowSet: windowSet)
+            return frameAssignment
         }
     }
 
