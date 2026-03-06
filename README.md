@@ -1,20 +1,18 @@
-Amethyst
-========
+# Amethyst
 
-[![Join the chat at https://gitter.im/ianyh/Amethyst](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ianyh/Amethyst?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.com/ianyh/Amethyst.svg?branch=development)](https://travis-ci.com/ianyh/Amethyst)
+[![Discussions](https://img.shields.io/github/discussions/ianyh/Amethyst)](https://github.com/ianyh/Amethyst/discussions)
 [![Open Source Helpers](https://www.codetriage.com/ianyh/amethyst/badges/users.svg)](https://www.codetriage.com/ianyh/amethyst)
 [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
-[![Twitter Follow](https://img.shields.io/twitter/follow/amethystwm?style=social)](https://twitter.com/amethystwm)
 
 Tiling window manager for macOS along the lines of [xmonad](https://xmonad.org/).
 
 ![Windows](https://ianyh.com/amethyst/images/windows.png)
 
-A quick screencast of basic functionality can be found [here](https://youtu.be/boPilhScpkY). (It's rough, and I'd love to see a better one if someone has the skills and inclination to make one.)
+If you want to learn more about tiling window managers and the features of Amethyst there are some great community resources on YouTube.
 
-Getting Amethyst
-================
+[Boost your MacOS PRODUCTIVITY with Amethyst | Tiling Window Manager](https://www.youtube.com/watch?v=7Z9-Ry4yGNc)
+
+## Getting Amethyst
 
 Amethyst is available for direct download on the [releases page](https://github.com/ianyh/Amethyst/releases) or using [homebrew cask](https://github.com/Homebrew/homebrew-cask).
 
@@ -22,24 +20,44 @@ Amethyst is available for direct download on the [releases page](https://github.
 brew install --cask amethyst
 ```
 
-Note: that Amethyst now is only supported on macOS 10.12+.
+Note: that Amethyst now is only supported on macOS 10.15+.
 
-Using Amethyst
-==============
+## Using Amethyst
 
-Amethyst must be given permissions to use the accessibility APIs under the Privacy tab of the Security & Privacy preferences pane as shown below.
+Amethyst must be given permissions to use the accessibility APIs in the Privacy & Security tab, Privacy -> Accessibilty.
 
-![Accessibility permissions](https://ianyh.com/amethyst/images/accessibility-window.png)
+<p align="center">
+  <img style="text-align: center; border-radius:4px;" width="500px" src="docs/images/accessibility-permission.png" alt="Give Accessibility permission to Amethyst under Privicay and Security." />
+</p>
 
-Keyboard Shortcuts
-------------------
+**_Important note_**: You will probably want to disable `Automatically rearrange Spaces based on most recent use` (found under Mission Control in System Preferences). This setting is enabled by default, and will cause your Spaces to swap places based on use. This makes keyboard navigation between Spaces unpredictable.
 
-Amethyst uses two modifier combinations.
+<p align="center">
+  <img style="text-align: center" width="500px" src="docs/images/auto-rearranage.png" />
+</p>
+
+or run in a terminal:
+```bash
+defaults write com.apple.dock workspaces-auto-swoosh -bool NO
+killall Dock
+```
+
+## Troubleshooting
+
+See [Troubleshooting](docs/troubleshooting.md) for some common issues.
+
+## Configuration
+
+### Keyboard Shortcuts
+
+Amethyst uses two modifier combinations (`mod1` and `mod2`) and can optionally use another two (`mod3` and `mod4`).
 
 | Default Shortcut | Description |
 |---|---|
 | `mod1` | `option + shift` |
 | `mod2` | `ctrl + option + shift` |
+| `mod3` | not defined by default |
+| `mod4` | not defined by default |
 
 And defines the following commands, mostly a mapping to xmonad key combinations.
 
@@ -60,7 +78,7 @@ And defines the following commands, mostly a mapping to xmonad key combinations.
 | `mod2 + j` | Swap focused window counter clockwise |
 | `mod2 + k` | Swap focused window clockwise |
 | `mod1 + enter` | Swap focused window with main window |
-| `mod1 + z` | Force windows to be reevalulated |
+| `mod1 + z` | Force windows to be reevaluated |
 | `mod2 + z` | Relaunch Amethyst |
 | `mod2 + left` | Throw focused window to space left |
 | `mod2 + right` | Throw focused window to space right |
@@ -74,6 +92,12 @@ And defines the following commands, mostly a mapping to xmonad key combinations.
 | `mod2 + 8` | Throw focused window to space 8 |
 | `mod2 + 9` | Throw focused window to space 9 |
 | `mod2 + 0` | Throw focused window to space 10 |
+| `none`     | Throw focused window to space 11 |
+| `none`     | Throw focused window to space 12 |
+| `none`     | Throw focused window to space 13 |
+| `none`     | Throw focused window to space 14 |
+| `none`     | Throw focused window to space 15 |
+| `none`     | Throw focused window to space 16 |
 | `mod1 + w` | Focus Screen 1 |
 | `mod2 + w` | Throw focused window to screen 1 |
 | `mod1 + e` | Focus Screen 2 |
@@ -82,6 +106,8 @@ And defines the following commands, mostly a mapping to xmonad key combinations.
 | `mod2 + r` | Throw focused window to screen 3 |
 | `mod1 + q` | Focus Screen 4 |
 | `mod2 + q` | Throw focused window to screen 4 |
+| `mod1 + g` | Focus Screen 5 |
+| `mod2 + g` | Throw focused window to screen 5 |
 | `mod1 + t` | Toggle float for focused window |
 | `mod1 + i` | Display current layout |
 | `mod2 + t` | Toggle global tiling |
@@ -96,8 +122,7 @@ And defines the following commands, mostly a mapping to xmonad key combinations.
 | `none` | Select widescreen-tall layout |
 | `none` | Select bsp layout |
 
-Available Layouts
------------------
+### Available Layouts
 
 Amethyst allows you to cycle among several different window layouts.
 Layouts can also be enabled/disabled to control whether they appear in the cycle sequence at all.
@@ -113,6 +138,20 @@ Exactly the same as *Tall*, but the main pane is on the right, with the other pa
 #### Wide
 
 The rotated version of *Tall*, where the main pane is on the _top_ (extending the full width of the screen), and the other pane is on the bottom. If either pane has more than one window, that pane will split into columns instead of rows.
+
+#### Two Pane
+
+This layout has two visible panes - the main and the secondary pane. The window
+in the main pane is pinned, just like in other layouts, and all the remaining
+windows are placed in the other pane with only one window being visible at a
+time, which can be swapped (using the keyboard shortcuts). This layout
+automatically adapts to horizontal/vertical tiling depending on your screen
+orientation. The main pane is on the left in the horizontal orientation and it's
+on the top in the vertical orientation.
+
+#### Two Pane Right
+
+Exactly the same as *Two Pane*, but the main pane is on the right, with the other pane on the left.
 
 #### 3Column-Left
 
@@ -153,27 +192,28 @@ The rotated version of *Column*, where each window takes up an entire row, exten
 #### Floating
 
 This mode makes all windows "floating", allowing you to move and resize them as if Amethyst were temporarily deactivated. Unlike the other modes, this will mean that windows can be placed "on top of" each other, obscuring your view of some windows.
- 
+
 #### Binary Space Partitioning (BSP)
 
 This layout does not have a main pane in the way that other layouts do. When adding windows, any given pane can be split evenly into two panes along whatever axis is longer. This is recursive such that pane A can be split in the middle into pane A on the left and pane B on the right; pane B can then be split into pane B on top and pane C on bottom; pane C can then be split into pane C on the left and pane D on the right; and so on.
 
-Contributing
-============
+#### Custom (beta)
 
-If you'd like to contribute please branch off of the `development` branch and open pull requests against it rather than `master`. Otherwise just try to stick to the general style of the code. There is a setup script to guide you through the process of installing necessary tools and getting dependencies built. To get started run
+Custom layouts can be implemented via JavaScript. See [Custom Layouts](docs/custom-layouts.md).
 
-```bash
-$ ./bin/setup.sh
-```
+### Configuration File
 
-Contact
-=======
+Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). Note that if configuration file is present, it will override the settings defined via the GUI.
 
-If you have questions or feedback your best options are to [tweet](https://twitter.com/amethystwm) or to get on [gitter](https://gitter.im/ianyh/Amethyst).
+## Building Amethyst Locally
 
-Donating
-========
+If you would like to test your changes locally, Amethyst can be built using [`fastlane`](https://github.com/fastlane/fastlane). Just run the command `fastlane` in the root folder, and the app will be available at `./build/Amethyst.app`. (You may need to provision the app under "Signing & Capabilities" in XCode first.)
+
+## Contributing
+
+If you'd like to contribute please branch off of the `development` branch and open pull requests against it rather than `master`. Otherwise just try to stick to the general style of the code.
+
+## Donating
 
 Amethyst is free and always will be. That said, a couple of people have expressed their desire to donate money in appreciation. Given the current political climate I would recommend donating to one of these organizations instead:
 
@@ -189,8 +229,7 @@ Amethyst is free and always will be. That said, a couple of people have expresse
 
 And a bunch of technology-oriented ones:
 
-* [National Center for Women & Information Technology](https://www.ncwit.org/donate)
+* [National Center for Women & Information Technology](https://ncwit.org/about-ncwit/donate/)
 * [girls who code](https://girlswhocode.com/get-involved/)
-* [MotherCoders](https://www.indiegogo.com/projects/mothercoders-a-giant-hack-for-moms-who-want-in)
-* [Trans*H4CK](https://www.transhack.org/donate/)
-* [Black Girls CODE](https://www.blackgirlscode.com/)
+* [Trans*H4CK](https://www.transhack.org/sponsorship/)
+* [Black Girls CODE](https://wearebgc.org/donate/)

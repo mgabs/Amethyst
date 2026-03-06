@@ -19,8 +19,9 @@ extension RandomAccessCollection where Element == FrameAssignment<TestWindow>, I
         return filtered(byIDs: Array(windows).map { $0.id() })
     }
 
-    func sorted() -> [FrameAssignment<TestWindow>] {
-        return sorted { $0.frame.origin.x < $1.frame.origin.x }.sorted { $0.frame.origin.y < $1.frame.origin.y }
+    func sorted() -> [Element] {
+        return sorted { $0.frame.origin.x < $1.frame.origin.x }
+            .sorted { $0.frame.origin.y < $1.frame.origin.y }
     }
 
     func frames() -> [CGRect] {
@@ -33,10 +34,29 @@ extension RandomAccessCollection where Element == FrameAssignment<TestWindow>, I
         }.joined(separator: "\n")
     }
 
-    func verify(frames: [CGRect]) {
+    func verify(frames: [CGRect], inOrder: Bool = false) {
         expect(self.count).to(equal(frames.count), description: "\(count) assignments, but \(frames.count) frames")
-        zip(self, frames).forEach { assignment, frame in
-            expect(assignment.frame).to(equal(frame))
+
+        if inOrder {
+            zip(self, frames).forEach { assignment, frame in
+                expect(assignment.frame).to(equal(frame))
+            }
+        } else {
+            let currentFrames = map { $0.frame }
+            for frame in frames {
+                expect(currentFrames).to(contain(frame))
+            }
         }
+    }
+
+    func verify(frames: [String: CGRect]) {
+        var unverifiedFrames = frames
+        for assignment in self {
+            let id = assignment.window.id
+            expect(unverifiedFrames[id]).toNot(beNil(), description: "\(id) should exist")
+            expect(assignment.frame).to(equal(unverifiedFrames[id]), description: "\(id)")
+            unverifiedFrames[id] = nil
+        }
+        expect(unverifiedFrames).to(beEmpty())
     }
 }

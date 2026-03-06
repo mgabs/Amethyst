@@ -6,8 +6,8 @@
 //  Copyright © 2016 Ian Ynda-Hummel. All rights reserved.
 //
 
+import Carbon
 import Foundation
-import MASShortcut
 import Silica
 
 // Type for defining key code.
@@ -33,7 +33,6 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         self.userConfiguration = userConfiguration
         super.init()
         _ = constructKeyCodeMap()
-        MASShortcutValidator.shared().allowAnyShortcutWithOptionModifier = true
     }
 
     private static func keyCodeForNumber(_ number: NSNumber) -> AMKeyCode {
@@ -116,6 +115,42 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
             }
         }
 
+        constructCommandWithCommandKey(CommandKey.command1.rawValue) {
+            let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
+            screenManager?.updateCurrentLayout { layout in
+                if let customLayout = layout as? CustomLayout {
+                    customLayout.command1()
+                }
+            }
+        }
+
+        constructCommandWithCommandKey(CommandKey.command2.rawValue) {
+            let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
+            screenManager?.updateCurrentLayout { layout in
+                if let customLayout = layout as? CustomLayout {
+                    customLayout.command2()
+                }
+            }
+        }
+
+        constructCommandWithCommandKey(CommandKey.command3.rawValue) {
+            let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
+            screenManager?.updateCurrentLayout { layout in
+                if let customLayout = layout as? CustomLayout {
+                    customLayout.command3()
+                }
+            }
+        }
+
+        constructCommandWithCommandKey(CommandKey.command4.rawValue) {
+            let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
+            screenManager?.updateCurrentLayout { layout in
+                if let customLayout = layout as? CustomLayout {
+                    customLayout.command4()
+                }
+            }
+        }
+
         constructCommandWithCommandKey(CommandKey.focusCCW.rawValue) {
             windowManager.focusTransitionCoordinator.moveFocusCounterClockwise()
         }
@@ -157,10 +192,12 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         }
 
         constructCommandWithCommandKey(CommandKey.displayCurrentLayout.rawValue) {
-            windowManager.displayCurrentLayout()
+            DispatchQueue.main.async {
+                windowManager.displayCurrentLayout()
+            }
         }
 
-        (1...4).forEach { screenNumber in
+        (1...5).forEach { screenNumber in
             let focusCommandKey = "\(CommandKey.focusScreenPrefix.rawValue)-\(screenNumber)"
             let throwCommandKey = "\(CommandKey.throwScreenPrefix.rawValue)-\(screenNumber)"
 
@@ -173,7 +210,7 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
             }
         }
 
-        (1...10).forEach { spaceNumber in
+        (1...16).forEach { spaceNumber in
             let commandKey = "\(CommandKey.throwSpacePrefix.rawValue)-\(spaceNumber)"
 
             self.constructCommandWithCommandKey(commandKey) {
@@ -195,7 +232,19 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
 
         constructCommandWithCommandKey(CommandKey.toggleTiling.rawValue) {
             self.userConfiguration.tilingEnabled = !self.userConfiguration.tilingEnabled
-            windowManager.markAllScreensForReflow(withChange: .unknown)
+            windowManager.markAllScreensForReflow()
+        }
+
+        constructCommandWithCommandKey(CommandKey.enableTiling.rawValue) {
+            guard !self.userConfiguration.tilingEnabled else { return }
+            self.userConfiguration.tilingEnabled = true
+            windowManager.markAllScreensForReflow()
+        }
+
+        constructCommandWithCommandKey(CommandKey.disableTiling.rawValue) {
+            guard self.userConfiguration.tilingEnabled else { return }
+            self.userConfiguration.tilingEnabled = false
+            windowManager.markAllScreensForReflow()
         }
 
         constructCommandWithCommandKey(CommandKey.reevaluateWindows.rawValue) {
@@ -208,6 +257,22 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
 
         constructCommandWithCommandKey(CommandKey.relaunchAmethyst.rawValue) { [weak appDelegate] in
             appDelegate?.relaunch(self)
+        }
+
+        constructCommandWithCommandKey(CommandKey.increaseWindowMaxCount.rawValue) {
+            self.userConfiguration.increaseWindowMaxCount()
+            windowManager.markAllScreensForReflow()
+            DispatchQueue.main.async {
+                windowManager.displayWindowCountHUD()
+            }
+        }
+
+        constructCommandWithCommandKey(CommandKey.decreaseWindowMaxCount.rawValue) {
+            self.userConfiguration.decreaseWindowMaxCount()
+            windowManager.markAllScreensForReflow()
+            DispatchQueue.main.async {
+                windowManager.displayWindowCountHUD()
+            }
         }
 
         LayoutType<Application.Window>.availableLayoutStrings().forEach { (layoutKey, _) in
@@ -290,6 +355,7 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         stringToKeyCodes["right"] = [kVK_RightArrow]
         stringToKeyCodes["down"] = [kVK_DownArrow]
         stringToKeyCodes["left"] = [kVK_LeftArrow]
+        stringToKeyCodes["delete"] = [kVK_Delete]
 
         return stringToKeyCodes
     }
@@ -329,6 +395,12 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         hotKeyNameToDefaultsKey.append(["Expand main pane", CommandKey.expandMain.rawValue])
         hotKeyNameToDefaultsKey.append(["Increase main pane count", CommandKey.increaseMain.rawValue])
         hotKeyNameToDefaultsKey.append(["Decrease main pane count", CommandKey.decreaseMain.rawValue])
+        hotKeyNameToDefaultsKey.append(["Increase window max count", CommandKey.increaseWindowMaxCount.rawValue])
+        hotKeyNameToDefaultsKey.append(["Decrease window max count", CommandKey.decreaseWindowMaxCount.rawValue])
+        hotKeyNameToDefaultsKey.append(["Custom layout command 1", CommandKey.command1.rawValue])
+        hotKeyNameToDefaultsKey.append(["Custom layout command 2", CommandKey.command2.rawValue])
+        hotKeyNameToDefaultsKey.append(["Custom layout command 3", CommandKey.command3.rawValue])
+        hotKeyNameToDefaultsKey.append(["Custom layout command 4", CommandKey.command4.rawValue])
         hotKeyNameToDefaultsKey.append(["Move focus counter clockwise", CommandKey.focusCCW.rawValue])
         hotKeyNameToDefaultsKey.append(["Move focus clockwise", CommandKey.focusCW.rawValue])
         hotKeyNameToDefaultsKey.append(["Move focus to main window", CommandKey.focusMain.rawValue])
@@ -343,13 +415,13 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         hotKeyNameToDefaultsKey.append(["Throw focused window to space left", CommandKey.throwSpaceLeft.rawValue])
         hotKeyNameToDefaultsKey.append(["Throw focused window to space right", CommandKey.throwSpaceRight.rawValue])
 
-        (1...10).forEach { spaceNumber in
+        (1...16).forEach { spaceNumber in
             let name = "Throw focused window to space \(spaceNumber)"
 
             hotKeyNameToDefaultsKey.append([name, "\(CommandKey.throwSpacePrefix.rawValue)-\(spaceNumber)"])
         }
 
-        (1...4).forEach { screenNumber in
+        (1...5).forEach { screenNumber in
             let focusCommandName = "Focus screen \(screenNumber)"
             let throwCommandName = "Throw focused window to screen \(screenNumber)"
             let focusCommandKey = "\(CommandKey.focusScreenPrefix.rawValue)-\(screenNumber)"
@@ -361,7 +433,10 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
 
         hotKeyNameToDefaultsKey.append(["Toggle float for focused window", CommandKey.toggleFloat.rawValue])
         hotKeyNameToDefaultsKey.append(["Display current layout", CommandKey.displayCurrentLayout.rawValue])
+        hotKeyNameToDefaultsKey.append(["Toggle focus follows mouse", CommandKey.toggleFocusFollowsMouse.rawValue])
         hotKeyNameToDefaultsKey.append(["Toggle global tiling", CommandKey.toggleTiling.rawValue])
+        hotKeyNameToDefaultsKey.append(["Enable global tiling", CommandKey.enableTiling.rawValue])
+        hotKeyNameToDefaultsKey.append(["Disable global tiling", CommandKey.disableTiling.rawValue])
 
         for (layoutKey, layoutName) in LayoutType<Application.Window>.availableLayoutStrings() {
             let commandName = "Select \(layoutName) layout"

@@ -14,11 +14,11 @@ enum WindowTransition<Window: WindowType> {
     typealias Screen = Window.Screen
     case switchWindows(_ window1: Window, _ window2: Window)
     case moveWindowToScreen(_ window: Window, screen: Screen)
-    case moveWindowToSpaceAtIndex(_ window: Window, spaceIndex: Int)
+    case moveWindowToSpaceAtIndex(_ window: Window, spaceIndex: Int, sourceSpaceIndex: Int)
     case resetFocus
 }
 
-protocol WindowTransitionTarget: class {
+protocol WindowTransitionTarget: AnyObject {
     associatedtype Application: ApplicationType
     typealias Window = Application.Window
     typealias Screen = Window.Screen
@@ -26,10 +26,12 @@ protocol WindowTransitionTarget: class {
     func executeTransition(_ transition: WindowTransition<Window>)
 
     func isWindowFloating(_ window: Window) -> Bool
+    func currentLayout() -> Layout<Application.Window>?
     func screen(at index: Int) -> Screen?
     func activeWindows(on screen: Screen) -> [Window]
     func nextScreenIndexClockwise(from screen: Screen) -> Int
     func nextScreenIndexCounterClockwise(from screen: Screen) -> Int
+    func lastMainWindowForCurrentSpace() -> Window?
 }
 
 class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
@@ -45,17 +47,24 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
             return
         }
 
-        guard let windows = target?.activeWindows(on: screen), let focusedIndex = windows.index(of: focusedWindow) else {
+        guard let windows = target?.activeWindows(on: screen), let focusedIndex = windows.firstIndex(of: focusedWindow) else {
             return
         }
 
-        // if there are 2 windows, we can always swap.  Just make sure we don't swap focusedWindow with itself.
-        switch windows.count {
-        case 1:
+        if windows.count <= 1 {
             return
-        case 2:
-            target?.executeTransition(.switchWindows(focusedWindow, windows[1 - focusedIndex]))
-        default:
+        }
+
+        if focusedIndex == 0 {
+            guard let lastMainWindow = target?.lastMainWindowForCurrentSpace() else {
+                return
+            }
+            target?.executeTransition(.switchWindows(lastMainWindow, focusedWindow))
+            return
+        }
+
+        if focusedIndex != 0 {
+            // Swap focused window with main window if other window is focused
             target?.executeTransition(.switchWindows(focusedWindow, windows[0]))
         }
     }
@@ -70,7 +79,7 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
             return
         }
 
-        guard let windows = target?.activeWindows(on: screen), let focusedWindowIndex = windows.index(of: focusedWindow) else {
+        guard let windows = target?.activeWindows(on: screen), let focusedWindowIndex = windows.firstIndex(of: focusedWindow) else {
             return
         }
 
@@ -89,7 +98,7 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
             return
         }
 
-        guard let windows = target?.activeWindows(on: screen), let focusedWindowIndex = windows.index(of: focusedWindow) else {
+        guard let windows = target?.activeWindows(on: screen), let focusedWindowIndex = windows.firstIndex(of: focusedWindow) else {
             return
         }
 
@@ -146,34 +155,48 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
     }
 
     func pushFocusedWindowToSpace(_ space: Int) {
+        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForAllScreens() else {
+            return
+        }
+
+        guard let index = spaces.firstIndex(of: currentFocusedSpace), index < spaces.count else {
+            return
+        }
+
+        pushFocusedWindowToSpace(space, sourceSpace: index)
+    }
+
+    func pushFocusedWindowToSpace(_ space: Int, sourceSpace: Int) {
         guard let focusedWindow = Window.currentlyFocused(), focusedWindow.screen() != nil else {
             return
         }
 
-        target?.executeTransition(.moveWindowToSpaceAtIndex(focusedWindow, spaceIndex: space))
+        target?.executeTransition(.moveWindowToSpaceAtIndex(focusedWindow, spaceIndex: space, sourceSpaceIndex: sourceSpace))
     }
 
     func pushFocusedWindowToSpaceLeft() {
-        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForFocusedScreen() else {
+        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForAllScreens() else {
             return
         }
 
-        guard let index = spaces.index(of: currentFocusedSpace), index > 0 else {
+        let filteredSpaces = spaces.filter { $0.type == CGSSpaceTypeUser }
+        guard let index = filteredSpaces.firstIndex(of: currentFocusedSpace), index > 0 else {
             return
         }
 
-        pushFocusedWindowToSpace(index - 1)
+        pushFocusedWindowToSpace(index - 1, sourceSpace: index)
     }
 
     func pushFocusedWindowToSpaceRight() {
-        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForFocusedScreen() else {
+        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForAllScreens() else {
             return
         }
 
-        guard let index = spaces.index(of: currentFocusedSpace), index + 1 < spaces.count else {
+        let filteredSpaces = spaces.filter { $0.type == CGSSpaceTypeUser }
+        guard let index = filteredSpaces.firstIndex(of: currentFocusedSpace), index + 1 < spaces.count else {
             return
         }
 
-        pushFocusedWindowToSpace(index + 1)
+        pushFocusedWindowToSpace(index + 1, sourceSpace: index)
     }
 }

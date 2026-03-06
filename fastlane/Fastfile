@@ -16,11 +16,41 @@
 default_platform(:mac)
 
 lane :mac do
-    build_mac_app
+  sh("xcodebuild -workspace ../Amethyst.xcworkspace -scheme Amethyst -destination 'generic/platform=macOS' -archivePath ../build/Amethyst.xcarchive DEVELOPMENT_TEAM='7X39ZNJZMN' archive | xcbeautify")
+  sh("cp -r ../build/Amethyst.xcarchive/Products/Applications/Amethyst.app ../build/Amethyst.app")
+  sh("cd ../build && zip -r Amethyst.zip Amethyst.app")
+end
+
+desc "Build a local debug version of Amethyst without code signing"
+lane :local do
     xcodebuild(
-        export_archive: true,
-        archive_path: "./build/Amethyst.xcarchive",
-        export_path: "./build",
-        export_options_plist: "./exportOptions.plist"
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        configuration: "Debug",
+        clean: true,
+        build: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
+    )
+end
+
+desc "Build a local release (optimized) version of Amethyst without code signing"
+lane :local_release do
+    xcodebuild(
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        configuration: "Release",
+        clean: true,
+        build: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
+    )
+end
+
+desc "Run tests"
+lane :test do
+    run_tests(
+        workspace: "Amethyst.xcworkspace",
+        scheme: "Amethyst",
+        clean: true,
+        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
     )
 end

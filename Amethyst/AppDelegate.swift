@@ -18,8 +18,6 @@ import SwiftyBeaver
 class AppDelegate: NSObject, NSApplicationDelegate {
     static let windowManagerEncodingKey = "EncodedWindowManager"
 
-    @IBOutlet var preferencesWindowController: PreferencesWindowController?
-
     fileprivate var windowManager: WindowManager<SIApplication>?
     private var hotKeyManager: HotKeyManager<SIApplication>?
 
@@ -28,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet var versionMenuItem: NSMenuItem?
     @IBOutlet var startAtLoginMenuItem: NSMenuItem?
     @IBOutlet var toggleGlobalTilingMenuItem: NSMenuItem?
+    @IBOutlet var layoutsMenuItem: NSMenuItem?
 
     private var isFirstLaunch = true
 
@@ -35,6 +34,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
             log.addDestination(ConsoleDestination())
         #endif
+
+        if CommandLine.arguments.contains("--log") {
+            let destination = ConsoleDestination()
+            destination.useNSLog = true
+            log.addDestination(destination)
+        }
 
         log.info("Logging is enabled")
         log.debug("Debug logging is enabled")
@@ -53,8 +58,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             SUUpdater.shared().feedURL = URL(string: appcastURLString)
         #endif
-
-        preferencesWindowController?.window?.level = .floating
 
         if let encodedWindowManager = UserDefaults.standard.data(forKey: AppDelegate.windowManagerEncodingKey), UserConfiguration.shared.restoreLayoutsOnLaunch() {
             let decoder = JSONDecoder()
@@ -80,19 +83,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = statusItemMenu
         statusItem?.highlightMode = true
 
+        let hideMenuBarIcon: Bool = UserConfiguration.shared.hideMenuBarIcon()
+        statusItem?.isVisible = !hideMenuBarIcon
+
         versionMenuItem?.title = "Version \(shortVersion) (\(version))"
         toggleGlobalTilingMenuItem?.title = "Disable"
 
         startAtLoginMenuItem?.state = (LoginServiceKit.isExistLoginItems(at: Bundle.main.bundlePath) ? .on : .off)
+
+        // Set up status item menu delegate to refresh layouts when main menu is opened
+        statusItemMenu?.delegate = self
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
+        let hasAccessibilityPermissions = UserConfiguration.shared.confirmAccessibilityPermissions()
+        if UserConfiguration.shared.hasAccessibilityPermissions != hasAccessibilityPermissions {
+            UserConfiguration.shared.hasAccessibilityPermissions = hasAccessibilityPermissions
+        }
+
         guard !isFirstLaunch else {
             isFirstLaunch = false
             return
         }
-
-        showPreferencesWindow(self)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -120,26 +132,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @IBAction func toggleGlobalTiling(_ sender: AnyObject) {
         UserConfiguration.shared.tilingEnabled = !UserConfiguration.shared.tilingEnabled
-        windowManager?.markAllScreensForReflow(withChange: .unknown)
+        windowManager?.markAllScreensForReflow()
+    }
+
+    @IBAction func resetLayouts(_ sender: AnyObject) {
+        UserDefaults.standard.removeObject(forKey: AppDelegate.windowManagerEncodingKey)
+        windowManager?.reset()
     }
 
     @IBAction func relaunch(_ sender: AnyObject) {
-        let executablePath = Bundle.main.executablePath! as NSString
-        let fileSystemRepresentedPath = executablePath.fileSystemRepresentation
-        let fileSystemPath = FileManager.default.string(withFileSystemRepresentation: fileSystemRepresentedPath, length: Int(strlen(fileSystemRepresentedPath)))
-        Process.launchedProcess(launchPath: fileSystemPath, arguments: [])
-        NSApp.terminate(self)
-    }
-
-    @IBAction func showPreferencesWindow(_ sender: AnyObject) {
-        guard let isVisible = preferencesWindowController?.window?.isVisible, !isVisible else {
-            return
-        }
-
-        preferencesWindowController?.showWindow(nil)
-        NSApp.activate(ignoringOtherApps: true)
-
-        presentDotfileWarningIfNecessary()
+        AppManager.relaunch()
     }
 
     @IBAction func checkForUpdates(_ sender: AnyObject) {
@@ -148,26 +150,76 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
     }
 
-    private func presentDotfileWarningIfNecessary() {
-        let shouldWarn = !UserDefaults.standard.bool(forKey: "disable-dotfile-conflict-warning")
-        if shouldWarn && UserConfiguration.shared.hasCustomConfiguration() {
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Warning"
-            alert.informativeText = "You have a .amethyst file, which can override in-app preferences. You may encounter unexpected behavior."
-            alert.showsSuppressionButton = true
-            alert.runModal()
-
-            if alert.suppressionButton?.state == .on {
-                UserDefaults.standard.set(true, forKey: "disable-dotfile-conflict-warning")
-            }
+    private func populateLayoutsMenu() {
+        guard let layoutsMenuItem = layoutsMenuItem,
+              let submenu = layoutsMenuItem.submenu else {
+            return
         }
+
+        // Clear existing items
+        submenu.removeAllItems()
+
+        // Get screen manager: try focused screen first, then screen under mouse cursor
+        let screenManager: ScreenManager<WindowManager<SIApplication>>? = {
+            if let focused = windowManager?.focusedScreenManager() {
+                return focused
+            }
+            // Fallback to screen containing mouse cursor (useful when clicking menu bar)
+            let mouseLocation = NSEvent.mouseLocation
+            if let nsScreen = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }) {
+                let amScreen = AMScreen(screen: nsScreen)
+                return windowManager?.screenManager(for: amScreen)
+            }
+            return nil
+        }()
+
+        guard let screenManager = screenManager else {
+            let errorItem = NSMenuItem(title: "Unable to determine current screen", action: nil, keyEquivalent: "")
+            errorItem.isEnabled = false
+            submenu.addItem(errorItem)
+            return
+        }
+
+        // Get layouts from the screen manager (not from global config)
+        let layouts = screenManager.layoutsInfo
+
+        // Check if no layouts are available and return early
+        if layouts.isEmpty {
+            let noLayoutsItem = NSMenuItem(title: "No layouts enabled", action: nil, keyEquivalent: "")
+            noLayoutsItem.isEnabled = false
+            submenu.addItem(noLayoutsItem)
+            return
+        }
+
+        // Add menu items for each layout in the screen manager
+        for layoutInfo in layouts {
+            let menuItem = NSMenuItem(title: layoutInfo.name, action: #selector(selectLayout(_:)), keyEquivalent: "")
+            menuItem.target = self
+            menuItem.representedObject = layoutInfo.key
+            menuItem.state = layoutInfo.isSelected ? .on : .off
+
+            submenu.addItem(menuItem)
+        }
+    }
+
+    @IBAction func selectLayout(_ sender: NSMenuItem) {
+        guard let layoutKey = sender.representedObject as? String,
+              let windowManager = windowManager,
+              let screenManager = windowManager.focusedScreenManager() else {
+            return
+        }
+
+        screenManager.selectLayout(layoutKey)
+        // Menu will be refreshed automatically when next opened via NSMenuDelegate
     }
 }
 
-extension AppDelegate: NSWindowDelegate {
-    func windowWillClose(_ notification: Notification) {
-        windowManager?.preferencesDidClose()
+extension AppDelegate: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        // Refresh layouts menu when main status item menu is about to open
+        if menu == statusItemMenu {
+            populateLayoutsMenu()
+        }
     }
 }
 
@@ -176,10 +228,10 @@ extension AppDelegate: UserConfigurationDelegate {
         var statusItemImage: NSImage?
         if UserConfiguration.shared.tilingEnabled == true {
             statusItemImage = NSImage(named: "icon-statusitem")
-            toggleGlobalTilingMenuItem?.title = "Disable"
+            toggleGlobalTilingMenuItem?.title = "Disable Tiling"
         } else {
             statusItemImage = NSImage(named: "icon-statusitem-disabled")
-            toggleGlobalTilingMenuItem?.title = "Enable"
+            toggleGlobalTilingMenuItem?.title = "Enable Tiling"
         }
         statusItemImage?.isTemplate = true
         statusItem?.image = statusItemImage

@@ -35,11 +35,20 @@ class Layout<Window: WindowType>: Codable {
     /// The configuration key of the layout.
     class var layoutKey: String { fatalError("Must be implemented by subclass") }
 
+    /// The display name of the layout.
+    var layoutName: String { return type(of: self).layoutName }
+
     /// The configuration key of the layout.
     var layoutKey: String { return type(of: self).layoutKey }
 
     /// The debug description of the layout.
     var layoutDescription: String { return "" }
+
+    /// Whether or not window margins should be applied.
+    var windowMargins: Bool = false
+
+    /// The size of the window margins.
+    var windowMarginSize: CGFloat = 0
 
     required init() {}
 
@@ -93,7 +102,9 @@ extension Layout {
      - Note: This does not necessarily correspond to the final position of the window as windows do not necessarily take the exact frame the layout provides.
      */
     func windowAtPoint(_ point: CGPoint, of windowSet: WindowSet<Window>, on screen: Screen) -> LayoutWindow<Window>? {
-        return frameAssignments(windowSet, on: screen)?.first(where: { $0.frame.contains(point) })?.window
+        return frameAssignments(windowSet, on: screen)?
+            .first { $0.frame.contains(point) }?
+            .window
     }
 
     /**
@@ -110,7 +121,11 @@ extension Layout {
      - Note: This does not necessarily correspond to the final frame of the window as windows do not necessarily take the exact frame the layout provides.
      */
     func assignedFrame(_ window: Window, of windowSet: WindowSet<Window>, on screen: Screen) -> FrameAssignment<Window>? {
-        return frameAssignments(windowSet, on: screen)?.first { $0.window.id == window.id() }
+        guard let assignments = frameAssignments(windowSet, on: screen) else {
+            return nil
+        }
+
+        return assignments.first { $0.window.id == window.id() }
     }
 }
 

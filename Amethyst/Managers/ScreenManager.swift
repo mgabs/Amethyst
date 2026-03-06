@@ -9,9 +9,19 @@
 import Foundation
 import Silica
 
-protocol ScreenManagerDelegate: class {
+/// Information about a layout for display in menus
+struct LayoutMenuItemInfo {
+    let key: String
+    let name: String
+    let isSelected: Bool
+}
+
+protocol ScreenManagerDelegate: AnyObject {
     associatedtype Window: WindowType
+    func applyWindowLimit(forScreenManager screenManager: ScreenManager<Self>, minimizingIn range: (_ windowCount: Int) -> Range<Int>)
     func activeWindowSet(forScreenManager screenManager: ScreenManager<Self>) -> WindowSet<Window>
+    func onReflowInitiation()
+    func onReflowCompletion()
 }
 
 final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
@@ -31,20 +41,37 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     /// `ObserveApplicationNotifications`.
     private(set) var lastFocusedWindow: Window?
     private let userConfiguration: UserConfiguration
-    var onReflowInitiation: (() -> Void)?
-    var onReflowCompletion: (() -> Void)?
 
-    private var reflowOperation: Operation?
+    private let reflowOperationDispatchQueue = DispatchQueue(
+        label: "ScreenManager.reflowOperationQueue",
+        qos: .utility,
+        attributes: [],
+        autoreleaseFrequency: .inherit,
+        target: nil
+    )
+    private let reflowOperationQueue = OperationQueue()
 
     private var layouts: [Layout<Window>] = []
     private var currentLayoutIndexBySpaceUUID: [String: Int] = [:]
     private var layoutsBySpaceUUID: [String: [Layout<Window>]] = [:]
     private var currentLayoutIndex: Int = 0
+    var previousLayoutKey: String?
     var currentLayout: Layout<Window>? {
         guard !layouts.isEmpty else {
             return nil
         }
         return layouts[currentLayoutIndex]
+    }
+
+    /// Returns layout info for all layouts in this screen manager, including selection state
+    var layoutsInfo: [LayoutMenuItemInfo] {
+        return layouts.enumerated().map { index, layout in
+            LayoutMenuItemInfo(
+                key: layout.layoutKey,
+                name: layout.layoutName,
+                isSelected: index == currentLayoutIndex
+            )
+        }
     }
 
     private let layoutNameWindowController: LayoutNameWindowController
@@ -59,6 +86,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         super.init()
 
         layouts = LayoutType.layoutsWithConfiguration(userConfiguration)
+
+        reflowOperationQueue.underlyingQueue = reflowOperationDispatchQueue
     }
 
     init(from decoder: Decoder) throws {
@@ -122,11 +151,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         try values.encode(layoutsBySpaceUUID, forKey: .layoutsBySpaceUUID)
     }
 
-    deinit {
-        self.onReflowInitiation = nil
-        self.onReflowCompletion = nil
-    }
-
     func updateScreen(to screen: Screen) {
         self.screen = screen
     }
@@ -134,10 +158,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     func updateSpace(to space: Space) {
         if let currentSpace = self.space {
             currentLayoutIndexBySpaceUUID[currentSpace.uuid] = currentLayoutIndex
-        }
-
-        defer {
-            setNeedsReflow(withWindowChange: .spaceChange)
         }
 
         self.space = space
@@ -152,8 +172,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
     }
 
-    func setNeedsReflow(withWindowChange windowChange: Change<Window>) {
-        switch windowChange {
+    func distributeEvent(_ change: Change<Window>) {
+        switch change {
         case let .add(window: window):
             lastFocusedWindow = window
         case let .focusChanged(window):
@@ -162,29 +182,81 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             if lastFocusedWindow == window {
                 lastFocusedWindow = nil
             }
-        case .windowSwap, .applicationActivate, .applicationDeactivate, .spaceChange, .layoutChange, .unknown:
+        case .windowSwap, .applicationActivate, .applicationDeactivate, .spaceChange, .layoutChange, .tabChange, .none, .unknown:
             break
         }
 
-        reflowOperation?.cancel()
+        log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow -- Window Change: \(change)")
 
-        log.debug("Screen: \(screen?.screenID() ?? "unknown") -- Window Change: \(windowChange)")
-
-        if let statefulLayout = currentLayout as? StatefulLayout {
-            statefulLayout.updateWithChange(windowChange)
+        guard let space, let layouts = layoutsBySpaceUUID[space.uuid] else {
+            log.warning("Trying to distribute an event to a screen with no space")
+            return
         }
 
-        DispatchQueue.main.async {
-            self.reflow(windowChange)
+        for layout in layouts {
+            if let layout = layout as? StatefulLayout {
+                layout.updateWithChange(change)
+            }
         }
     }
 
-    private func reflow(_ event: Change<Window>) {
+    func setNeedsReflow() {
+        reflowOperationQueue.cancelAllOperations()
+
+        log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow")
+
+        DispatchQueue.main.async {
+            self.minimizeWindows()
+            self.reflow()
+        }
+    }
+
+    private func minimizeWindows() {
+        let mainPaneCount = (currentLayout as? PanedLayout)?.mainPaneCount ?? 0
+
+        guard UserConfiguration.shared.tilingEnabled, let windowLimit = UserConfiguration.shared.windowMaxCount() else {
+            return
+        }
+        let shouldInsertAtFront = UserConfiguration.shared.sendNewWindowsToMainPane()
+        delegate?.applyWindowLimit(forScreenManager: self, minimizingIn: { windowCount in
+            if windowLimit > windowCount {
+                // Not enough windows to minimize.
+                return 0 ..< 0
+            }
+            if !(currentLayout is PanedLayout) {
+                // Minimize from the back, for layouts like floating/fullscreen.
+                if shouldInsertAtFront {
+                    return windowLimit ..< windowCount
+                } else {
+                    return 0 ..< windowCount - windowLimit
+                }
+            }
+            if windowLimit <= mainPaneCount {
+                // Don't minimize main panes. This allowing varying main pane count to pin windows.
+                guard windowCount >= mainPaneCount else {return 0 ..< 0}
+                return mainPaneCount ..< windowCount
+            }
+            // Minimize the oldest non-main panes.
+            if shouldInsertAtFront {
+                return windowLimit ..< windowCount
+            } else {
+                return mainPaneCount ..< windowCount + mainPaneCount - windowLimit
+            }
+        })
+    }
+
+    private func reflow() {
         guard let screen = screen else {
             return
         }
 
         guard userConfiguration.tilingEnabled, space?.type == CGSSpaceTypeUser else {
+            return
+        }
+
+        // During rapid Space transitions, activation/focus notifications can arrive before
+        // this screen manager updates its tracked Space. Skip reflow if state is stale.
+        guard let currentSpace = CGSpacesInfo<Window>.currentSpaceForScreen(screen), currentSpace.id == space?.id else {
             return
         }
 
@@ -196,16 +268,52 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        let reflowOperation = ReflowOperation(screen: screen, windowSet: windows, layout: layout)
-        reflowOperation.completionBlock = { [weak self, weak reflowOperation] in
-            guard let isCancelled = reflowOperation?.isCancelled, !isCancelled else {
+        // Calculate window margins based on the number of managed windows
+        let windowMargins = userConfiguration.windowMarginsEnabled() && (userConfiguration.smartWindowMargins() ? windows.windows.count > 1 : true)
+        layout.windowMargins = windowMargins
+        layout.windowMarginSize = userConfiguration.windowMarginSize()
+
+        guard let frameAssignments = layout.frameAssignments(windows, on: screen) else {
+            return
+        }
+
+        // TODO: fix mff
+//        let mouseFollowsFocus = userConfiguration.mouseFollowsFocus()
+
+        let batchOperation = BlockOperation {
+            DispatchQueue.main.sync {
+                for assignment in frameAssignments {
+                    windows.perform(frameAssignment: assignment)
+                }
+            }
+        }
+
+        let completeOperation = BlockOperation()
+
+        // The complete operation should execute the completion delegate call
+        completeOperation.addExecutionBlock { [unowned completeOperation, weak self] in
+            if completeOperation.isCancelled {
                 return
             }
 
-            self?.onReflowCompletion?()
+            DispatchQueue.main.async {
+                self?.delegate?.onReflowCompletion()
+                // TODO: fix mff
+//                if mouseFollowsFocus {
+//                    if case .windowSwap(let window, _) = event {
+//                        window.focus()
+//                    }
+//                }
+            }
         }
-        onReflowInitiation?()
-        OperationQueue.main.addOperation(reflowOperation)
+
+        // The completion should be dependent on all assignments finishing
+        completeOperation.addDependency(batchOperation)
+
+        // Start the operation
+        delegate?.onReflowInitiation()
+        reflowOperationQueue.addOperation(batchOperation)
+        reflowOperationQueue.addOperation(completeOperation)
     }
 
     func updateCurrentLayout(_ updater: (Layout<Window>) -> Void) {
@@ -213,26 +321,33 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
         updater(layout)
-        setNeedsReflow(withWindowChange: .layoutChange)
+        setNeedsReflow()
     }
 
     func cycleLayoutForward() {
         setCurrentLayoutIndex((currentLayoutIndex + 1) % layouts.count)
-        setNeedsReflow(withWindowChange: .layoutChange)
+        setNeedsReflow()
     }
 
     func cycleLayoutBackward() {
         setCurrentLayoutIndex((currentLayoutIndex == 0 ? layouts.count : currentLayoutIndex) - 1)
-        setNeedsReflow(withWindowChange: .layoutChange)
+        setNeedsReflow()
     }
 
     func selectLayout(_ layoutString: String) {
-        guard let layoutIndex = layouts.index(where: { type(of: $0).layoutKey == layoutString }) else {
+        guard let currentLayoutKey = currentLayout?.layoutKey else {
+            return
+        }
+
+        let nextLayoutKey = currentLayoutKey == layoutString ? previousLayoutKey : layoutString
+
+        guard let layoutIndex = layouts.firstIndex(where: { $0.layoutKey == nextLayoutKey }) else {
             return
         }
 
         setCurrentLayoutIndex(layoutIndex)
-        setNeedsReflow(withWindowChange: .layoutChange)
+        setNeedsReflow()
+        previousLayoutKey = currentLayoutKey
     }
 
     private func setCurrentLayoutIndex(_ index: Int, changingSpace: Bool = false) {
@@ -246,7 +361,9 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        displayLayoutHUD()
+        DispatchQueue.main.async {
+            self.displayLayoutHUD()
+        }
     }
 
     func shrinkMainPane() {
@@ -280,11 +397,26 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     }
 
     func displayLayoutHUD() {
+        guard userConfiguration.enablesLayoutHUD(), space?.type == CGSSpaceTypeUser else {
+            return
+        }
+
+        let currentLayoutName = currentLayout.flatMap({ $0.layoutName }) ?? "None"
+        let currentLayoutDescription = currentLayout?.layoutDescription ?? ""
+
+        displayCustomHUD(title: currentLayoutName, description: currentLayoutDescription)
+    }
+
+    @objc func hideLayoutHUD(_ sender: AnyObject) {
+        layoutNameWindowController.close()
+    }
+
+    func displayCustomHUD(title: String, description: String = "") {
         guard let screen = screen else {
             return
         }
 
-        guard userConfiguration.enablesLayoutHUD(), space?.type == CGSSpaceTypeUser else {
+        guard space?.type == CGSSpaceTypeUser else {
             return
         }
 
@@ -297,22 +429,19 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        let screenFrame = screen.frameIncludingDockAndMenu()
+        // Use new displayNotification method with dynamic sizing
+        layoutNameWindow.displayNotification(title: title, description: description)
+
+        // Center the window after resizing
+        let screenFrame = screen.frame()
         let screenCenter = CGPoint(x: screenFrame.midX, y: screenFrame.midY)
         let windowOrigin = CGPoint(
             x: screenCenter.x - layoutNameWindow.frame.width / 2.0,
             y: screenCenter.y - layoutNameWindow.frame.height / 2.0
         )
-
-        layoutNameWindow.layoutNameField?.stringValue = currentLayout.flatMap({ type(of: $0).layoutName }) ?? "None"
-        layoutNameWindow.layoutDescriptionLabel?.stringValue = currentLayout?.layoutDescription ?? ""
         layoutNameWindow.setFrameOrigin(NSPointFromCGPoint(windowOrigin))
 
         layoutNameWindowController.showWindow(self)
-    }
-
-    @objc func hideLayoutHUD(_ sender: AnyObject) {
-        layoutNameWindowController.close()
     }
 }
 
@@ -326,11 +455,5 @@ extension ScreenManager: Comparable {
         let originX2 = rhsScreen.frameWithoutDockOrMenu().origin.x
 
         return originX1 < originX2
-    }
-}
-
-extension WindowManager: ScreenManagerDelegate {
-    func activeWindowSet(forScreenManager screenManager: ScreenManager<WindowManager<Application>>) -> WindowSet<Window> {
-        return windows.windowSet(forActiveWindowsOnScreen: screenManager.screen!)
     }
 }

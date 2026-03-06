@@ -218,7 +218,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                 return
             }
 
-            if let insertionPoint = lastKnownFocusedWindowID, window.id() != insertionPoint {
+            if let insertionPoint = lastKnownFocusedWindowID, window.id() != insertionPoint, rootNode.findWindowID(insertionPoint) != nil {
                 log.info("insert \(window) - \(window.id()) at point: \(insertionPoint)")
                 rootNode.insertWindowID(window.id(), atPoint: insertionPoint)
             } else {
@@ -245,7 +245,23 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
 
             windowNode.windowID = otherWindowID
             otherWindowNode.windowID = windowID
-        case .applicationDeactivate, .applicationActivate, .spaceChange, .layoutChange, .unknown:
+        case let .tabChange(window, previousWindow):
+            if rootNode.findWindowID(window.id()) != nil {
+                log.warning("Trying to swap a tab in that is already in the tree: \(window)")
+                rootNode.removeWindowID(window.id())
+            }
+
+            guard let previousWindowNode = rootNode.findWindowID(previousWindow.id()) else {
+                log.error("Trying to change tab from a window that is not in the tree: \(previousWindow)")
+                return
+            }
+
+            if rootNode.findWindowID(window.id()) != nil {
+                log.warning("Trying to swap a tab in from another node")
+            }
+
+            previousWindowNode.windowID = window.id()
+        case .applicationDeactivate, .applicationActivate, .spaceChange, .layoutChange, .none, .unknown:
             break
         }
     }
@@ -257,7 +273,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
 
         let orderedIDs = rootNode.orderedWindowIDs()
 
-        guard let focusedWindowIndex = orderedIDs.index(of: focusedWindow.id()) else {
+        guard let focusedWindowIndex = orderedIDs.firstIndex(of: focusedWindow.id()) else {
             return nil
         }
 
@@ -273,7 +289,7 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
 
         let orderedIDs = rootNode.orderedWindowIDs()
 
-        guard let focusedWindowIndex = orderedIDs.index(of: focusedWindow.id()) else {
+        guard let focusedWindowIndex = orderedIDs.firstIndex(of: focusedWindow.id()) else {
             return nil
         }
 
@@ -314,11 +330,20 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
                     continue
                 }
 
-                let resizeRules = ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1)
+                let resizeRules = ResizeRules(
+                    isMain: true,
+                    unconstrainedDimension: .horizontal,
+                    scaleFactor: 1,
+                    windowMargins: self.windowMargins,
+                    windowMarginSize: self.windowMarginSize
+                )
                 let frameAssignment = FrameAssignment<Window>(
                     frame: traversalNode.frame,
                     window: window,
-                    screenFrame: baseFrame, resizeRules: resizeRules
+                    screenFrame: baseFrame,
+                    resizeRules: resizeRules,
+                    windowMargins: self.windowMargins,
+                    windowMarginSize: self.windowMarginSize
                 )
                 ret.append(frameAssignment)
             } else {

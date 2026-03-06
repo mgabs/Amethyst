@@ -223,12 +223,20 @@ class ThreeColumnLayout<Window: WindowType>: Layout<Window> {
 
             let isMain = windowIndex < paneArrangement.firstIndex(.secondary)
 
-            let resizeRules = ResizeRules(isMain: isMain, unconstrainedDimension: .horizontal, scaleFactor: scaleFactor)
+            let resizeRules = ResizeRules(
+                isMain: isMain,
+                unconstrainedDimension: .horizontal,
+                scaleFactor: scaleFactor,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
+            )
             let frameAssignment = FrameAssignment<Window>(
                 frame: windowFrame,
                 window: window,
                 screenFrame: screenFrame,
-                resizeRules: resizeRules
+                resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
             )
 
             assignments.append(frameAssignment)

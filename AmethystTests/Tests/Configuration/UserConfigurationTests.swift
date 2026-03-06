@@ -7,9 +7,11 @@
 //
 
 @testable import Amethyst
+import Cocoa
 import Nimble
 import Quick
 import SwiftyJSON
+import Yams
 
 class TestConfigurationStorage: ConfigurationStorage {
     var storage: [ConfigurationKey: Any] = [:]
@@ -70,17 +72,29 @@ class UserConfigurationTests: QuickSpec {
         describe("constructing commands") {
             context("overrides") {
                 it("when user configuration exists") {
-                    let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    var configuration = UserConfiguration(storage: TestConfigurationStorage())
                     let localConfiguration: [String: Any] = [
                         "test": [
                             "mod": "mod1",
                             "key": "1"
                         ]
                     ]
-                    configuration.configuration = JSON(localConfiguration)
+                    configuration.configurationYAML = nil
+                    configuration.configurationJSON = JSON(localConfiguration)
                     configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
-                    let registrar = TestHotKeyRegistrar()
+                    var registrar = TestHotKeyRegistrar()
+
+                    configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
+
+                    expect(registrar.override).to(beTrue())
+
+                    configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    configuration.configurationYAML = localConfiguration
+                    configuration.configurationJSON = nil
+                    configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
+
+                    registrar = TestHotKeyRegistrar()
 
                     configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
 
@@ -88,7 +102,7 @@ class UserConfigurationTests: QuickSpec {
                 }
 
                 it("when custom mod1 is specified") {
-                    let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    var configuration = UserConfiguration(storage: TestConfigurationStorage())
                     let localConfiguration: [String: Any] = [
                         "mod1": [
                             "command"
@@ -100,19 +114,33 @@ class UserConfigurationTests: QuickSpec {
                             "key": "1"
                         ]
                     ]
-                    configuration.configuration = JSON(localConfiguration)
+                    configuration.configurationYAML = nil
+                    configuration.configurationJSON = JSON(localConfiguration)
                     configuration.defaultConfiguration = JSON(defaultConfiguration)
                     configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
-                    let registrar = TestHotKeyRegistrar()
+                    var registrar = TestHotKeyRegistrar()
 
                     configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
 
                     expect(registrar.override).to(beTrue())
+
+                    configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    configuration.configurationYAML = localConfiguration
+                    configuration.configurationJSON = nil
+                    configuration.defaultConfiguration = JSON(defaultConfiguration)
+                    configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
+
+                    registrar = TestHotKeyRegistrar()
+
+                    configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
+
+                    expect(registrar.override).to(beTrue())
+
                 }
 
                 it("when custom mod2 is specified") {
-                    let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    var configuration = UserConfiguration(storage: TestConfigurationStorage())
                     let localConfiguration: [String: Any] = [
                         "mod2": [
                             "command"
@@ -124,11 +152,23 @@ class UserConfigurationTests: QuickSpec {
                             "key": "1"
                         ]
                     ]
-                    configuration.configuration = JSON(localConfiguration)
+                    configuration.configurationJSON = JSON(localConfiguration)
                     configuration.defaultConfiguration = JSON(defaultConfiguration)
                     configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
-                    let registrar = TestHotKeyRegistrar()
+                    var registrar = TestHotKeyRegistrar()
+
+                    configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
+
+                    expect(registrar.override).to(beTrue())
+
+                    configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    configuration.configurationYAML = localConfiguration
+                    configuration.configurationJSON = nil
+                    configuration.defaultConfiguration = JSON(defaultConfiguration)
+                    configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
+
+                    registrar = TestHotKeyRegistrar()
 
                     configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
 
@@ -138,7 +178,7 @@ class UserConfigurationTests: QuickSpec {
 
             context("takes command") {
                 it("from local configuration over default") {
-                    let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    var configuration = UserConfiguration(storage: TestConfigurationStorage())
                     let localConfiguration: [String: Any] = [
                         "test": [
                             "mod": "mod1",
@@ -151,11 +191,22 @@ class UserConfigurationTests: QuickSpec {
                             "key": "2"
                         ]
                     ]
-                    configuration.configuration = JSON(localConfiguration)
+                    configuration.configurationJSON = JSON(localConfiguration)
                     configuration.defaultConfiguration = JSON(defaultConfiguration)
                     configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
-                    let registrar = TestHotKeyRegistrar()
+                    var registrar = TestHotKeyRegistrar()
+
+                    configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
+
+                    expect(registrar.keyString).to(equal("1"))
+
+                    configuration = UserConfiguration(storage: TestConfigurationStorage())
+                    configuration.configurationJSON = JSON(localConfiguration)
+                    configuration.defaultConfiguration = JSON(defaultConfiguration)
+                    configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
+
+                    registrar = TestHotKeyRegistrar()
 
                     configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
 
@@ -170,7 +221,7 @@ class UserConfigurationTests: QuickSpec {
                             "key": "1"
                         ]
                     ]
-                    configuration.configuration = JSON([:])
+                    configuration.configurationJSON = JSON([:])
                     configuration.defaultConfiguration = JSON(defaultConfiguration)
                     configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
@@ -184,7 +235,7 @@ class UserConfigurationTests: QuickSpec {
             }
 
             it("does not crash for malformed commands") {
-                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                var configuration = UserConfiguration(storage: TestConfigurationStorage())
                 let localConfiguration: [String: Any] = [
                     "test": [
                         "key": "2"
@@ -196,11 +247,24 @@ class UserConfigurationTests: QuickSpec {
                         "key": "2"
                     ]
                 ]
-                configuration.configuration = JSON(localConfiguration)
+                configuration.configurationYAML = nil
+                configuration.configurationJSON = JSON(localConfiguration)
                 configuration.defaultConfiguration = JSON(defaultConfiguration)
                 configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
 
-                let registrar = TestHotKeyRegistrar()
+                var registrar = TestHotKeyRegistrar()
+
+                expect {
+                    configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
+                }.toNot(throwError())
+
+                configuration = UserConfiguration(storage: TestConfigurationStorage())
+                configuration.configurationYAML = localConfiguration
+                configuration.configurationJSON = nil
+                configuration.defaultConfiguration = JSON(defaultConfiguration)
+                configuration.modifier1 = configuration.modifierFlagsForStrings(["command"])
+
+                registrar = TestHotKeyRegistrar()
 
                 expect {
                     configuration.constructCommand(for: registrar, commandKey: "test", handler: {})
@@ -440,6 +504,42 @@ class UserConfigurationTests: QuickSpec {
             }
         }
 
+        describe("small window size") {
+            it("returns default value when not set") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                expect(configuration.smallWindowSize()).to(equal(500))
+            }
+
+            it("returns configured value when set") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                storage.set(Float(300), forKey: .smallWindowSize)
+
+                expect(configuration.smallWindowSize()).to(equal(300))
+            }
+
+            it("returns default value when set to zero") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                storage.set(Float(0), forKey: .smallWindowSize)
+
+                expect(configuration.smallWindowSize()).to(equal(500))
+            }
+
+            it("returns default value when set to negative") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                storage.set(Float(-100), forKey: .smallWindowSize)
+
+                expect(configuration.smallWindowSize()).to(equal(500))
+            }
+        }
+
         describe("load configuration") {
             it("default configuration does not override existing configuration") {
                 let storage = TestConfigurationStorage()
@@ -459,7 +559,7 @@ class UserConfigurationTests: QuickSpec {
                 expect(configuration.layoutKeys()).to(equal(existingLayouts))
             }
 
-            it("local configuration does override existing configuration") {
+            it("local json configuration does override existing configuration") {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
                 let existingLayouts = ["wide"]
@@ -477,10 +577,60 @@ class UserConfigurationTests: QuickSpec {
                 storage.set(existingLayouts, forKey: .layouts)
 
                 expect(configuration.layoutKeys()).to(equal(existingLayouts))
-                configuration.configuration = JSON(localConfiguration)
+                configuration.configurationYAML = nil
+                configuration.configurationJSON = JSON(localConfiguration)
                 configuration.defaultConfiguration = JSON(defaultConfiguration)
                 configuration.loadConfiguration()
                 expect(configuration.layoutKeys()).to(equal(localConfiguration["layouts"]))
+            }
+
+            it("local yaml configuration does override existing configuration") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+                let existingLayouts = ["wide"]
+                let localConfiguration = [
+                    "layouts": [
+                        "fullscreen"
+                    ]
+                ]
+                let defaultConfiguration = [
+                    "layouts": [
+                        "tall"
+                    ]
+                ]
+
+                storage.set(existingLayouts, forKey: .layouts)
+
+                expect(configuration.layoutKeys()).to(equal(existingLayouts))
+                configuration.configurationYAML = localConfiguration
+                configuration.configurationJSON = nil
+                configuration.defaultConfiguration = JSON(defaultConfiguration)
+                configuration.loadConfiguration()
+                expect(configuration.layoutKeys()).to(equal(localConfiguration["layouts"]))
+            }
+
+            it("prefers yaml over json for local configuration") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                let yamlConfiguration = [
+                    "layouts": [
+                        "fullscreen"
+                    ]
+                ]
+                let jsonConfiguration = [
+                    "layouts": [
+                        "tall"
+                    ]
+                ]
+                let defaultConfiguration = [
+                    "layouts": [
+                        "wide"
+                    ]
+                ]
+                configuration.configurationYAML = yamlConfiguration
+                configuration.configurationJSON = JSON(jsonConfiguration)
+                configuration.defaultConfiguration = JSON(defaultConfiguration)
+                configuration.loadConfiguration()
+                expect(configuration.layoutKeys()).to(equal(yamlConfiguration["layouts"]))
             }
         }
 
@@ -553,14 +703,25 @@ class UserConfigurationTests: QuickSpec {
                     let storage = TestConfigurationStorage()
                     let configuration = UserConfiguration(storage: storage)
                     let bundlesData: [Any] = [
+                        // Normal string
                         "test.test.1",
+                        // JSON formatted
                         [
                             "id": "test.test.2",
                             "window-titles": [
                                 "dialog"
                             ]
                         ],
-                        "test.test.3"
+                        // Another string
+                        "test.test.3",
+                        // YAML formatted
+                        [
+                            "test.test.4": [
+                                "window-titles": [
+                                    "dialog2"
+                                ]
+                            ]
+                        ]
                     ]
 
                     storage.set(bundlesData, forKey: .floatingBundleIdentifiers)
@@ -569,9 +730,10 @@ class UserConfigurationTests: QuickSpec {
                     let expectedBundles = [
                         FloatingBundle(id: "test.test.1", windowTitles: []),
                         FloatingBundle(id: "test.test.2", windowTitles: ["dialog"]),
-                        FloatingBundle(id: "test.test.3", windowTitles: [])
+                        FloatingBundle(id: "test.test.3", windowTitles: []),
+                        FloatingBundle(id: "test.test.4", windowTitles: ["dialog2"])
                     ]
-                    expect(bundles.count).to(equal(3))
+                    expect(bundles.count).to(equal(4))
                     expect(bundles).to(equal(expectedBundles))
                 }
             }

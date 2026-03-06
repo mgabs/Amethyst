@@ -12,6 +12,7 @@ import Silica
 extension WindowManager {
     class Windows {
         private(set) var windows: [Window] = []
+        private(set) var lastMainWindows: [CGSSpaceID: Window?] = [:]
         private var activeIDCache: Set<CGWindowID> = Set()
         private var deactivatedPIDs: Set<pid_t> = Set()
         private var floatingMap: [Window.WindowID: Bool] = [:]
@@ -41,13 +42,7 @@ extension WindowManager {
             }
 
             let screenWindows = windows.filter { window in
-                let windowIDsArray = [NSNumber(value: window.cgID() as UInt32)] as NSArray
-
-                guard let spaces = CGSCopySpacesForWindows(CGSMainConnectionID(), kCGSAllSpacesMask, windowIDsArray)?.takeRetainedValue() else {
-                    return false
-                }
-
-                let space = (spaces as NSArray as? [NSNumber])?.first?.intValue
+                let space = CGWindowsInfo.windowSpace(window)
 
                 guard let windowScreen = window.screen(), currentSpace.id == space else {
                     return false
@@ -63,26 +58,92 @@ extension WindowManager {
             return screenWindows
         }
 
+        func activeWindowOnCurrentScreen(atIndex: Int) -> Window? {
+            guard let focusedWindow = Window.currentlyFocused(),
+                  let currentScreen = focusedWindow.screen() else {
+                return nil
+            }
+            let activeWindows = activeWindows(onScreen: currentScreen)
+
+            return activeWindows.indices.contains(atIndex) ? activeWindows[atIndex] : nil
+        }
+
         // MARK: Adding and Removing
 
         func add(window: Window, atFront shouldInsertAtFront: Bool) {
             if shouldInsertAtFront {
+                if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+                   let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
+                    lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
+                }
+
                 windows.insert(window, at: 0)
             } else {
                 windows.append(window)
             }
         }
 
+        func add(window: Window, afterWindow otherWindow: Window) -> Bool {
+            guard let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
+                return false
+            }
+
+            windows.insert(window, at: otherWindowIndex)
+
+            return true
+        }
+
         func remove(window: Window) {
-            guard let windowIndex = windows.index(of: window) else {
+            for (_, lastMainWindow) in lastMainWindows where lastMainWindow?.id() == window.id() {
+                if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace() {
+                    let secondWindow = activeWindowOnCurrentScreen(atIndex: 1)
+                    lastMainWindows[currentFocusedSpace.id] = secondWindow
+                }
+            }
+
+            guard let windowIndex = windows.firstIndex(where: { $0.id() == window.id() }) else {
                 return
             }
 
             windows.remove(at: windowIndex)
         }
 
+        @discardableResult func replace(window: Window, withWindow otherWindow: Window) -> Bool {
+            if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+               let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
+                if firstActiveWindow == window || firstActiveWindow == otherWindow {
+                    lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
+                }
+            }
+
+            guard let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
+                windows.append(otherWindow)
+                return false
+            }
+
+            let windowIndex = windows.firstIndex(of: window)
+            windows[otherWindowIndex] = window
+
+            if let windowIndex {
+                windows.remove(at: windowIndex)
+            }
+
+            return true
+        }
+
         @discardableResult func swap(window: Window, withWindow otherWindow: Window) -> Bool {
-            guard let windowIndex = windows.index(of: window), let otherWindowIndex = windows.index(of: otherWindow) else {
+            if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+               let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
+                if firstActiveWindow.id() == window.id() || firstActiveWindow.id() == otherWindow.id() {
+                    lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
+                }
+            }
+
+            if windows.firstIndex(of: window) == nil {
+                windows.append(window)
+            }
+
+            guard let windowIndex = windows.firstIndex(of: window), let otherWindowIndex = windows.firstIndex(of: otherWindow) else {
                 return false
             }
 
@@ -99,7 +160,7 @@ extension WindowManager {
         // MARK: Window States
 
         func isWindowTracked(_ window: Window) -> Bool {
-            return windows.contains(window)
+            return windows.contains(where: { $0.id() == window.id() })
         }
 
         func isWindowActive(_ window: Window) -> Bool {
@@ -127,7 +188,7 @@ extension WindowManager {
         }
 
         func regenerateActiveIDCache() {
-            let windowDescriptions = CGWindowsInfo(options: .optionOnScreenOnly, windowID: CGWindowID(0))
+            let windowDescriptions = CGWindowsInfo<Window>(options: .optionOnScreenOnly, windowID: CGWindowID(0))
             activeIDCache = windowDescriptions?.activeIDs() ?? Set()
         }
 

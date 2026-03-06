@@ -6,8 +6,10 @@
 //  Copyright © 2016 Ian Ynda-Hummel. All rights reserved.
 //
 
+import Cocoa
 import Foundation
 import SwiftyJSON
+import Yams
 
 enum DefaultFloat: Equatable {
     case floating
@@ -65,23 +67,31 @@ enum ConfigurationKey: String {
     case commandKey = "key"
     case mod1 = "mod1"
     case mod2 = "mod2"
+    case mod3 = "mod3"
+    case mod4 = "mod4"
     case windowMargins = "window-margins"
+    case smartWindowMargins = "smart-window-margins"
     case windowMarginSize = "window-margin-size"
     case windowMinimumHeight = "window-minimum-height"
     case windowMinimumWidth = "window-minimum-width"
+    case windowMaxCount = "window-max-count"
     case floatingBundleIdentifiers = "floating"
     case floatingBundleIdentifiersIsBlacklist = "floating-is-blacklist"
     case ignoreMenuBar = "ignore-menu-bar"
     case floatSmallWindows = "float-small-windows"
+    case smallWindowSize = "small-window-size"
     case mouseFollowsFocus = "mouse-follows-focus"
     case focusFollowsMouse = "focus-follows-mouse"
     case mouseSwapsWindows = "mouse-swaps-windows"
     case mouseResizesWindows = "mouse-resizes-windows"
     case layoutHUD = "enables-layout-hud"
     case layoutHUDOnSpaceChange = "enables-layout-hud-on-space-change"
+    case windowCountHUD = "enables-window-count-hud"
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
+    case focusFollowsWindowThrownBetweenSpacesDelay = "focus-follows-window-thrown-between-spaces-delay"
+    case applicationActivationDelay = "application-activation-delay"
     case windowResizeStep = "window-resize-step"
     case screenPaddingLeft = "screen-padding-left"
     case screenPaddingRight = "screen-padding-right"
@@ -89,6 +99,8 @@ enum ConfigurationKey: String {
     case screenPaddingBottom = "screen-padding-bottom"
     case debugLayoutInfo = "debug-layout-info"
     case restoreLayoutsOnLaunch = "restore-layouts-on-launch"
+    case disablePaddingOnBuiltinDisplay = "disable-padding-on-builtin-display"
+    case hideMenuBarIcon = "hide-menu-bar-icon"
 }
 
 extension ConfigurationKey: CaseIterable {}
@@ -100,6 +112,10 @@ enum CommandKey: String {
     case expandMain = "expand-main"
     case increaseMain = "increase-main"
     case decreaseMain = "decrease-main"
+    case command1 = "command1"
+    case command2 = "command2"
+    case command3 = "command3"
+    case command4 = "command4"
     case focusCCW = "focus-ccw"
     case focusCW = "focus-cw"
     case focusMain = "focus-main"
@@ -118,9 +134,13 @@ enum CommandKey: String {
     case toggleFloat = "toggle-float"
     case displayCurrentLayout = "display-current-layout"
     case toggleTiling = "toggle-tiling"
+    case enableTiling = "enable-tiling"
+    case disableTiling = "disable-tiling"
     case reevaluateWindows = "reevaluate-windows"
     case toggleFocusFollowsMouse = "toggle-focus-follows-mouse"
     case relaunchAmethyst = "relaunch-amethyst"
+    case increaseWindowMaxCount = "increase-window-max-count"
+    case decreaseWindowMaxCount = "decrease-window-max-count"
 }
 
 protocol UserConfigurationDelegate: AnyObject {
@@ -156,13 +176,23 @@ class FloatingBundle: NSObject {
         if let id = object as? String {
             return FloatingBundle(id: id, windowTitles: [])
         } else if let dict = object as? [String: Any] {
-            let json = JSON(dict)
+            var json = JSON(dict)
 
-            guard let id = json["id"].string, let windowTitles = json["window-titles"].arrayObject as? [String] else {
+            if let id = json["id"].string, let windowTitles = json["window-titles"].arrayObject as? [String] {
+                return FloatingBundle(id: id, windowTitles: windowTitles)
+            }
+
+            guard let key = dict.keys.first, dict.count == 1 else {
                 return nil
             }
 
-            return FloatingBundle(id: id, windowTitles: windowTitles)
+            json = json[key]
+
+            if let windowTitles = json["window-titles"].arrayObject as? [String] {
+                return FloatingBundle(id: key, windowTitles: windowTitles)
+            }
+
+            return nil
         } else {
             return nil
         }
@@ -186,11 +216,14 @@ class UserConfiguration: NSObject {
         }
     }
 
-    var configuration: JSON?
+    var configurationYAML: [String: Any]?
+    var configurationJSON: JSON?
     var defaultConfiguration: JSON?
 
     var modifier1: AMModifierFlags?
     var modifier2: AMModifierFlags?
+    var modifier3: AMModifierFlags?
+    var modifier4: AMModifierFlags?
 
     init(storage: ConfigurationStorage) {
         self.storage = storage
@@ -200,16 +233,28 @@ class UserConfiguration: NSObject {
         self.init(storage: UserDefaults.standard)
     }
 
-    private func configurationValueForKey<T>(_ key: ConfigurationKey) -> T? {
-        guard let exists = configuration?[key.rawValue].exists(), exists else {
-            return defaultConfiguration![key.rawValue].object as? T
+    private func configurationValueForKey<T>(_ key: ConfigurationKey, fallbackToDefault: Bool = true) -> T? {
+        return configurationValue(forKeyValue: key.rawValue, fallbackToDefault: fallbackToDefault)
+    }
+
+    private func configurationValue<T>(forKeyValue keyValue: String, fallbackToDefault: Bool = true) -> T? {
+        if let yamlValue = configurationYAML?[keyValue] {
+            if yamlValue is NSNull {
+                return nil
+            } else {
+                return yamlValue as? T
+            }
         }
 
-        guard let configurationValue = configuration?[key.rawValue].rawValue as? T else {
-            return defaultConfiguration![key.rawValue].object as? T
+        if let jsonValue = configurationJSON?[keyValue], jsonValue.exists(), jsonValue.error == nil {
+            return jsonValue.rawValue as? T
         }
 
-        return configurationValue
+        if fallbackToDefault {
+            return defaultConfiguration![keyValue].rawValue as? T
+        }
+
+        return nil
     }
 
     func modifierFlagsForStrings(_ modifierStrings: [String]) -> AMModifierFlags {
@@ -242,11 +287,11 @@ class UserConfiguration: NSObject {
 
     func loadConfiguration() {
         for key in ConfigurationKey.allCases {
-            let value = configuration?[key.rawValue]
+            let value: Any? = configurationValueForKey(key, fallbackToDefault: false)
             let defaultValue = defaultConfiguration?[key.rawValue]
             let existingValue = storage.object(forKey: key)
 
-            let hasLocalConfigurationValue = (value != nil && value?.error == nil)
+            let hasLocalConfigurationValue = value != nil
             let hasDefaultConfigurationValue = (defaultValue != nil && defaultValue?.error == nil)
             let hasExistingValue = (existingValue != nil)
 
@@ -254,7 +299,27 @@ class UserConfiguration: NSObject {
                 continue
             }
 
-            storage.set(hasLocalConfigurationValue ? value?.object : defaultValue?.object as Any?, forKey: key)
+            storage.set(hasLocalConfigurationValue ? value : defaultValue?.rawValue, forKey: key)
+        }
+    }
+
+    private func yamlForConfig(at path: String) -> [String: Any]? {
+        guard FileManager.default.fileExists(atPath: path, isDirectory: nil) else {
+            return nil
+        }
+
+        let configPath = URL(fileURLWithPath: path)
+
+        guard let string = try? String(contentsOf: configPath) else {
+            return nil
+        }
+
+        do {
+            let yaml = try Yams.load(yaml: string)
+            return yaml as? [String: Any]
+        } catch {
+            log.debug(error)
+            return nil
         }
     }
 
@@ -263,7 +328,9 @@ class UserConfiguration: NSObject {
             return nil
         }
 
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+        let configPath = URL(fileURLWithPath: path)
+
+        guard let data = try? Data(contentsOf: configPath) else {
             return nil
         }
 
@@ -271,14 +338,47 @@ class UserConfiguration: NSObject {
     }
 
     private func loadConfigurationFile() {
-        let amethystConfigPath = NSHomeDirectory() + "/.amethyst"
+        let xdgConfigPath = ProcessInfo.processInfo.environment["XDG_CONFIG_HOME"] ?? NSHomeDirectory().appending("/.config")
+        let amethystXDGConfigPath = xdgConfigPath.appending("/amethyst")
+        let amethystYAMLConfigPath = NSHomeDirectory().appending("/.amethyst.yml")
+        let amethystJSONConfigPath = NSHomeDirectory().appending("/.amethyst")
         let defaultAmethystConfigPath = Bundle.main.path(forResource: "default", ofType: "amethyst")
 
-        if FileManager.default.fileExists(atPath: amethystConfigPath, isDirectory: nil) {
-            configuration = jsonForConfig(at: amethystConfigPath)
+        var isDirectory: ObjCBool = false
+        /**
+         Prioritiy order for config files:
+         1. yml in home dir
+         2. yml in xdg path
+         3. json in home dir
+         4. default json
+         */
+        if FileManager.default.fileExists(atPath: amethystYAMLConfigPath, isDirectory: &isDirectory) {
+            configurationYAML = yamlForConfig(at: amethystYAMLConfigPath)
 
-            if configuration == nil {
-                log.error("error loading configuration")
+            if configurationYAML == nil {
+                log.error("error loading configuration as yaml")
+
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Error loading configuration"
+                alert.runModal()
+            }
+        } else if FileManager.default.fileExists(atPath: amethystXDGConfigPath, isDirectory: &isDirectory) {
+            configurationYAML = yamlForConfig(at: isDirectory.boolValue ? amethystXDGConfigPath.appending("/amethyst.yml") : amethystXDGConfigPath)
+
+            if configurationYAML == nil {
+                log.error("error loading configuration as yaml")
+
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Error loading configuration"
+                alert.runModal()
+            }
+        } else if FileManager.default.fileExists(atPath: amethystJSONConfigPath, isDirectory: &isDirectory) {
+            configurationJSON = jsonForConfig(at: amethystJSONConfigPath)
+
+            if configurationJSON == nil {
+                log.error("error loading configuration as json")
 
                 let alert = NSAlert()
                 alert.alertStyle = .critical
@@ -297,11 +397,39 @@ class UserConfiguration: NSObject {
             alert.runModal()
         }
 
-        let mod1Strings: [String] = configurationValueForKey(.mod1)!
-        let mod2Strings: [String] = configurationValueForKey(.mod2)!
+        let mod1Strings: [String] = configurationValueForKey(.mod1) ?? []
+        let mod2Strings: [String] = configurationValueForKey(.mod2) ?? []
+        let mod3Strings: [String]? = configurationValueForKey(.mod3)
+        let mod4Strings: [String]? = configurationValueForKey(.mod4)
 
         modifier1 = modifierFlagsForStrings(mod1Strings)
         modifier2 = modifierFlagsForStrings(mod2Strings)
+
+        if modifier1 == nil || modifier1!.isEmpty {
+            log.error("error loading a mod1")
+
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Error loading mod1"
+            alert.runModal()
+        }
+
+        if modifier2 == nil || modifier2!.isEmpty {
+            log.error("error loading a mod2")
+
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Error loading mod2"
+            alert.runModal()
+        }
+
+        if let mod3Strings = mod3Strings {
+            modifier3 = modifierFlagsForStrings(mod3Strings)
+        }
+
+        if let mod4Strings = mod4Strings {
+            modifier4 = modifierFlagsForStrings(mod4Strings)
+        }
     }
 
     static func constructLayoutKeyString(_ layoutKey: String) -> String {
@@ -310,14 +438,21 @@ class UserConfiguration: NSObject {
 
     func constructCommand(for hotKeyRegistrar: HotKeyRegistrar, commandKey: String, handler: @escaping HotKeyHandler) {
         var override = false
-        var command: [String: String]? = configuration?[commandKey].object as? [String: String]
+        var command: [String: String]? = configurationValue(forKeyValue: commandKey, fallbackToDefault: false)
         if command != nil {
             override = true
+        } else if let enabled: Bool = configurationValue(forKeyValue: commandKey, fallbackToDefault: false), !enabled {
+            override = true
+            command = nil
         } else {
-            if configuration?[ConfigurationKey.mod1.rawValue] != nil || configuration?[ConfigurationKey.mod2.rawValue] != nil {
+            let mod1: [String]? = configurationValueForKey(.mod1, fallbackToDefault: false)
+            let mod2: [String]? = configurationValueForKey(.mod2, fallbackToDefault: false)
+            let mod3: [String]? = configurationValueForKey(.mod3, fallbackToDefault: false)
+            let mod4: [String]? = configurationValueForKey(.mod4, fallbackToDefault: false)
+            if mod1 != nil || mod2 != nil || mod3 != nil || mod4 != nil {
                 override = true
             }
-            command = defaultConfiguration?[commandKey].object as? [String: String]
+            command = defaultConfiguration?[commandKey].rawValue as? [String: String]
         }
 
         let commandKeyString = command?[ConfigurationKey.commandKey.rawValue]
@@ -331,6 +466,10 @@ class UserConfiguration: NSObject {
                 commandFlags = modifier1
             case "mod2":
                 commandFlags = modifier2
+            case "mod3":
+                commandFlags = modifier3
+            case "mod4":
+                commandFlags = modifier4
             default:
                 log.warning("Unknown modifier string: \(modifierString)")
                 return
@@ -352,7 +491,9 @@ class UserConfiguration: NSObject {
                 return
             }
 
-            handler()
+            DispatchQueue.global(qos: .userInitiated).async {
+                handler()
+            }
         }
 
         hotKeyRegistrar.registerHotKey(
@@ -365,7 +506,7 @@ class UserConfiguration: NSObject {
     }
 
     func hasCustomConfiguration() -> Bool {
-        return configuration != nil
+        return configurationYAML != nil || configurationJSON != nil
     }
 
     private func modifierFlagsForModifierString(_ modifierString: String) -> AMModifierFlags {
@@ -374,6 +515,10 @@ class UserConfiguration: NSObject {
             return modifier1!
         case "mod2":
             return modifier2!
+        case "mod3":
+            return modifier3!
+        case "mod4":
+            return modifier4!
         default:
             log.warning("Unknown modifier string: \(modifierString)")
             return modifier1!
@@ -415,7 +560,13 @@ class UserConfiguration: NSObject {
         // If the title matches it is included
         //   - Blacklist means floating
         //   - Whitelist means not floating
-        if floatingBundle.windowTitles.contains(title) {
+        if floatingBundle.windowTitles.contains(where: { windowTitle in
+            if title.range(of: windowTitle, options: .regularExpression) != nil {
+                return true
+            } else {
+                return false
+            }
+        }) {
             return .reliable(DefaultFloat.from(useIdentifiersAsBlacklist))
         }
 
@@ -435,13 +586,11 @@ class UserConfiguration: NSObject {
     func runningApplicationFloatingBundle(_ runningApplication: BundleIdentifiable) -> FloatingBundle? {
         let floatingBundles = self.floatingBundles()
 
+        let bundleIdentifier = runningApplication.bundleIdentifier ?? ""
+
         for floatingBundle in floatingBundles {
             if floatingBundle.id.contains("*") {
                 do {
-                    guard let bundleIdentifier = runningApplication.bundleIdentifier else {
-                        continue
-                    }
-
                     let pattern = floatingBundle.id
                         .replacingOccurrences(of: ".", with: "\\.")
                         .replacingOccurrences(of: "*", with: ".*")
@@ -472,6 +621,11 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .floatSmallWindows)
     }
 
+    func smallWindowSize() -> CGFloat {
+        let size = CGFloat(storage.float(forKey: .smallWindowSize))
+        return size > 0 ? size : 500
+    }
+
     func mouseFollowsFocus() -> Bool {
         return storage.bool(forKey: .mouseFollowsFocus)
     }
@@ -500,6 +654,10 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .layoutHUDOnSpaceChange)
     }
 
+    func enablesWindowCountHUD() -> Bool {
+        return storage.bool(forKey: .windowCountHUD)
+    }
+
     func useCanaryBuild() -> Bool {
         return storage.bool(forKey: .useCanaryBuild)
     }
@@ -509,7 +667,27 @@ class UserConfiguration: NSObject {
     }
 
     func windowMargins() -> Bool {
+        if !storage.bool(forKey: .windowMargins) {
+            return false
+        }
+        // if smartWindowMargins is not enabled, enable window margins
+        if !smartWindowMargins() {
+            return true
+        }
+        // if smartWindowMargins is enabled, enabled window margins if there are more than one visible windows on screen
+        let options = CGWindowListOption(arrayLiteral: .excludeDesktopElements, .optionOnScreenOnly)
+        let windowsListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
+        let infoList = windowsListInfo as! [[String: Any]]
+        let visibleWindows = infoList.filter { $0["kCGWindowLayer"] as! Int == 0 }
+        return visibleWindows.count > 1
+    }
+
+    func windowMarginsEnabled() -> Bool {
         return storage.bool(forKey: .windowMargins)
+    }
+
+    func smartWindowMargins() -> Bool {
+        return storage.bool(forKey: .smartWindowMargins)
     }
 
     func windowMinimumHeight() -> CGFloat {
@@ -518,6 +696,35 @@ class UserConfiguration: NSObject {
 
     func windowMinimumWidth() -> CGFloat {
         return CGFloat(storage.float(forKey: .windowMinimumWidth))
+    }
+
+    func windowMaxCount() -> Int? {
+        let int = Int(storage.float(forKey: .windowMaxCount))
+        return int == 0 ? nil : int
+    }
+
+    private func setConfigurationValueWithKVO(_ value: Any?, forKey key: ConfigurationKey) {
+        if let userDefaults = storage as? UserDefaults {
+            userDefaults.willChangeValue(forKey: key.rawValue)
+            userDefaults.set(value, forKey: key)
+            userDefaults.didChangeValue(forKey: key.rawValue)
+        } else {
+            storage.set(value, forKey: key)
+        }
+    }
+
+    func increaseWindowMaxCount() {
+        let currentCount = windowMaxCount() ?? 0
+        let newCount = currentCount + 1
+
+        setConfigurationValueWithKVO(Float(newCount), forKey: .windowMaxCount)
+    }
+
+    func decreaseWindowMaxCount() {
+        let currentCount = windowMaxCount() ?? 1
+        let newCount = max(0, currentCount - 1)
+
+        setConfigurationValueWithKVO(Float(newCount), forKey: .windowMaxCount)
     }
 
     func windowResizeStep() -> CGFloat {
@@ -541,12 +748,10 @@ class UserConfiguration: NSObject {
     }
 
     func floatingBundleIdentifiersIsBlacklist() -> Bool {
+        guard storage.object(forKey: .floatingBundleIdentifiersIsBlacklist) != nil else {
+            return true
+        }
         return storage.bool(forKey: .floatingBundleIdentifiersIsBlacklist)
-    }
-
-    func floatingBundleIdentifiers() -> [String] {
-        let floatingBundleIdentifiers = storage.stringArray(forKey: .floatingBundleIdentifiers)
-        return floatingBundleIdentifiers ?? []
     }
 
     func floatingBundles() -> [FloatingBundle] {
@@ -557,10 +762,6 @@ class UserConfiguration: NSObject {
         return floatingBundles.compactMap { FloatingBundle.from($0) }
     }
 
-    func setFloatingBundleIdentifiers(_ floatingBundleIdentifiers: [String]) {
-        storage.set(floatingBundleIdentifiers as Any?, forKey: .floatingBundleIdentifiers)
-    }
-
     func setFloatingBundles(_ floatingBundles: [FloatingBundle]) {
         storage.set(floatingBundles.map { $0.encoded() }, forKey: .floatingBundleIdentifiers)
     }
@@ -569,12 +770,30 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .newWindowsToMain)
     }
 
+    func disablePaddingOnBuiltinDisplay() -> Bool {
+        return storage.bool(forKey: .disablePaddingOnBuiltinDisplay)
+    }
+
     func followWindowsThrownBetweenSpaces() -> Bool {
         return storage.bool(forKey: .followSpaceThrownWindows)
     }
 
+    func focusFollowsWindowThrownBetweenSpacesDelay() -> TimeInterval {
+        let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownBetweenSpacesDelay))
+        return delay > 0 ? delay : 0.5
+    }
+
+    func applicationActivationDelay() -> TimeInterval {
+        let delay = TimeInterval(storage.float(forKey: .applicationActivationDelay))
+        return delay > 0 ? delay : 0.2
+    }
+
     func restoreLayoutsOnLaunch() -> Bool {
         return storage.bool(forKey: .restoreLayoutsOnLaunch)
+    }
+
+    func hideMenuBarIcon() -> Bool {
+        return storage.bool(forKey: .hideMenuBarIcon)
     }
 }
 

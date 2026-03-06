@@ -15,10 +15,25 @@ class FullscreenLayout<Window: WindowType>: Layout<Window> {
     override var layoutDescription: String { return "" }
 
     override func frameAssignments(_ windowSet: WindowSet<Window>, on screen: Screen) -> [FrameAssignment<Window>]? {
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: UserConfiguration.shared.smartWindowMargins())
         return windowSet.windows.map { window in
-            let resizeRules = ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1)
-            return FrameAssignment<Window>(frame: screenFrame, window: window, screenFrame: screenFrame, resizeRules: resizeRules)
+            let resizeRules = ResizeRules(
+                isMain: true,
+                unconstrainedDimension: .horizontal,
+                scaleFactor: 1,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize
+            )
+            let frameAssignment = FrameAssignment<Window>(
+                frame: screenFrame,
+                window: window,
+                screenFrame: screenFrame,
+                resizeRules: resizeRules,
+                windowMargins: self.windowMargins,
+                windowMarginSize: self.windowMarginSize,
+                disableWindowMargins: UserConfiguration.shared.smartWindowMargins()
+            )
+            return frameAssignment
         }
     }
 }

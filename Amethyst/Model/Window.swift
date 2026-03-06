@@ -9,6 +9,19 @@
 import Foundation
 import Silica
 
+// swiftlint:disable identifier_name
+ @_silgen_name("GetProcessForPID") @discardableResult
+ func GetProcessForPID(_ pid: pid_t, _ psn: inout ProcessSerialNumber) -> OSStatus
+
+ @_silgen_name("_SLPSSetFrontProcessWithOptions") @discardableResult
+ func _SLPSSetFrontProcessWithOptions(_ psn: inout ProcessSerialNumber, _ wid: UInt32, _ mode: UInt32) -> CGError
+
+ @_silgen_name("SLPSPostEventRecordTo") @discardableResult
+ func SLPSPostEventRecordTo(_ psn: inout ProcessSerialNumber, _ bytes: inout UInt8) -> CGError
+
+ let kCPSUserGenerated: UInt32 = 0x200
+// swiftlint:enable identifier_name
+
 /// Generic protocol for objects acting as windows in the system.
 protocol WindowType: Equatable {
     associatedtype Screen: ScreenType
@@ -81,6 +94,8 @@ protocol WindowType: Equatable {
      */
     @discardableResult func focus() -> Bool
 
+    @discardableResult func minimize() -> Bool
+
     /**
      Moves the window to a screen.
      
@@ -101,6 +116,14 @@ protocol WindowType: Equatable {
         - space: The index of the space.
      */
     func move(toSpace space: UInt)
+
+    /**
+     Moves the window to the space at an index.
+     
+     - Parameters:
+        - space: The index of the space
+     */
+    func move(toSpaceAtIndex space: UInt)
 
     /**
      Moves the window to a space.
@@ -179,6 +202,12 @@ final class AXWindowID: Hashable, Codable {
     }
 }
 
+extension AXWindowID: CustomStringConvertible {
+    var description: String {
+        return "\(window.title() ?? "unknown") (\(window.windowID()))"
+    }
+}
+
 /// Conformance of `AXWindow` as an Amethyst window.
 extension AXWindow: WindowType {
     typealias Screen = AMScreen
@@ -206,6 +235,10 @@ extension AXWindow: WindowType {
         }
 
         self.init(axElement: axElementRef)
+
+        if string(forKey: "AXRole" as CFString) != "AXWindow" {
+            return nil
+        }
     }
 
     func id() -> WindowID {
@@ -222,7 +255,9 @@ extension AXWindow: WindowType {
     }
 
     func pid() -> pid_t {
-        return processIdentifier()
+        // Some window operations can surface elements owned by a helper process.
+        // Use AXParent's PID when available so identity checks stay stable.
+        return forKey("AXParent" as CFString)?.processIdentifier() ?? processIdentifier()
     }
 
     /**
@@ -245,8 +280,9 @@ extension AXWindow: WindowType {
     func shouldFloat() -> Bool {
         let userConfiguration = UserConfiguration.shared
         let frame = self.frame()
+        let threshold = userConfiguration.smallWindowSize()
 
-        if userConfiguration.floatSmallWindows() && frame.size.width < 500 && frame.size.height < 500 {
+        if userConfiguration.floatSmallWindows() && frame.size.width < threshold && frame.size.height < threshold {
             return true
         }
 
@@ -268,9 +304,42 @@ extension AXWindow: WindowType {
      
      - Returns:
      `true` if the window was successfully focused, `false` otherwise.
+     
+     - Description:
+     What a mess. See: https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468
      */
     @discardableResult override func focus() -> Bool {
-        guard super.focus() else {
+        let pid = self.pid()
+        var wid = self.cgID()
+        var psn = ProcessSerialNumber()
+        let status = GetProcessForPID(pid, &psn)
+
+        guard status == noErr else {
+            return false
+        }
+
+        var cgStatus = _SLPSSetFrontProcessWithOptions(&psn, wid, kCPSUserGenerated)
+
+        guard cgStatus == .success else {
+            return false
+        }
+
+        for byte in [0x01, 0x02] {
+            var bytes = [UInt8](repeating: 0, count: 0xf8)
+            bytes[0x04] = 0xF8
+            bytes[0x08] = UInt8(byte)
+            bytes[0x3a] = 0x10
+            memcpy(&bytes[0x3c], &wid, MemoryLayout<UInt32>.size)
+            memset(&bytes[0x20], 0xFF, 0x10)
+            cgStatus = bytes.withUnsafeMutableBufferPointer { pointer in
+                return SLPSPostEventRecordTo(&psn, &pointer.baseAddress!.pointee)
+            }
+            guard cgStatus == .success else {
+                return false
+            }
+        }
+
+        guard super.raise() else {
             return false
         }
 
@@ -287,6 +356,11 @@ extension AXWindow: WindowType {
         mouseMoveEvent.post(tap: CGEventTapLocation.cghidEventTap)
 
         return true
+    }
+
+    @discardableResult func minimize() -> Bool {
+        super.minimize()
+        return isWindowMinimized()
     }
 
     func moveScaled(to screen: Screen) {
@@ -309,14 +383,16 @@ extension AXWindow: WindowType {
         move(to: screen.screen)
     }
 
-    func move(toSpace spaceID: CGSSpaceID) {
-        let currentSpace = CGSGetActiveSpace(CGSMainConnectionID())
-        let ids = [cgID()]
-        CGSRemoveWindowsFromSpaces(CGSMainConnectionID(), ids as CFArray, [currentSpace] as CFArray)
-        CGSAddWindowsToSpaces(CGSMainConnectionID(), ids as CFArray, [spaceID] as CFArray)
+    func move(toSpaceAtIndex space: UInt) {
+        super.move(toSpace: space)
+    }
 
-        if UserConfiguration.shared.followWindowsThrownBetweenSpaces() {
-            focus()
-        }
+    func move(toSpace spaceID: CGSSpaceID) {
+    }
+}
+
+extension AXWindow {
+    override var description: String {
+        return "\(super.description) (\(cgID()))"
     }
 }

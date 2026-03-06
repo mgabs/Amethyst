@@ -25,7 +25,7 @@ enum MouseState<Window: WindowType> {
 }
 
 /// MouseStateKeeper will need a few things to do its job effectively
-protocol MouseStateKeeperDelegate: class {
+protocol MouseStateKeeperDelegate: AnyObject {
     associatedtype Window: WindowType
     func recommendMainPaneRatio(_ ratio: CGFloat)
     func swapDraggedWindowWithDropzone(_ draggedWindow: Window)
@@ -44,6 +44,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     let dragRaceThresholdSeconds = 0.15 // prevent race conditions during drag ops
     var state: MouseState<Delegate.Window>
     private(set) weak var delegate: Delegate?
+    private(set) var lastClick: Date?
     private var monitor: Any?
 
     init(delegate: Delegate) {
@@ -89,7 +90,10 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
                 self.resizeFrameToDraggedWindowBorder(ratio)
             case .doneDragging:
                 self.state = .doneDragging(atTime: Date()) // reset the clock I guess
-            case .pointing, .clicking:
+            case .clicking:
+                lastClick = Date()
+                self.state = .pointing
+            case .pointing:
                 self.state = .pointing
             }
 

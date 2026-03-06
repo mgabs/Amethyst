@@ -6,6 +6,7 @@
 //  Copyright © 2019 Ian Ynda-Hummel. All rights reserved.
 //
 
+import AppKit
 import Foundation
 import Silica
 
@@ -37,15 +38,15 @@ protocol ApplicationType: Equatable {
     func pid() -> pid_t
 
     /**
-     Determines whether a window with a given title should float by default.
+     Determines whether a window should float by default.
      
      - Parameters:
-         - windowTitle: The window title to test.
+         - window: The window to test.
      
      - Note:
      We can receive an unreliable result. It is up to the caller to determine whether or not that result is good enough.
      */
-    func defaultFloatForWindowWithTitle(_ windowTitle: String?) -> Reliable<DefaultFloat>
+    func defaultFloatForWindow(_ window: Window) -> Reliable<DefaultFloat>
 
     /// Clears the internal cache of application windows.
     func dropWindowsCache()
@@ -62,7 +63,7 @@ protocol ApplicationType: Equatable {
      - Returns:
      `true` if observing the notification succeeded, and `false` otherwise.
      */
-    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> Bool
+    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> AXError
 
     /**
      Observe an AX notification on a window of the application with a given handler.
@@ -77,7 +78,7 @@ protocol ApplicationType: Equatable {
      - Returns:
      `true` if observing the notification succeeded, and `false` otherwise.
      */
-    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> Bool
+    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> AXError
 
     /**
      Removes an observation for a notification on the application itself.
@@ -141,19 +142,19 @@ class AnyApplication<Application: ApplicationType>: ApplicationType {
         return internalApplication.pid()
     }
 
-    func defaultFloatForWindowWithTitle(_ windowTitle: String?) -> Reliable<DefaultFloat> {
-        return internalApplication.defaultFloatForWindowWithTitle(windowTitle)
+    func defaultFloatForWindow(_ window: Window) -> Reliable<DefaultFloat> {
+        return internalApplication.defaultFloatForWindow(window)
     }
 
     func dropWindowsCache() {
         internalApplication.dropWindowsCache()
     }
 
-    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> Bool {
+    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> AXError {
         return internalApplication.observe(notification: notification, handler: handler)
     }
 
-    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> Bool {
+    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> AXError {
         return internalApplication.observe(notification: notification, window: window, handler: handler)
     }
 
@@ -188,11 +189,11 @@ extension SIApplication: ApplicationType {
         return processIdentifier()
     }
 
-    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> Bool {
+    func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> AXError {
         return observeNotification(notification as CFString, with: self, handler: handler)
     }
 
-    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> Bool {
+    func observe(notification: String, window: Window, handler: @escaping SIAXNotificationHandler) -> AXError {
         return observeNotification(notification as CFString, with: window, handler: handler)
     }
 
@@ -204,15 +205,19 @@ extension SIApplication: ApplicationType {
         unobserveNotification(notification as CFString, with: window)
     }
 
-    func defaultFloatForWindowWithTitle(_ windowTitle: String?) -> Reliable<DefaultFloat> {
+    func defaultFloatForWindow(_ window: Window) -> Reliable<DefaultFloat> {
+        if window.shouldFloat() {
+            return .reliable(.floating)
+        }
+
         guard let runningApplication = NSRunningApplication(processIdentifier: pid()) else {
             return .reliable(.floating)
         }
 
-        return UserConfiguration.shared.runningApplication(runningApplication, byDefaultFloatsForTitle: windowTitle)
+        return UserConfiguration.shared.runningApplication(runningApplication, byDefaultFloatsForTitle: window.title())
     }
 
-    private func observe(notification: String, with accessibilityElement: SIAccessibilityElement, handler: @escaping SIAXNotificationHandler) -> Bool {
+    private func observe(notification: String, with accessibilityElement: SIAccessibilityElement, handler: @escaping SIAXNotificationHandler) -> AXError {
         return observeNotification(notification as CFString, with: accessibilityElement, handler: handler)
     }
 }

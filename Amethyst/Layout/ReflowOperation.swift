@@ -35,6 +35,12 @@ struct ResizeRules {
     /// the scale factor for the unconstrained dimension.
     let scaleFactor: CGFloat
 
+    /// Whether or not window margins should be applied.
+    let windowMargins: Bool
+
+    /// The size of the window margins.
+    let windowMarginSize: CGFloat
+
     /**
      Determines the new value of the dimension based on the scale factor.
      
@@ -52,7 +58,7 @@ struct ResizeRules {
             }
         }()
 
-        let padding = UserConfiguration.shared.windowMargins() ? UserConfiguration.shared.windowMarginSize() : 0
+        let padding = windowMargins ? windowMarginSize : 0
         return negatePadding ? dimension + padding : dimension
     }
 }
@@ -64,12 +70,6 @@ struct LayoutWindow<Window: WindowType>: Equatable {
 
     static func == (lhs: Self, rhs: Self) -> Bool {
         return lhs.id == rhs.id
-    }
-
-    init(id: Window.WindowID, frame: CGRect, isFocused: Bool) {
-        self.id = id
-        self.frame = frame
-        self.isFocused = isFocused
     }
 }
 
@@ -99,19 +99,16 @@ struct WindowSet<Window: WindowType> {
         return isWindowWithIDFloating(window.id)
     }
 
-    func performFrameAssignments(_ frameAssignments: [FrameAssignment<Window>]) {
-        for frameAssignment in frameAssignments {
-            if !isWindowWithIDActive(frameAssignment.window.id) {
-                return
-            }
+    func perform(frameAssignment: FrameAssignment<Window>) {
+        guard let window = windowForID(frameAssignment.window.id) else {
+            return
         }
 
-        for frameAssignment in frameAssignments {
-            guard let window = windowForID(frameAssignment.window.id) else {
-                continue
-            }
-            frameAssignment.perform(withWindow: window)
+        guard isWindowWithIDActive(frameAssignment.window.id), !isWindowWithIDFloating(frameAssignment.window.id) else {
+            return
         }
+
+        frameAssignment.perform(withWindow: window)
     }
 }
 
@@ -129,12 +126,39 @@ struct FrameAssignment<Window: WindowType> {
     /// The rules governing constraints to frame transforms
     let resizeRules: ResizeRules
 
+    /// If `true`, then  window margins won't be applied
+    let disableWindowMargins: Bool
+
+    /// Whether or not window margins should be applied.
+    let windowMargins: Bool
+
+    /// The size of the window margins.
+    let windowMarginSize: CGFloat
+
+    init(
+        frame: CGRect,
+        window: LayoutWindow<Window>,
+        screenFrame: CGRect,
+        resizeRules: ResizeRules,
+        windowMargins: Bool,
+        windowMarginSize: CGFloat,
+        disableWindowMargins: Bool = false
+    ) {
+        self.frame = frame
+        self.window =  window
+        self.screenFrame = screenFrame
+        self.resizeRules = resizeRules
+        self.windowMargins = windowMargins
+        self.windowMarginSize = windowMarginSize
+        self.disableWindowMargins = disableWindowMargins
+    }
+
     /// The final frame is the desired frame, but transformed to provide desired padding
     var finalFrame: CGRect {
         var ret = frame
-        let padding = floor(UserConfiguration.shared.windowMarginSize() / 2)
+        let padding = floor(windowMarginSize / 2)
 
-        if UserConfiguration.shared.windowMargins() {
+        if windowMargins && !disableWindowMargins {
             ret.origin.x += padding
             ret.origin.y += padding
             ret.size.width -= 2 * padding
@@ -176,17 +200,17 @@ struct FrameAssignment<Window: WindowType> {
     }
 
     /// Perform the actual application of the frame to the window
-    fileprivate func perform(withWindow window: Window) {
+    func perform(withWindow window: Window) {
         var finalFrame = self.finalFrame
         var finalOrigin = finalFrame.origin
 
         // If this is the focused window then we need to shift it to be on screen regardless of size
         // We call this "window peeking" (this line here to aid in text search)
-        if self.window.isFocused {
+        if window.isFocused() {
             // Just resize the window first to see what the dimensions end up being
             // Sometimes applications have internal window requirements that are not exposed to us directly
             finalFrame.origin = window.frame().origin
-            window.setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1))
+            setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1), onWindow: window)
 
             // With the real height we can update the frame to account for the current size
             finalFrame.size = CGSize(
@@ -199,48 +223,16 @@ struct FrameAssignment<Window: WindowType> {
 
         // Move the window to its final frame
         finalFrame.origin = finalOrigin
-        window.setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1))
-    }
-}
-
-/**
- A base class for specific layout operations that perform assignments according to their algorithm.
- 
- - Requires:
- Specific operations should subclass and override the `frameAssignments()` method.
- 
- - Note:
- Subclasses need not override `main()`, but if you do you _must_ call the `super` implementation.
- */
-class ReflowOperation<Window: WindowType>: Operation {
-    typealias Screen = Window.Screen
-
-    /// The screen on which the windows are being laid out.
-    let screen: Screen
-
-    /// The screen on which the windows are being laid out.
-    let windowSet: WindowSet<Window>
-
-    let layout: Layout<Window>
-
-    var windows: [LayoutWindow<Window>] { return windowSet.windows }
-
-    /**
-     - Parameters:
-         - screen: The screen on which the windows are being laid out.
-         - windows: The screen on which the windows are being laid out.
-     */
-    init(screen: Screen, windowSet: WindowSet<Window>, layout: Layout<Window>) {
-        self.screen = screen
-        self.windowSet = windowSet
-        self.layout = layout
-        super.init()
+        setFrame(finalFrame, withThreshold: CGSize(width: 1, height: 1), onWindow: window)
     }
 
-    /// The main method of the `Operation`.
-    override func main() {
-        guard !isCancelled else { return }
-        guard let assignments = layout.frameAssignments(windowSet, on: screen) else { return }
-        windowSet.performFrameAssignments(assignments)
+    private func setFrame(_ frame: CGRect, withThreshold threshold: CGSize, onWindow window: Window) {
+        if Thread.isMainThread {
+            window.setFrame(frame, withThreshold: threshold)
+        } else {
+            DispatchQueue.main.sync {
+                window.setFrame(frame, withThreshold: threshold)
+            }
+        }
     }
 }

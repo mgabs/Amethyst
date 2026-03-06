@@ -6,18 +6,31 @@
 //  Copyright © 2020 Ian Ynda-Hummel. All rights reserved.
 //
 
+import ArgumentParser
 import Cocoa
 
+struct Debug: ParsableCommand {
+    static var configuration: CommandConfiguration = CommandConfiguration(
+        abstract: "Generate diagnostic reports on system state.",
+        subcommands: [Apps.self, Windows.self],
+        defaultSubcommand: Windows.self
+    )
+}
+
 struct DebugInfo {
-    static func description() -> String {
-        return [
+    static func description(arguments: [String]) -> String {
+        var infos = [
             "Version: \(version())",
             "OS version: \(ProcessInfo.processInfo.operatingSystemVersionString)",
-            "Has permissions: \(isProcessTrusted())",
             "Screens:\n\(screens())",
-            "Manageable applications:\n\(applications())",
             "Configuration:\n\(config())"
-        ].joined(separator: "\n\n")
+        ]
+
+        if arguments.contains("--include-apps") {
+            infos.append("Manageable applications:\n\(applications())")
+        }
+
+        return infos.joined(separator: "\n\n")
     }
 
     static func version() -> String {
@@ -40,7 +53,7 @@ struct DebugInfo {
 
     static func applications() -> String {
         return NSWorkspace.shared.runningApplications
-            .filter { $0.isManageable }
+            .filter { $0.isManageable == .manageable }
             .map { "\t\($0.localizedName ?? "<unknown name>") (\($0.bundleIdentifier ?? "<unknown bundle id>"))" }
             .joined(separator: "\n")
     }

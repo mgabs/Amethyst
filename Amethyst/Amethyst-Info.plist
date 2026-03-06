@@ -30,6 +30,8 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>Amethyst needs accessibility permissions to move and resize windows.</string>
 	<key>SUCanaryFeedURL</key>
 	<string>https://ianyh.com/amethyst/canary-appcast.xml</string>
 	<key>SUFeedURL</key>

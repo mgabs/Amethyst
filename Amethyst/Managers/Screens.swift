@@ -62,12 +62,7 @@ extension WindowManager {
             guard let focusedWindow = Window.currentlyFocused() else {
                 return nil
             }
-            for screenManager in screenManagers {
-                if screenManager.screen?.screenID() == focusedWindow.screen()?.screenID() {
-                    return screenManager
-                }
-            }
-            return nil
+            return screenManagers.first { $0.screen?.screenID() == focusedWindow.screen()?.screenID() }
         }
 
         func updateScreens(windowManager: WindowManager) {
@@ -78,7 +73,11 @@ extension WindowManager {
                     continue
                 }
 
-                let screenManager = screenManagersCache[screenID] ?? windowManager.screenManager(screen: screen)
+                let screenManager = screenManagersCache[screenID] ?? ScreenManager<WindowManager<Application>>(
+                    screen: screen,
+                    delegate: windowManager,
+                    userConfiguration: UserConfiguration.shared
+                )
                 screenManager.delegate = windowManager
                 screenManager.updateScreen(to: screen)
 
@@ -92,20 +91,34 @@ extension WindowManager {
             self.screenManagers = screenManagers.sorted()
 
             updateSpaces()
-            markAllScreensForReflow(withChange: .unknown)
+            markAllScreensForReflow()
         }
 
-        func markScreen(_ screen: Screen, forReflowWithChange change: Change<Window>) {
+        func distributeEventToScreen(_ screen: Screen, change: Change<Window>) {
             screenManagers
                 .filter { $0.screen?.screenID() == screen.screenID() }
                 .forEach { screenManager in
-                    screenManager.setNeedsReflow(withWindowChange: change)
+                    screenManager.distributeEvent(change)
                 }
         }
 
-        func markAllScreensForReflow(withChange windowChange: Change<Window>) {
+        func distributeEventToAllScreens(change: Change<Window>) {
             for screenManager in screenManagers {
-                screenManager.setNeedsReflow(withWindowChange: windowChange)
+                screenManager.distributeEvent(change)
+            }
+        }
+
+        func markScreenForReflow(_ screen: Screen) {
+            screenManagers
+                .filter { $0.screen?.screenID() == screen.screenID() }
+                .forEach { screenManager in
+                    screenManager.setNeedsReflow()
+                }
+        }
+
+        func markAllScreensForReflow() {
+            for screenManager in screenManagers {
+                screenManager.setNeedsReflow()
             }
         }
     }
