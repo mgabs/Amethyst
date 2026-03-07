@@ -105,8 +105,8 @@ class CustomLayoutTests: QuickSpec {
                 expect(frameAssignments.count).to(equal(layoutWindows.count))
 
                 frameAssignments.forEach { assignment in
-                    expect(assignment.frameAssignment.frame).to(equal(screen.adjustedFrame()))
-                    expect(assignment.frameAssignment.finalFrame).to(equal(screen.adjustedFrame()))
+                    expect(assignment.frame).to(equal(screen.adjustedFrame()))
+                    expect(assignment.finalFrame).to(equal(screen.adjustedFrame()))
                 }
             }
 
@@ -130,8 +130,8 @@ class CustomLayoutTests: QuickSpec {
                 expect(frameAssignments.count).to(equal(layoutWindows.count))
 
                 frameAssignments.forEach { assignment in
-                    expect(assignment.frameAssignment.frame).to(equal(screen.adjustedFrame()))
-                    expect(assignment.frameAssignment.finalFrame).to(equal(screen.adjustedFrame()))
+                    expect(assignment.frame).to(equal(screen.adjustedFrame()))
+                    expect(assignment.finalFrame).to(equal(screen.adjustedFrame()))
                 }
             }
         }
