@@ -111,10 +111,10 @@ enum SpaceIndicatorStyle: Int {
     case perMonitor = 1
     case allSpaces = 2
 }
-
 enum SpaceIndicatorColorStyle: Int {
     case bordered = 0
     case solid = 1
+    case solidInverted = 2
 }
 
 extension ConfigurationKey: CaseIterable {}

@@ -339,5 +339,5 @@ show-space-indicator: false
 # The style of the space indicator. 0 for single icon, 1 for one icon per monitor, 2 for one icon per space (default 0).
 space-indicator-style: 0
 
-# The color style of the space indicator. 0 for bordered, 1 for solid (default 0).
+# The color style of the space indicator. 0 for bordered, 1 for solid, 2 for solid inverted (default 0).
 space-indicator-color-style: 0

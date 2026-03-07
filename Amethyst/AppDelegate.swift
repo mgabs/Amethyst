@@ -144,16 +144,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         borderedItem.tag = SpaceIndicatorColorStyle.bordered.rawValue
         borderedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .bordered ? .on : .off
         colorStyleSubmenu.addItem(borderedItem)
+let solidItem = NSMenuItem(title: "Solid", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+solidItem.target = self
+solidItem.tag = SpaceIndicatorColorStyle.solid.rawValue
+solidItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solid ? .on : .off
+colorStyleSubmenu.addItem(solidItem)
 
-        let solidItem = NSMenuItem(title: "Solid", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
-        solidItem.target = self
-        solidItem.tag = SpaceIndicatorColorStyle.solid.rawValue
-        solidItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solid ? .on : .off
-        colorStyleSubmenu.addItem(solidItem)
+let solidInvertedItem = NSMenuItem(title: "Solid Inverted", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+solidInvertedItem.target = self
+solidInvertedItem.tag = SpaceIndicatorColorStyle.solidInverted.rawValue
+solidInvertedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solidInverted ? .on : .off
+colorStyleSubmenu.addItem(solidInvertedItem)
 
-        colorStyleItem.submenu = colorStyleSubmenu
-        spaceIndicatorSubmenu.addItem(colorStyleItem)
-
+colorStyleItem.submenu = colorStyleSubmenu
+spaceIndicatorSubmenu.addItem(colorStyleItem)
         spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
 
         // Insert before "Quit"
@@ -515,7 +519,7 @@ class SpaceIndicatorManager {
             )
             text.draw(in: stringRect, withAttributes: attributes)
             image.unlockFocus()
-        } else {
+        } else if style == .solid {
             // Solid style
             let background = NSImage(size: size)
             background.lockFocus()
@@ -548,6 +552,38 @@ class SpaceIndicatorManager {
             background.draw(in: rect, from: .zero, operation: .sourceOut, fraction: 1.0)
             textImage.draw(in: rect, from: .zero, operation: .destinationOut, fraction: 1.0)
             image.unlockFocus()
+        } else if style == .solidInverted {
+            // Solid Inverted style (Black background, White number)
+            // We use fixed colors and isTemplate = false to ensure it always looks the same
+            image.lockFocus()
+
+            // Draw black background
+            let bgColor = NSColor.black.withAlphaComponent(alpha)
+            bgColor.set()
+            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
+            path.fill()
+
+            // Draw white text
+            let font = NSFont.boldSystemFont(ofSize: 11)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.white.withAlphaComponent(alpha),
+                .paragraphStyle: paragraphStyle
+            ]
+            let stringSize = text.size(withAttributes: attributes)
+            let stringRect = NSRect(
+                x: rect.origin.x,
+                y: rect.origin.y + (rect.size.height - stringSize.height) / 2.0,
+                width: rect.size.width,
+                height: stringSize.height
+            )
+            text.draw(in: stringRect, withAttributes: attributes)
+
+            image.unlockFocus()
+            image.isTemplate = false
+            return image
         }
 
         image.isTemplate = true
@@ -567,7 +603,9 @@ class SpaceIndicatorManager {
             currentX += image.size.width + spacing
         }
         combinedImage.unlockFocus()
-        combinedImage.isTemplate = true
+
+        // Only mark as template if ALL source images are templates
+        combinedImage.isTemplate = images.allSatisfy { $0.isTemplate }
         return combinedImage
     }
 }

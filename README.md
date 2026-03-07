@@ -218,6 +218,7 @@ Amethyst can display the current space number in the menu bar. This feature is h
 
 - **Bordered**: The space number is drawn inside a rounded rectangle outline.
 - **Solid**: The space number is "cut out" from a solid rounded rectangle background.
+- **Solid Inverted**: The space number is drawn in white on a solid black rounded rectangle background.
 
 You can toggle these options directly from the Amethyst menu bar icon under the "Space Indicator" submenu.
 
