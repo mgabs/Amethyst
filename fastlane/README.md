@@ -45,14 +45,6 @@ Build a local release (optimized) version of Amethyst without code signing
 
 Run tests
 
-### add_layout_type_tests
-
-```sh
-[bundle exec] fastlane add_layout_type_tests
-```
-
-Add LayoutTypeTests.swift to project
-
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

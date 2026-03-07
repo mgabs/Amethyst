@@ -332,3 +332,12 @@ restore-layouts-on-launch: true
 
 # true to display some optional debug information in the layout HUD (default false).
 debug-layout-info: false
+
+# true to display the current space number in the menu bar (default false).
+show-space-indicator: false
+
+# The style of the space indicator. 0 for single icon, 1 for one icon per monitor, 2 for one icon per space (default 0).
+space-indicator-style: 0
+
+# The color style of the space indicator. 0 for bordered, 1 for solid (default 0).
+space-indicator-color-style: 0

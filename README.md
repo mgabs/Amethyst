@@ -1,5 +1,8 @@
 # Amethyst
 
+> [!IMPORTANT]
+> This is a fork of [ianyh/amethyst](https://github.com/ianyh/Amethyst).
+
 [![Discussions](https://img.shields.io/github/discussions/ianyh/Amethyst)](https://github.com/ianyh/Amethyst/discussions)
 [![Open Source Helpers](https://www.codetriage.com/ianyh/amethyst/badges/users.svg)](https://www.codetriage.com/ianyh/amethyst)
 [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
@@ -200,6 +203,23 @@ This layout does not have a main pane in the way that other layouts do. When add
 #### Custom (beta)
 
 Custom layouts can be implemented via JavaScript. See [Custom Layouts](docs/custom-layouts.md).
+
+### Space Indicator
+
+Amethyst can display the current space number in the menu bar. This feature is highly customizable and supports multiple monitors.
+
+#### Styles
+
+- **Single Icon**: Displays the space number of the currently focused display.
+- **One Icon Per Monitor**: Displays the active space number for every connected monitor.
+- **One Icon Per Space**: Displays icons for all available spaces across all monitors. Active spaces are shown at full opacity, while inactive spaces are dimmed.
+
+#### Color Styles
+
+- **Bordered**: The space number is drawn inside a rounded rectangle outline.
+- **Solid**: The space number is "cut out" from a solid rounded rectangle background.
+
+You can toggle these options directly from the Amethyst menu bar icon under the "Space Indicator" submenu.
 
 ### Configuration File
 

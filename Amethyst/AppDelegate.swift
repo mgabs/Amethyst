@@ -6,6 +6,7 @@
 //  Copyright © 2016 Ian Ynda-Hummel. All rights reserved.
 //
 
+import Cocoa
 import CoreServices
 import Foundation
 import LoginServiceKit
@@ -27,6 +28,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet var startAtLoginMenuItem: NSMenuItem?
     @IBOutlet var toggleGlobalTilingMenuItem: NSMenuItem?
     @IBOutlet var layoutsMenuItem: NSMenuItem?
+
+    private var spaceIndicatorManager: SpaceIndicatorManager?
+    private var showSpaceIndicatorMenuItem: NSMenuItem?
 
     private var isFirstLaunch = true
 
@@ -68,6 +72,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyManager = HotKeyManager(userConfiguration: UserConfiguration.shared)
 
         hotKeyManager?.setUpWithWindowManager(windowManager!, configuration: UserConfiguration.shared, appDelegate: self)
+
+        setupSpaceIndicator()
     }
 
     override func awakeFromNib() {
@@ -91,8 +97,141 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         startAtLoginMenuItem?.state = (LoginServiceKit.isExistLoginItems(at: Bundle.main.bundlePath) ? .on : .off)
 
-        // Set up status item menu delegate to refresh layouts when main menu is opened
         statusItemMenu?.delegate = self
+    }
+
+    private func setupSpaceIndicator() {
+        guard let statusItem = statusItem, let menu = statusItemMenu else { return }
+
+        spaceIndicatorManager = SpaceIndicatorManager(statusItem: statusItem, userConfiguration: UserConfiguration.shared)
+
+        let spaceIndicatorMenuItem = NSMenuItem(title: "Space Indicator", action: nil, keyEquivalent: "")
+        let spaceIndicatorSubmenu = NSMenu()
+
+        let showItem = NSMenuItem(title: "Show Space Number", action: #selector(toggleSpaceIndicator(_:)), keyEquivalent: "")
+        showItem.target = self
+        showItem.state = UserConfiguration.shared.showSpaceIndicator() ? .on : .off
+        spaceIndicatorSubmenu.addItem(showItem)
+        showSpaceIndicatorMenuItem = showItem
+
+        spaceIndicatorSubmenu.addItem(NSMenuItem.separator())
+
+        let singleItem = NSMenuItem(title: "Single Icon", action: #selector(setSpaceIndicatorStyle(_:)), keyEquivalent: "")
+        singleItem.target = self
+        singleItem.tag = SpaceIndicatorStyle.single.rawValue
+        singleItem.state = UserConfiguration.shared.spaceIndicatorStyle() == .single ? .on : .off
+        spaceIndicatorSubmenu.addItem(singleItem)
+
+        let perMonitorItem = NSMenuItem(title: "One Icon Per Monitor", action: #selector(setSpaceIndicatorStyle(_:)), keyEquivalent: "")
+        perMonitorItem.target = self
+        perMonitorItem.tag = SpaceIndicatorStyle.perMonitor.rawValue
+        perMonitorItem.state = UserConfiguration.shared.spaceIndicatorStyle() == .perMonitor ? .on : .off
+        spaceIndicatorSubmenu.addItem(perMonitorItem)
+
+        let allSpacesItem = NSMenuItem(title: "One Icon Per Space", action: #selector(setSpaceIndicatorStyle(_:)), keyEquivalent: "")
+        allSpacesItem.target = self
+        allSpacesItem.tag = SpaceIndicatorStyle.allSpaces.rawValue
+        allSpacesItem.state = UserConfiguration.shared.spaceIndicatorStyle() == .allSpaces ? .on : .off
+        spaceIndicatorSubmenu.addItem(allSpacesItem)
+
+        spaceIndicatorSubmenu.addItem(NSMenuItem.separator())
+
+        let colorStyleItem = NSMenuItem(title: "Color Style", action: nil, keyEquivalent: "")
+        let colorStyleSubmenu = NSMenu()
+
+        let borderedItem = NSMenuItem(title: "Bordered", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+        borderedItem.target = self
+        borderedItem.tag = SpaceIndicatorColorStyle.bordered.rawValue
+        borderedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .bordered ? .on : .off
+        colorStyleSubmenu.addItem(borderedItem)
+
+        let solidItem = NSMenuItem(title: "Solid", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+        solidItem.target = self
+        solidItem.tag = SpaceIndicatorColorStyle.solid.rawValue
+        solidItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solid ? .on : .off
+        colorStyleSubmenu.addItem(solidItem)
+
+        colorStyleItem.submenu = colorStyleSubmenu
+        spaceIndicatorSubmenu.addItem(colorStyleItem)
+
+        spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
+
+        // Insert before "Quit"
+        menu.insertItem(spaceIndicatorMenuItem, at: menu.numberOfItems - 1)
+
+        // Observe space changes
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil
+        )
+
+        // Observe screen changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+
+        DispatchQueue.main.async { [weak self] in
+            self?.updateSpaceIndicator()
+        }
+    }
+
+    @objc private func setSpaceIndicatorStyle(_ sender: NSMenuItem) {
+        guard let style = SpaceIndicatorStyle(rawValue: sender.tag) else { return }
+        UserConfiguration.shared.setSpaceIndicatorStyle(style)
+
+        // Update menu item states
+        if let submenu = sender.menu {
+            for item in submenu.items {
+                if item.action == #selector(setSpaceIndicatorStyle(_:)) {
+                    item.state = (item.tag == sender.tag) ? .on : .off
+                }
+            }
+        }
+
+        updateSpaceIndicator()
+    }
+
+    @objc private func setSpaceIndicatorColorStyle(_ sender: NSMenuItem) {
+        guard let style = SpaceIndicatorColorStyle(rawValue: sender.tag) else { return }
+        UserConfiguration.shared.setSpaceIndicatorColorStyle(style)
+
+        // Update menu item states
+        if let submenu = sender.menu {
+            for item in submenu.items {
+                if item.action == #selector(setSpaceIndicatorColorStyle(_:)) {
+                    item.state = (item.tag == sender.tag) ? .on : .off
+                }
+            }
+        }
+
+        updateSpaceIndicator()
+    }
+    @objc private func spaceDidChange(_ notification: Notification) {
+        // Small delay to ensure space info is updated
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.updateSpaceIndicator()
+        }
+    }
+
+    @objc private func toggleSpaceIndicator(_ sender: NSMenuItem) {
+        let newValue = !UserConfiguration.shared.showSpaceIndicator()
+        UserConfiguration.shared.setShowSpaceIndicator(newValue)
+        sender.state = newValue ? .on : .off
+        updateSpaceIndicator()
+    }
+
+    private func updateSpaceIndicator() {
+        if UserConfiguration.shared.showSpaceIndicator() {
+            spaceIndicatorManager?.update()
+        } else {
+            // Restore default icon
+            configurationGlobalTilingDidChange(UserConfiguration.shared)
+        }
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
@@ -233,11 +372,202 @@ extension AppDelegate: UserConfigurationDelegate {
             statusItemImage = NSImage(named: "icon-statusitem-disabled")
             toggleGlobalTilingMenuItem?.title = "Enable Tiling"
         }
+
+        if UserConfiguration.shared.showSpaceIndicator() {
+            spaceIndicatorManager?.update()
+            return
+        }
+
         statusItemImage?.isTemplate = true
         statusItem?.image = statusItemImage
     }
 
     func configurationAccessibilityPermissionsDidChange(_ userConfiguration: UserConfiguration) {
         windowManager?.reevaluateWindows()
+    }
+}
+class SpaceIndicatorManager {
+    private let statusItem: NSStatusItem
+    private let userConfiguration: UserConfiguration
+    private let size = CGSize(width: 16, height: 16)
+
+    init(statusItem: NSStatusItem, userConfiguration: UserConfiguration) {
+        self.statusItem = statusItem
+        self.userConfiguration = userConfiguration
+    }
+
+    func update() {
+        guard userConfiguration.showSpaceIndicator() else {
+            return
+        }
+
+        let style = userConfiguration.spaceIndicatorStyle()
+        let image: NSImage
+
+        switch style {
+        case .single:
+            let text = getCurrentSpaceNumber()
+            image = createSpaceImage(text: text)
+        case .perMonitor:
+            image = createPerMonitorImage()
+        case .allSpaces:
+            image = createAllSpacesImage()
+        }
+
+        statusItem.button?.image = image
+    }
+
+    private func getCurrentSpaceNumber() -> String {
+        guard let info = getSpaceInfo() else { return "?" }
+        return info.currentSpace
+    }
+
+    private func createPerMonitorImage() -> NSImage {
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?") }
+        let images = info.activeSpaces.map { createSpaceImage(text: $0) }
+        return combine(images: images)
+    }
+
+    private func createAllSpacesImage() -> NSImage {
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?") }
+        let images = info.allSpaces.map { createSpaceImage(text: $0.text, isActive: $0.isActive) }
+        return combine(images: images)
+    }
+
+    private struct SpaceInfo {
+        let currentSpace: String
+        let activeSpaces: [String]
+        let allSpaces: [(text: String, isActive: Bool)]
+    }
+
+    private func getSpaceInfo() -> SpaceInfo? {
+        guard let cfScreenDescriptions = CGSCopyManagedDisplaySpaces(CGSMainConnectionID())?.takeRetainedValue() else {
+            return nil
+        }
+        guard let screenDescriptions = cfScreenDescriptions as NSArray as? [[String: AnyObject]] else {
+            return nil
+        }
+
+        var currentSpaceNumber = "?"
+        var activeSpaces: [String] = []
+        var allSpaces: [(text: String, isActive: Bool)] = []
+
+        var counter = 1
+        for screenDescription in screenDescriptions {
+            guard let currentSpace = screenDescription["Current Space"] as? [String: Any],
+                  let spaces = screenDescription["Spaces"] as? [[String: Any]] else {
+                continue
+            }
+
+            let activeSpaceUUID = currentSpace["uuid"] as? String
+
+            for space in spaces {
+                let isFullscreen = space["TileLayoutManager"] != nil
+                let text = isFullscreen ? "F" : "\(counter)"
+                let isActive = space["uuid"] as? String == activeSpaceUUID
+
+                if isActive {
+                    currentSpaceNumber = text
+                    activeSpaces.append(text)
+                }
+
+                allSpaces.append((text: text, isActive: isActive))
+
+                if !isFullscreen {
+                    counter += 1
+                }
+            }
+        }
+
+        return SpaceInfo(currentSpace: currentSpaceNumber, activeSpaces: activeSpaces, allSpaces: allSpaces)
+    }
+
+    private func createSpaceImage(text: String, isActive: Bool = true) -> NSImage {
+        let rect = NSRect(x: 0, y: 0, width: size.width, height: size.height)
+        let image = NSImage(size: size)
+        let alpha: CGFloat = isActive ? 1.0 : 0.3
+        let color = NSColor.labelColor.withAlphaComponent(alpha)
+        let style = userConfiguration.spaceIndicatorColorStyle()
+
+        if style == .bordered {
+            image.lockFocus()
+            let font = NSFont.boldSystemFont(ofSize: 11)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: color,
+                .paragraphStyle: paragraphStyle
+            ]
+
+            let path = NSBezierPath(roundedRect: rect, xRadius: 2, yRadius: 2)
+            color.set()
+            path.lineWidth = 1.5
+            path.stroke()
+
+            let stringSize = text.size(withAttributes: attributes)
+            let stringRect = NSRect(
+                x: rect.origin.x,
+                y: rect.origin.y + (rect.size.height - stringSize.height) / 2.0,
+                width: rect.size.width,
+                height: stringSize.height
+            )
+            text.draw(in: stringRect, withAttributes: attributes)
+            image.unlockFocus()
+        } else {
+            // Solid style
+            let background = NSImage(size: size)
+            background.lockFocus()
+            color.set()
+            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
+            path.fill()
+            background.unlockFocus()
+
+            let textImage = NSImage(size: size)
+            textImage.lockFocus()
+            let font = NSFont.boldSystemFont(ofSize: 11)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.black, // Color doesn't matter here as we use it as a mask
+                .paragraphStyle: paragraphStyle
+            ]
+            let stringSize = text.size(withAttributes: attributes)
+            let stringRect = NSRect(
+                x: rect.origin.x,
+                y: rect.origin.y + (rect.size.height - stringSize.height) / 2.0,
+                width: rect.size.width,
+                height: stringSize.height
+            )
+            text.draw(in: stringRect, withAttributes: attributes)
+            textImage.unlockFocus()
+
+            image.lockFocus()
+            background.draw(in: rect, from: .zero, operation: .sourceOut, fraction: 1.0)
+            textImage.draw(in: rect, from: .zero, operation: .destinationOut, fraction: 1.0)
+            image.unlockFocus()
+        }
+
+        image.isTemplate = true
+        return image
+    }
+
+    private func combine(images: [NSImage]) -> NSImage {
+        let spacing: CGFloat = 2.0
+        let totalWidth = images.reduce(0) { $0 + $1.size.width } + CGFloat(images.count - 1) * spacing
+        let combinedSize = CGSize(width: totalWidth, height: size.height)
+        let combinedImage = NSImage(size: combinedSize)
+
+        combinedImage.lockFocus()
+        var currentX: CGFloat = 0
+        for image in images {
+            image.draw(at: NSPoint(x: currentX, y: 0), from: .zero, operation: .sourceOver, fraction: 1.0)
+            currentX += image.size.width + spacing
+        }
+        combinedImage.unlockFocus()
+        combinedImage.isTemplate = true
+        return combinedImage
     }
 }

@@ -234,5 +234,8 @@
     "screen-padding-left": 0,
     "screen-padding-right": 0,
     "debug-layout-info": false,
-    "restore-layouts-on-launch": true
+    "restore-layouts-on-launch": true,
+    "show-space-indicator": false,
+    "space-indicator-style": 0,
+    "space-indicator-color-style": 0
 }

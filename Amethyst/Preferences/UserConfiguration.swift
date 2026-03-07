@@ -101,6 +101,20 @@ enum ConfigurationKey: String {
     case restoreLayoutsOnLaunch = "restore-layouts-on-launch"
     case disablePaddingOnBuiltinDisplay = "disable-padding-on-builtin-display"
     case hideMenuBarIcon = "hide-menu-bar-icon"
+    case showSpaceIndicator = "show-space-indicator"
+    case spaceIndicatorStyle = "space-indicator-style"
+    case spaceIndicatorColorStyle = "space-indicator-color-style"
+}
+
+enum SpaceIndicatorStyle: Int {
+    case single = 0
+    case perMonitor = 1
+    case allSpaces = 2
+}
+
+enum SpaceIndicatorColorStyle: Int {
+    case bordered = 0
+    case solid = 1
 }
 
 extension ConfigurationKey: CaseIterable {}
@@ -794,6 +808,32 @@ class UserConfiguration: NSObject {
 
     func hideMenuBarIcon() -> Bool {
         return storage.bool(forKey: .hideMenuBarIcon)
+    }
+
+    func showSpaceIndicator() -> Bool {
+        return storage.bool(forKey: .showSpaceIndicator)
+    }
+
+    func setShowSpaceIndicator(_ show: Bool) {
+        storage.set(show, forKey: .showSpaceIndicator)
+    }
+
+    func spaceIndicatorStyle() -> SpaceIndicatorStyle {
+        let styleInt = storage.object(forKey: .spaceIndicatorStyle) as? Int ?? 0
+        return SpaceIndicatorStyle(rawValue: styleInt) ?? .single
+    }
+
+    func setSpaceIndicatorStyle(_ style: SpaceIndicatorStyle) {
+        storage.set(style.rawValue, forKey: .spaceIndicatorStyle)
+    }
+
+    func spaceIndicatorColorStyle() -> SpaceIndicatorColorStyle {
+        let styleInt = storage.object(forKey: .spaceIndicatorColorStyle) as? Int ?? 0
+        return SpaceIndicatorColorStyle(rawValue: styleInt) ?? .bordered
+    }
+
+    func setSpaceIndicatorColorStyle(_ style: SpaceIndicatorColorStyle) {
+        storage.set(style.rawValue, forKey: .spaceIndicatorColorStyle)
     }
 }
 
