@@ -167,44 +167,7 @@ enum LayoutType<Window: WindowType> {
     }
 
     static func from(key: String) -> LayoutType<Window> {
-        switch key {
-        case "tall":
-            return .tall
-        case "tall-right":
-            return .tallRight
-        case "wide":
-            return .wide
-        case "two-pane":
-            return .twoPane
-        case "two-pane-right":
-            return .twoPaneRight
-        case "3column-left":
-            return .threeColumnLeft
-        case "middle-wide":
-            return .threeColumnMiddle
-        case "3column-right":
-            return .threeColumnRight
-        case "4column-left":
-            return .fourColumnLeft
-        case "4column-right":
-            return .fourColumnRight
-        case "fullscreen":
-            return .fullscreen
-        case "column":
-            return .column
-        case "row":
-            return .row
-        case "floating":
-            return .floating
-        case "widescreen-tall":
-            return .widescreenTallLeft
-        case "widescreen-tall-right":
-            return .widescreenTallRight
-        case "bsp":
-            return .binarySpacePartitioning
-        default:
-            return .custom(key: key)
-        }
+        return standardLayouts.first { $0.key == key } ?? .custom(key: key)
     }
 
     static func layoutForKey(_ layoutKey: String) -> Layout<Window>? {
