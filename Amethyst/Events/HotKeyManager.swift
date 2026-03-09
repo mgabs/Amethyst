@@ -7,6 +7,7 @@
 //
 
 import Carbon
+import Cocoa
 import Foundation
 import Silica
 

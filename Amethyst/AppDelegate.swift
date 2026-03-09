@@ -146,25 +146,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         borderedItem.tag = SpaceIndicatorColorStyle.bordered.rawValue
         borderedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .bordered ? .on : .off
         colorStyleSubmenu.addItem(borderedItem)
-let solidItem = NSMenuItem(title: "Solid", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
-solidItem.target = self
-solidItem.tag = SpaceIndicatorColorStyle.solid.rawValue
-solidItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solid ? .on : .off
-colorStyleSubmenu.addItem(solidItem)
 
-let solidInvertedItem = NSMenuItem(title: "Solid Inverted", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
-solidInvertedItem.target = self
-solidInvertedItem.tag = SpaceIndicatorColorStyle.solidInverted.rawValue
-solidInvertedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solidInverted ? .on : .off
-colorStyleSubmenu.addItem(solidInvertedItem)
+        let solidItem = NSMenuItem(title: "Solid", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+        solidItem.target = self
+        solidItem.tag = SpaceIndicatorColorStyle.solid.rawValue
+        solidItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solid ? .on : .off
+        colorStyleSubmenu.addItem(solidItem)
 
-colorStyleItem.submenu = colorStyleSubmenu
-spaceIndicatorSubmenu.addItem(colorStyleItem)
+        let solidInvertedItem = NSMenuItem(title: "Solid Inverted", action: #selector(setSpaceIndicatorColorStyle(_:)), keyEquivalent: "")
+        solidInvertedItem.target = self
+        solidInvertedItem.tag = SpaceIndicatorColorStyle.solidInverted.rawValue
+        solidInvertedItem.state = UserConfiguration.shared.spaceIndicatorColorStyle() == .solidInverted ? .on : .off
+        colorStyleSubmenu.addItem(solidInvertedItem)
 
-spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
+        colorStyleItem.submenu = colorStyleSubmenu
+        spaceIndicatorSubmenu.addItem(colorStyleItem)
+        spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
 
         // Insert before "Quit"
         menu.insertItem(spaceIndicatorMenuItem, at: menu.numberOfItems - 1)
+
+        // Observe application activation
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: NSWorkspace.didActivateApplicationNotification,
+            object: nil
+        )
 
         // Observe space changes
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -179,14 +187,6 @@ spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
             self,
             selector: #selector(spaceDidChange(_:)),
             name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
-
-        // Observe focus changes
-        NSWorkspace.shared.notificationCenter.addObserver(
-            self,
-            selector: #selector(spaceDidChange(_:)),
-            name: NSWorkspace.didActivateApplicationNotification,
             object: nil
         )
 
@@ -226,8 +226,9 @@ spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
 
         updateSpaceIndicator()
     }
+
     @objc private func spaceDidChange(_ notification: Notification) {
-        // during rapid space switching
+        // Small delay to ensure space info is updated
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.updateSpaceIndicator()
         }
@@ -401,6 +402,7 @@ extension AppDelegate: UserConfigurationDelegate {
         windowManager?.reevaluateWindows()
     }
 }
+
 class SpaceIndicatorManager {
     private let statusItem: NSStatusItem
     private let userConfiguration: UserConfiguration
@@ -424,7 +426,7 @@ class SpaceIndicatorManager {
         switch style {
         case .single:
             let text = getCurrentSpaceNumber()
-            image = createSpaceImage(text: text, isFocused: true)
+            image = createSpaceImage(text: text, isActive: true, isFocused: true)
         case .perMonitor:
             image = createPerMonitorImage()
         case .allSpaces:
@@ -440,13 +442,13 @@ class SpaceIndicatorManager {
     }
 
     private func createPerMonitorImage() -> NSImage {
-        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isFocused: true) }
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isActive: true, isFocused: true) }
         let images = info.activeSpaces.map { createSpaceImage(text: $0.text, isActive: true, isFocused: $0.isFocused) }
         return combine(images: images)
     }
 
     private func createAllSpacesImage() -> NSImage {
-        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isFocused: true) }
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isActive: true, isFocused: true) }
         let images = info.allSpaces.map { createSpaceImage(text: $0.text, isActive: $0.isActive, isFocused: $0.isFocused) }
         return combine(images: images)
     }
@@ -505,12 +507,20 @@ class SpaceIndicatorManager {
         return SpaceInfo(currentSpace: currentSpaceNumber, activeSpaces: activeSpaces, allSpaces: allSpaces)
     }
 
-    private func createSpaceImage(text: String, isActive: Bool = true, isFocused: Bool = false) -> NSImage {
+    func createSpaceImage(text: String, isActive: Bool, isFocused: Bool) -> NSImage {
         let rect = NSRect(x: 0, y: 0, width: size.width, height: size.height)
         let image = NSImage(size: size)
 
-        let alpha: CGFloat = isActive ? 1.0 : 0.3
-        let colorStyle = userConfiguration.spaceIndicatorColorStyle()
+        let alpha: CGFloat
+        if isFocused {
+            alpha = 1.0
+        } else if isActive {
+            alpha = 0.5
+        } else {
+            alpha = 0.2
+        }
+
+        let style = userConfiguration.spaceIndicatorColorStyle()
 
         image.lockFocus()
 
@@ -527,14 +537,13 @@ class SpaceIndicatorManager {
             attributes[.underlineStyle] = NSUnderlineStyle.thick.rawValue
         }
 
-        switch colorStyle {
-        case .bordered:
+        if style == .bordered {
             let color = NSColor.labelColor.withAlphaComponent(alpha)
             attributes[.foregroundColor] = color
 
             let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 2, yRadius: 2)
             color.set()
-            path.lineWidth = 1.0
+            path.lineWidth = 1.5
             path.stroke()
 
             let stringSize = text.size(withAttributes: attributes)
@@ -545,14 +554,14 @@ class SpaceIndicatorManager {
                 height: stringSize.height
             )
             text.draw(in: stringRect, withAttributes: attributes)
-
-        case .solid:
-            let color = NSColor.labelColor.withAlphaComponent(alpha)
+        } else if style == .solid {
+            // White background, Black text
+            let bgColor = NSColor.white.withAlphaComponent(alpha)
+            bgColor.set()
             let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
-            color.set()
             path.fill()
 
-            attributes[.foregroundColor] = NSColor.controlBackgroundColor // Use a contrasting color for text
+            attributes[.foregroundColor] = NSColor.black.withAlphaComponent(alpha)
 
             let stringSize = text.size(withAttributes: attributes)
             let stringRect = NSRect(
@@ -562,16 +571,14 @@ class SpaceIndicatorManager {
                 height: stringSize.height
             )
             text.draw(in: stringRect, withAttributes: attributes)
-
-        case .solidInverted:
+        } else if style == .solidInverted {
+            // Black background, White text
             let bgColor = NSColor.black.withAlphaComponent(alpha)
-            let textColor = NSColor.white.withAlphaComponent(alpha)
-
-            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
             bgColor.set()
+            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
             path.fill()
 
-            attributes[.foregroundColor] = textColor
+            attributes[.foregroundColor] = NSColor.white.withAlphaComponent(alpha)
 
             let stringSize = text.size(withAttributes: attributes)
             let stringRect = NSRect(
@@ -584,11 +591,11 @@ class SpaceIndicatorManager {
         }
 
         image.unlockFocus()
-        image.isTemplate = (colorStyle != .solidInverted)
+        image.isTemplate = (style == .bordered)
         return image
     }
 
-    private func combine(images: [NSImage]) -> NSImage {
+    func combine(images: [NSImage]) -> NSImage {
         let spacing: CGFloat = 2.0
         let totalWidth = images.reduce(0) { $0 + $1.size.width } + CGFloat(images.count - 1) * spacing
         let combinedSize = CGSize(width: totalWidth, height: size.height)
