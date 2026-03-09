@@ -277,9 +277,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        // TODO: fix mff
-//        let mouseFollowsFocus = userConfiguration.mouseFollowsFocus()
-
         let batchOperation = BlockOperation {
             DispatchQueue.main.sync {
                 for assignment in frameAssignments {
@@ -298,12 +295,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
             DispatchQueue.main.async {
                 self?.delegate?.onReflowCompletion()
-                // TODO: fix mff
-//                if mouseFollowsFocus {
-//                    if case .windowSwap(let window, _) = event {
-//                        window.focus()
-//                    }
-//                }
             }
         }
 
@@ -432,12 +423,11 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         // Use new displayNotification method with dynamic sizing
         layoutNameWindow.displayNotification(title: title, description: description)
 
-        // Center the window after resizing
-        let screenFrame = screen.frame()
-        let screenCenter = CGPoint(x: screenFrame.midX, y: screenFrame.midY)
+        // Move the window to the bottom of the screen
+        let screenFrame = screen.frameWithoutDockOrMenu()
         let windowOrigin = CGPoint(
-            x: screenCenter.x - layoutNameWindow.frame.width / 2.0,
-            y: screenCenter.y - layoutNameWindow.frame.height / 2.0
+            x: screenFrame.midX - layoutNameWindow.frame.width / 2.0,
+            y: screenFrame.origin.y + 40
         )
         layoutNameWindow.setFrameOrigin(NSPointFromCGPoint(windowOrigin))
 

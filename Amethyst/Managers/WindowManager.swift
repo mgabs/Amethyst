@@ -310,8 +310,15 @@ extension WindowManager {
         log.debug("Removing window: \(window)")
         pendingTabDetection.removeValue(forKey: window.id())
         earlyFocusedWindows.remove(window.id())
-        distributeEventToAllScreens(.remove(window: window))
-        markAllScreensForReflow()
+
+        if let screen = window.screen() {
+            distributeEventToScreen(screen, change: .remove(window: window))
+            markScreenForReflow(screen)
+        } else {
+            distributeEventToAllScreens(.remove(window: window))
+            markAllScreensForReflow()
+        }
+
         windows.regenerateActiveIDCache()
         windows.remove(window: window)
     }
@@ -927,11 +934,12 @@ extension WindowManager: WindowTransitionTarget {
         case let .moveWindowToScreen(window, screen):
             let currentScreen = window.screen()
             window.moveScaled(to: screen)
-            if currentScreen != nil {
-                distributeEventToScreen(screen, change: .remove(window: window))
-                markScreenForReflow(screen)
+            if let currentScreen = currentScreen {
+                distributeEventToScreen(currentScreen, change: .remove(window: window))
+                markScreenForReflow(currentScreen)
             }
             distributeEventToScreen(screen, change: .add(window: window))
+            markScreenForReflow(screen)
             window.focus()
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
             guard
@@ -950,6 +958,7 @@ extension WindowManager: WindowTransitionTarget {
                 return
             }
             distributeEventToScreen(screen, change: .remove(window: window))
+            markScreenForReflow(screen)
             eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
             window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
             if targetScreen.screenID() != screen.screenID() {

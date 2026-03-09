@@ -19,7 +19,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane mac
 ```
 
-
+Build Amethyst for release with signing
 
 ### local
 
@@ -44,6 +44,22 @@ Build a local release (optimized) version of Amethyst without code signing
 ```
 
 Run tests
+
+### lint
+
+```sh
+[bundle exec] fastlane lint
+```
+
+Check for style violations
+
+### clean
+
+```sh
+[bundle exec] fastlane clean
+```
+
+Clean up build artifacts and derived data
 
 ----
 

@@ -1,0 +1,10 @@
+# This file contains the scan configuration
+# You can find the documentation at https://docs.fastlane.tools/actions/scan/
+
+workspace("./Amethyst.xcworkspace")
+scheme("Amethyst")
+clean(true)
+output_directory("./fastlane/test_output")
+derived_data_path("./build/derived_data")
+# Code signing is usually disabled for tests to avoid signing issues in CI
+xcargs("CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO")

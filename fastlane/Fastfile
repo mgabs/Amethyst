@@ -10,47 +10,99 @@
 #     https://docs.fastlane.tools/plugins/available-plugins
 #
 
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
 default_platform(:mac)
 
+# Build directories
+BUILD_DIR = "./build"
+ARTIFACTS_DIR = "#{BUILD_DIR}/artifacts"
+DERIVED_DATA_DIR = "#{BUILD_DIR}/derived_data"
+ARCHIVE_DIR = "#{BUILD_DIR}/archive"
+
+# Helper to get formatted version string
+def get_version_identifier
+  # For macOS with modern project settings (MARKETING_VERSION)
+  version = get_version_number(xcodeproj: "Amethyst.xcodeproj")
+  build = get_build_number(xcodeproj: "Amethyst.xcodeproj")
+  "v#{version}-b#{build}"
+end
+
+before_all do
+  # Ensure clean state for fresh builds
+  clear_derived_data(derived_data_path: DERIVED_DATA_DIR) if is_ci
+  sh("mkdir -p #{ARTIFACTS_DIR}")
+end
+
+desc "Build Amethyst for release with signing"
 lane :mac do
-  sh("xcodebuild -workspace ../Amethyst.xcworkspace -scheme Amethyst -destination 'generic/platform=macOS' -archivePath ../build/Amethyst.xcarchive DEVELOPMENT_TEAM='7X39ZNJZMN' archive | xcbeautify")
-  sh("cp -r ../build/Amethyst.xcarchive/Products/Applications/Amethyst.app ../build/Amethyst.app")
-  sh("cd ../build && zip -r Amethyst.zip Amethyst.app")
+  build_app(
+    workspace: "./Amethyst.xcworkspace",
+    scheme: "Amethyst",
+    clean: true,
+    output_directory: ARTIFACTS_DIR,
+    archive_path: "#{ARCHIVE_DIR}/Amethyst.xcarchive",
+    export_method: "mac-application",
+    xcargs: "DEVELOPMENT_TEAM='7X39ZNJZMN'"
+  )
+
+  id = get_version_identifier
+  zip(
+    path: "#{ARTIFACTS_DIR}/Amethyst.app",
+    output_path: "#{ARTIFACTS_DIR}/Amethyst-#{id}.zip"
+  )
+
+  # Zip dSYMs for debugging
+  if File.directory?("#{ARTIFACTS_DIR}/Amethyst.app.dSYM")
+    zip(
+      path: "#{ARTIFACTS_DIR}/Amethyst.app.dSYM",
+      output_path: "#{ARTIFACTS_DIR}/Amethyst-#{id}.dSYM.zip"
+    )
+  end
 end
 
 desc "Build a local debug version of Amethyst without code signing"
 lane :local do
-    xcodebuild(
-        workspace: "Amethyst.xcworkspace",
-        scheme: "Amethyst",
-        configuration: "Debug",
-        clean: true,
-        build: true,
-        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
-    )
+  build_app(
+    workspace: "./Amethyst.xcworkspace",
+    scheme: "Amethyst",
+    configuration: "Debug",
+    clean: true,
+    output_directory: ARTIFACTS_DIR,
+    output_name: "Amethyst-Debug",
+    derived_data_path: DERIVED_DATA_DIR,
+    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+    export_method: "mac-application"
+  )
 end
 
 desc "Build a local release (optimized) version of Amethyst without code signing"
 lane :local_release do
-    xcodebuild(
-        workspace: "Amethyst.xcworkspace",
-        scheme: "Amethyst",
-        configuration: "Release",
-        clean: true,
-        build: true,
-        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
-    )
+  build_app(
+    workspace: "./Amethyst.xcworkspace",
+    scheme: "Amethyst",
+    configuration: "Release",
+    clean: true,
+    output_directory: ARTIFACTS_DIR,
+    output_name: "Amethyst-Local-Release",
+    derived_data_path: DERIVED_DATA_DIR,
+    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+    export_method: "mac-application"
+  )
 end
 
 desc "Run tests"
 lane :test do
-    run_tests(
-        workspace: "Amethyst.xcworkspace",
-        scheme: "Amethyst",
-        clean: true,
-        xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO"
-    )
+  run_tests
+end
+
+desc "Check for style violations"
+lane :lint do
+  swiftlint(
+    mode: :lint,
+    executable: "swiftlint"
+  )
+end
+
+desc "Clean up build artifacts and derived data"
+lane :clean do
+  sh("rm -rf #{BUILD_DIR}")
 end

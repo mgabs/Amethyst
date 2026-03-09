@@ -103,7 +103,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupSpaceIndicator() {
         guard let statusItem = statusItem, let menu = statusItemMenu else { return }
 
-        spaceIndicatorManager = SpaceIndicatorManager(statusItem: statusItem, userConfiguration: UserConfiguration.shared)
+        spaceIndicatorManager = SpaceIndicatorManager(statusItem: statusItem, userConfiguration: UserConfiguration.shared) { [weak self] in
+            return self?.windowManager?.focusedScreenManager()?.screen?.screenID()
+        }
 
         let spaceIndicatorMenuItem = NSMenuItem(title: "Space Indicator", action: nil, keyEquivalent: "")
         let spaceIndicatorSubmenu = NSMenu()
@@ -158,7 +160,8 @@ colorStyleSubmenu.addItem(solidInvertedItem)
 
 colorStyleItem.submenu = colorStyleSubmenu
 spaceIndicatorSubmenu.addItem(colorStyleItem)
-        spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
+
+spaceIndicatorMenuItem.submenu = spaceIndicatorSubmenu
 
         // Insert before "Quit"
         menu.insertItem(spaceIndicatorMenuItem, at: menu.numberOfItems - 1)
@@ -176,6 +179,14 @@ spaceIndicatorSubmenu.addItem(colorStyleItem)
             self,
             selector: #selector(spaceDidChange(_:)),
             name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+
+        // Observe focus changes
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: NSWorkspace.didActivateApplicationNotification,
             object: nil
         )
 
@@ -216,7 +227,7 @@ spaceIndicatorSubmenu.addItem(colorStyleItem)
         updateSpaceIndicator()
     }
     @objc private func spaceDidChange(_ notification: Notification) {
-        // Small delay to ensure space info is updated
+        // during rapid space switching
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.updateSpaceIndicator()
         }
@@ -393,11 +404,13 @@ extension AppDelegate: UserConfigurationDelegate {
 class SpaceIndicatorManager {
     private let statusItem: NSStatusItem
     private let userConfiguration: UserConfiguration
+    private let focusedScreenProvider: () -> String?
     private let size = CGSize(width: 16, height: 16)
 
-    init(statusItem: NSStatusItem, userConfiguration: UserConfiguration) {
+    init(statusItem: NSStatusItem, userConfiguration: UserConfiguration, focusedScreenProvider: @escaping () -> String?) {
         self.statusItem = statusItem
         self.userConfiguration = userConfiguration
+        self.focusedScreenProvider = focusedScreenProvider
     }
 
     func update() {
@@ -411,7 +424,7 @@ class SpaceIndicatorManager {
         switch style {
         case .single:
             let text = getCurrentSpaceNumber()
-            image = createSpaceImage(text: text)
+            image = createSpaceImage(text: text, isFocused: true)
         case .perMonitor:
             image = createPerMonitorImage()
         case .allSpaces:
@@ -427,21 +440,21 @@ class SpaceIndicatorManager {
     }
 
     private func createPerMonitorImage() -> NSImage {
-        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?") }
-        let images = info.activeSpaces.map { createSpaceImage(text: $0) }
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isFocused: true) }
+        let images = info.activeSpaces.map { createSpaceImage(text: $0.text, isActive: true, isFocused: $0.isFocused) }
         return combine(images: images)
     }
 
     private func createAllSpacesImage() -> NSImage {
-        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?") }
-        let images = info.allSpaces.map { createSpaceImage(text: $0.text, isActive: $0.isActive) }
+        guard let info = getSpaceInfo() else { return createSpaceImage(text: "?", isFocused: true) }
+        let images = info.allSpaces.map { createSpaceImage(text: $0.text, isActive: $0.isActive, isFocused: $0.isFocused) }
         return combine(images: images)
     }
 
     private struct SpaceInfo {
         let currentSpace: String
-        let activeSpaces: [String]
-        let allSpaces: [(text: String, isActive: Bool)]
+        let activeSpaces: [(text: String, isFocused: Bool)]
+        let allSpaces: [(text: String, isActive: Bool, isFocused: Bool)]
     }
 
     private func getSpaceInfo() -> SpaceInfo? {
@@ -452,9 +465,10 @@ class SpaceIndicatorManager {
             return nil
         }
 
+        let mainScreenID = focusedScreenProvider()
         var currentSpaceNumber = "?"
-        var activeSpaces: [String] = []
-        var allSpaces: [(text: String, isActive: Bool)] = []
+        var activeSpaces: [(text: String, isFocused: Bool)] = []
+        var allSpaces: [(text: String, isActive: Bool, isFocused: Bool)] = []
 
         var counter = 1
         for screenDescription in screenDescriptions {
@@ -463,19 +477,24 @@ class SpaceIndicatorManager {
                 continue
             }
 
+            let screenID = screenDescription["Display Identifier"] as? String
+            let isFocusedScreen = (screenID == mainScreenID)
             let activeSpaceUUID = currentSpace["uuid"] as? String
 
             for space in spaces {
                 let isFullscreen = space["TileLayoutManager"] != nil
                 let text = isFullscreen ? "F" : "\(counter)"
                 let isActive = space["uuid"] as? String == activeSpaceUUID
+                let isFocused = isActive && isFocusedScreen
 
                 if isActive {
-                    currentSpaceNumber = text
-                    activeSpaces.append(text)
+                    activeSpaces.append((text: text, isFocused: isFocused))
+                    if isFocusedScreen {
+                        currentSpaceNumber = text
+                    }
                 }
 
-                allSpaces.append((text: text, isActive: isActive))
+                allSpaces.append((text: text, isActive: isActive, isFocused: isFocused))
 
                 if !isFullscreen {
                     counter += 1
@@ -486,28 +505,36 @@ class SpaceIndicatorManager {
         return SpaceInfo(currentSpace: currentSpaceNumber, activeSpaces: activeSpaces, allSpaces: allSpaces)
     }
 
-    private func createSpaceImage(text: String, isActive: Bool = true) -> NSImage {
+    private func createSpaceImage(text: String, isActive: Bool = true, isFocused: Bool = false) -> NSImage {
         let rect = NSRect(x: 0, y: 0, width: size.width, height: size.height)
         let image = NSImage(size: size)
+
         let alpha: CGFloat = isActive ? 1.0 : 0.3
-        let color = NSColor.labelColor.withAlphaComponent(alpha)
-        let style = userConfiguration.spaceIndicatorColorStyle()
+        let colorStyle = userConfiguration.spaceIndicatorColorStyle()
 
-        if style == .bordered {
-            image.lockFocus()
-            let font = NSFont.boldSystemFont(ofSize: 11)
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
+        image.lockFocus()
 
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: color,
-                .paragraphStyle: paragraphStyle
-            ]
+        let font = NSFont.boldSystemFont(ofSize: 11)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
 
-            let path = NSBezierPath(roundedRect: rect, xRadius: 2, yRadius: 2)
+        var attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        if isFocused {
+            attributes[.underlineStyle] = NSUnderlineStyle.thick.rawValue
+        }
+
+        switch colorStyle {
+        case .bordered:
+            let color = NSColor.labelColor.withAlphaComponent(alpha)
+            attributes[.foregroundColor] = color
+
+            let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 2, yRadius: 2)
             color.set()
-            path.lineWidth = 1.5
+            path.lineWidth = 1.0
             path.stroke()
 
             let stringSize = text.size(withAttributes: attributes)
@@ -518,26 +545,15 @@ class SpaceIndicatorManager {
                 height: stringSize.height
             )
             text.draw(in: stringRect, withAttributes: attributes)
-            image.unlockFocus()
-        } else if style == .solid {
-            // Solid style
-            let background = NSImage(size: size)
-            background.lockFocus()
+
+        case .solid:
+            let color = NSColor.labelColor.withAlphaComponent(alpha)
+            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
             color.set()
-            let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
             path.fill()
-            background.unlockFocus()
 
-            let textImage = NSImage(size: size)
-            textImage.lockFocus()
-            let font = NSFont.boldSystemFont(ofSize: 11)
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor.black, // Color doesn't matter here as we use it as a mask
-                .paragraphStyle: paragraphStyle
-            ]
+            attributes[.foregroundColor] = NSColor.controlBackgroundColor // Use a contrasting color for text
+
             let stringSize = text.size(withAttributes: attributes)
             let stringRect = NSRect(
                 x: rect.origin.x,
@@ -546,32 +562,17 @@ class SpaceIndicatorManager {
                 height: stringSize.height
             )
             text.draw(in: stringRect, withAttributes: attributes)
-            textImage.unlockFocus()
 
-            image.lockFocus()
-            background.draw(in: rect, from: .zero, operation: .sourceOut, fraction: 1.0)
-            textImage.draw(in: rect, from: .zero, operation: .destinationOut, fraction: 1.0)
-            image.unlockFocus()
-        } else if style == .solidInverted {
-            // Solid Inverted style (Black background, White number)
-            // We use fixed colors and isTemplate = false to ensure it always looks the same
-            image.lockFocus()
-
-            // Draw black background
+        case .solidInverted:
             let bgColor = NSColor.black.withAlphaComponent(alpha)
-            bgColor.set()
+            let textColor = NSColor.white.withAlphaComponent(alpha)
+
             let path = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
+            bgColor.set()
             path.fill()
 
-            // Draw white text
-            let font = NSFont.boldSystemFont(ofSize: 11)
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor.white.withAlphaComponent(alpha),
-                .paragraphStyle: paragraphStyle
-            ]
+            attributes[.foregroundColor] = textColor
+
             let stringSize = text.size(withAttributes: attributes)
             let stringRect = NSRect(
                 x: rect.origin.x,
@@ -580,13 +581,10 @@ class SpaceIndicatorManager {
                 height: stringSize.height
             )
             text.draw(in: stringRect, withAttributes: attributes)
-
-            image.unlockFocus()
-            image.isTemplate = false
-            return image
         }
 
-        image.isTemplate = true
+        image.unlockFocus()
+        image.isTemplate = (colorStyle != .solidInverted)
         return image
     }
 
@@ -604,7 +602,6 @@ class SpaceIndicatorManager {
         }
         combinedImage.unlockFocus()
 
-        // Only mark as template if ALL source images are templates
         combinedImage.isTemplate = images.allSatisfy { $0.isTemplate }
         return combinedImage
     }
