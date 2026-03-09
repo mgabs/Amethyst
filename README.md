@@ -228,7 +228,33 @@ Amethyst supports configuration via YAML in the home directory. See [Configurati
 
 ## Building Amethyst Locally
 
-If you would like to test your changes locally, Amethyst can be built using [`fastlane`](https://github.com/fastlane/fastlane). Just run the command `fastlane` in the root folder, and the app will be available at `./build/Amethyst.app`. (You may need to provision the app under "Signing & Capabilities" in XCode first.)
+### Prerequisites
+
+```bash
+brew bundle         # Installs fastlane, xcbeautify, swiftlint
+bundle install      # Pins fastlane version via Bundler
+```
+
+### Build Commands
+
+```bash
+bundle exec fastlane local           # Debug build (no code signing)
+bundle exec fastlane local_release   # Optimized release build (no code signing)
+bundle exec fastlane mac             # Signed release build (requires certificate)
+bundle exec fastlane test            # Run test suite
+bundle exec fastlane lint            # SwiftLint check
+bundle exec fastlane clean           # Remove build artifacts
+```
+
+The built app will be available at `./build/artifacts/Amethyst.app`.
+
+### CI/CD
+
+GitHub Actions workflows run automatically:
+
+- **Build** — on push to `development`/`master` and PRs
+- **Tests** — on push to `development` and PRs
+- **Release** — on tag push (`v*`) or manual dispatch; creates a GitHub Release with signed app + dSYMs
 
 ## Contributing
 

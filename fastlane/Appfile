@@ -1,5 +1,5 @@
 app_identifier("com.amethyst.Amethyst") # The bundle identifier of your app
-apple_id(ENV["APPLE_ID"]) # Your Apple email address
+apple_id(ENV["APPLE_ID"]) # Your Apple email address (fallback; prefer ASC API key on CI)
 
 team_id("7X39ZNJZMN") # Developer Portal Team ID
 

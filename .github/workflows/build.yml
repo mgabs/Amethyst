@@ -14,9 +14,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
       - name: Install Dependencies
         run: |
           brew bundle
 
       - name: Build (Release)
-        run: fastlane local_release
+        run: bundle exec fastlane local_release

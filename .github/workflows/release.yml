@@ -15,6 +15,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
       - name: Install Dependencies
         run: |
           brew bundle
@@ -26,11 +32,13 @@ jobs:
           p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
 
       - name: Build Signed App
-        run: fastlane mac
+        run: bundle exec fastlane mac
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/Amethyst.zip
+          files: |
+            build/artifacts/Amethyst-*.zip
+            build/artifacts/Amethyst-*.dSYM.zip
           generate_release_notes: true
