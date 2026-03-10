@@ -198,6 +198,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe window moves to different spaces/screens
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: .windowDidMoveToSpace,
+            object: nil
+        )
+
         DispatchQueue.main.async { [weak self] in
             self?.updateSpaceIndicator()
         }

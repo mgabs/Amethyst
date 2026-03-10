@@ -788,6 +788,7 @@ extension WindowManager: MouseStateKeeperDelegate {
 
 extension Notification.Name {
     static let focusedScreenDidChange = Notification.Name("focusedScreenDidChangeNotification")
+    static let windowDidMoveToSpace = Notification.Name("windowDidMoveToSpaceNotification")
 }
 
 // MARK: ApplicationObservationDelegate
@@ -937,6 +938,7 @@ extension WindowManager: WindowTransitionTarget {
             distributeEventToScreen(screen, change: .add(window: window))
             markScreenForReflow(screen)
             window.focus()
+            NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
             guard
                 let screen = window.screen(),
@@ -968,6 +970,7 @@ extension WindowManager: WindowTransitionTarget {
                 } else {
                     SISystemWideElement.switch(toSpace: UInt(sourceSpaceIndex + 1))
                 }
+                NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
             }
         case .resetFocus:
             if let screen = screens.screenManagers.first?.screen {
