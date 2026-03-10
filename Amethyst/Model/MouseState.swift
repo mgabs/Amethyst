@@ -122,4 +122,35 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     func swapDraggedWindowWithDropzone(_ draggedWindow: Delegate.Window) {
         delegate?.swapDraggedWindowWithDropzone(draggedWindow)
     }
+
+    func handleWindowMove(window: Delegate.Window, lastReflowTime: Date) {
+        switch state {
+        case .dragging:
+            let reflowEndInterval = Date().timeIntervalSince(lastReflowTime)
+            guard reflowEndInterval > dragRaceThresholdSeconds else { break }
+            state = .moving(window: window)
+        case let .doneDragging(lmbUpMoment):
+            state = .pointing
+            let dragEndInterval = Date().timeIntervalSince(lmbUpMoment)
+            guard dragEndInterval < dragRaceThresholdSeconds else { break }
+            swapDraggedWindowWithDropzone(window)
+        default:
+            break
+        }
+    }
+
+    func handleWindowResize(screen: Delegate.Window.Screen, ratio: CGFloat) {
+        switch state {
+        case .dragging, .resizing:
+            state = .resizing(screen: screen, ratio: ratio)
+        case let .doneDragging(lmbUpMoment):
+            let dragEndInterval = Date().timeIntervalSince(lmbUpMoment)
+            if dragEndInterval < dragRaceThresholdSeconds {
+                state = .pointing
+                resizeFrameToDraggedWindowBorder(ratio)
+            }
+        default:
+            break
+        }
+    }
 }

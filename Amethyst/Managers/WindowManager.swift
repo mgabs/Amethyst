@@ -72,6 +72,8 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
     private lazy var applicationEventHandler = ApplicationEventHandler(delegate: self)
     private let userConfiguration: UserConfiguration
     private let disposeBag = DisposeBag()
+    private let windowMovedSubject = PublishSubject<Window>()
+    private let windowResizedSubject = PublishSubject<Window>()
 
     init(userConfiguration: UserConfiguration) {
         self.userConfiguration = userConfiguration
@@ -108,6 +110,20 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         )
 
         installApplicationMonitor()
+
+        windowMovedSubject
+            .throttle(.milliseconds(50), latest: true, scheduler: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] window in
+                self?.handleWindowMove(window: window)
+            })
+            .disposed(by: disposeBag)
+
+        windowResizedSubject
+            .throttle(.milliseconds(50), latest: true, scheduler: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] window in
+                self?.handleWindowResize(window: window)
+            })
+            .disposed(by: disposeBag)
 
         reevaluateWindows()
         screens.updateScreens(windowManager: self)
@@ -812,6 +828,14 @@ extension WindowManager: ApplicationObservationDelegate {
     }
 
     func application(_ application: AnyApplication<Application>, didMoveWindow window: Window) {
+        windowMovedSubject.onNext(window)
+    }
+
+    func application(_ application: AnyApplication<Application>, didResizeWindow window: Window) {
+        windowResizedSubject.onNext(window)
+    }
+
+    func handleWindowMove(window: Window) {
         guard userConfiguration.mouseSwapsWindows() else {
             return
         }
@@ -820,28 +844,10 @@ extension WindowManager: ApplicationObservationDelegate {
             return
         }
 
-        switch mouseStateKeeper.state {
-        case .dragging:
-            // be aware of last reflow time, again to prevent race condition
-            let reflowEndInterval = Date().timeIntervalSince(lastReflowTime)
-            guard reflowEndInterval > mouseStateKeeper.dragRaceThresholdSeconds else { break }
-
-            // record window and wait for mouse up
-            mouseStateKeeper.state = .moving(window: window)
-        case let .doneDragging(lmbUpMoment):
-            mouseStateKeeper.state = .pointing // flip state first to prevent race condition
-
-            // if mouse button recently came up, assume window move is related
-            let dragEndInterval = Date().timeIntervalSince(lmbUpMoment)
-            guard dragEndInterval < mouseStateKeeper.dragRaceThresholdSeconds else { break }
-
-            mouseStateKeeper.swapDraggedWindowWithDropzone(window)
-        default:
-            break
-        }
+        mouseStateKeeper.handleWindowMove(window: window, lastReflowTime: lastReflowTime)
     }
 
-    func application(_ application: AnyApplication<Application>, didResizeWindow window: Window) {
+    func handleWindowResize(window: Window) {
         guard userConfiguration.mouseResizesWindows() else {
             return
         }
@@ -864,27 +870,7 @@ extension WindowManager: ApplicationObservationDelegate {
 
         let ratio = oldFrame.impliedMainPaneRatio(windowFrame: window.frame())
 
-        switch mouseStateKeeper.state {
-        case .dragging, .resizing:
-            // record window and wait for mouse up
-            mouseStateKeeper.state = .resizing(screen: screen, ratio: ratio)
-        case let .doneDragging(lmbUpMoment):
-            // if mouse button recently came up, assume window resize is related
-            let dragEndInterval = Date().timeIntervalSince(lmbUpMoment)
-            if dragEndInterval < mouseStateKeeper.dragRaceThresholdSeconds {
-                mouseStateKeeper.state = .pointing // flip state first to prevent race condition
-
-                if let screenManager: ScreenManager<WindowManager<Application>> = focusedScreenManager() {
-                    screenManager.updateCurrentLayout { layout in
-                        if let panedLayout = layout as? PanedLayout {
-                            panedLayout.recommendMainPaneRatio(ratio)
-                        }
-                    }
-                }
-            }
-        default:
-            break
-        }
+        mouseStateKeeper.handleWindowResize(screen: screen, ratio: ratio)
     }
 
     func applicationDidActivate(_ application: AnyApplication<Application>) {

@@ -361,14 +361,32 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         guard let panedLayout = currentLayout as? PanedLayout else {
             return
         }
-        panedLayout.shrinkMainPane()
+
+        if let screen = screen,
+           let window = Window.currentlyFocused(),
+           let windowSet = delegate?.activeWindowSet(forScreenManager: self),
+           let frame = currentLayout?.assignedFrame(window, of: windowSet, on: screen),
+           !frame.resizeRules.isMain {
+            panedLayout.expandMainPane()
+        } else {
+            panedLayout.shrinkMainPane()
+        }
     }
 
     func expandMainPane() {
         guard let panedLayout = currentLayout as? PanedLayout else {
             return
         }
-        panedLayout.expandMainPane()
+
+        if let screen = screen,
+           let window = Window.currentlyFocused(),
+           let windowSet = delegate?.activeWindowSet(forScreenManager: self),
+           let frame = currentLayout?.assignedFrame(window, of: windowSet, on: screen),
+           !frame.resizeRules.isMain {
+            panedLayout.shrinkMainPane()
+        } else {
+            panedLayout.expandMainPane()
+        }
     }
 
     func nextWindowIDCounterClockwise() -> Window.WindowID? {
