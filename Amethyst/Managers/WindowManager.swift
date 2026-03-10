@@ -786,6 +786,10 @@ extension WindowManager: MouseStateKeeperDelegate {
     }
 }
 
+extension Notification.Name {
+    static let focusedScreenDidChange = Notification.Name("focusedScreenDidChangeNotification")
+}
+
 // MARK: ApplicationObservationDelegate
 extension WindowManager: ApplicationObservationDelegate {
     func application(_ application: AnyApplication<Application>, didAddWindow window: Window) {
@@ -801,6 +805,8 @@ extension WindowManager: ApplicationObservationDelegate {
             return
         }
 
+        let previousScreen = Window.currentlyFocused()?.screen()
+
         lastFocusDate = Date()
 
         if pendingTabDetection.removeValue(forKey: window.id()) != nil {
@@ -814,6 +820,10 @@ extension WindowManager: ApplicationObservationDelegate {
             // rather than deferring to a focus event that has already passed.
             log.debug("Focused untracked window before creation notification - recording early focus: \(window)")
             earlyFocusedWindows.insert(window.id())
+        }
+
+        if previousScreen?.screenID() != screen.screenID() {
+            NotificationCenter.default.post(name: .focusedScreenDidChange, object: nil)
         }
 
 //        doMouseFollowsFocus(focusedWindow: window)

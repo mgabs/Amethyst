@@ -190,6 +190,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe screen focus changes (custom notification from WindowManager)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: .focusedScreenDidChange,
+            object: nil
+        )
+
         DispatchQueue.main.async { [weak self] in
             self?.updateSpaceIndicator()
         }
