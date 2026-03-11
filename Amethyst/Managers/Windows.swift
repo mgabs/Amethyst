@@ -58,6 +58,28 @@ extension WindowManager {
             return screenWindows
         }
 
+        func activeWindows(onScreen screen: Screen, onSpace spaceID: CGSSpaceID) -> [Window] {
+            guard let screenID = screen.screenID() else {
+                return []
+            }
+
+            let screenWindows = windows.filter { window in
+                let space = CGWindowsInfo.windowSpace(window)
+
+                guard let windowScreen = window.screen(), spaceID == space else {
+                    return false
+                }
+
+                let isActive = self.isWindowActive(window)
+                let isHidden = self.isWindowHidden(window)
+                let isFloating = self.isWindowFloating(window)
+
+                return windowScreen.screenID() == screenID && isActive && !isHidden && !isFloating
+            }
+
+            return screenWindows
+        }
+
         func activeWindowOnCurrentScreen(atIndex: Int) -> Window? {
             guard let focusedWindow = Window.currentlyFocused(),
                   let currentScreen = focusedWindow.screen() else {

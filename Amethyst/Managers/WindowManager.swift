@@ -789,6 +789,7 @@ extension WindowManager: MouseStateKeeperDelegate {
 extension Notification.Name {
     static let focusedScreenDidChange = Notification.Name("focusedScreenDidChangeNotification")
     static let windowDidMoveToSpace = Notification.Name("windowDidMoveToSpaceNotification")
+    static let layoutDidChange = Notification.Name("layoutDidChangeNotification")
 }
 
 // MARK: ApplicationObservationDelegate
@@ -933,6 +934,7 @@ extension WindowManager: WindowTransitionTarget {
             markAllScreensForReflow()
         case let .moveWindowToScreen(window, screen):
             let currentScreen = window.screen()
+            let destinationWindows = activeWindows(on: screen)
             window.moveScaled(to: screen)
             if let currentScreen = currentScreen {
                 distributeEventToScreen(currentScreen, change: .remove(window: window))
@@ -940,7 +942,11 @@ extension WindowManager: WindowTransitionTarget {
             }
             distributeEventToScreen(screen, change: .add(window: window))
             if let screenManager = screenManager(for: screen) {
-                screenManager.resetLayout()
+                if !destinationWindows.isEmpty {
+                    screenManager.resetLayout()
+                } else {
+                    markScreenForReflow(screen)
+                }
             } else {
                 markScreenForReflow(screen)
             }
@@ -962,12 +968,17 @@ extension WindowManager: WindowTransitionTarget {
             guard let targetScreen = CGSpacesInfo<Window>.screenForSpace(space: targetSpace) else {
                 return
             }
+
+            let destinationWindows = activeWindows(on: targetScreen, onSpace: targetSpace)
+
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
             eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
             window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
             if let targetScreenManager = screenManager(for: targetScreen) {
-                targetScreenManager.resetLayout(for: targetSpace)
+                if !destinationWindows.isEmpty {
+                    targetScreenManager.resetLayout(for: targetSpace)
+                }
             }
             if targetScreen.screenID() != screen.screenID() {
                 // necessary to set frame here as window is expected to be at origin relative to targe screen when moved, can be improved.
@@ -999,6 +1010,12 @@ extension WindowManager: WindowTransitionTarget {
 
     func activeWindows(on screen: Screen) -> [Window] {
         return windows.activeWindows(onScreen: screen).filter { window in
+            return window.shouldBeManaged() && !self.windows.isWindowFloating(window)
+        }
+    }
+
+    func activeWindows(on screen: Screen, onSpace space: Space) -> [Window] {
+        return windows.activeWindows(onScreen: screen, onSpace: space.id).filter { window in
             return window.shouldBeManaged() && !self.windows.isWindowFloating(window)
         }
     }

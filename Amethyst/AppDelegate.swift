@@ -205,6 +205,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe layout changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(spaceDidChange(_:)),
+            name: .layoutDidChange,
+            object: nil
+        )
+
         DispatchQueue.main.async { [weak self] in
             self?.updateSpaceIndicator()
         }

@@ -333,6 +333,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
         if spaceUUID == self.space?.uuid || spaceUUID == nil {
             layouts = targetLayouts
+            NotificationCenter.default.post(name: .layoutDidChange, object: nil)
             setNeedsReflow()
         }
     }
@@ -369,6 +370,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
 
         currentLayoutIndex = index
+
+        NotificationCenter.default.post(name: .layoutDidChange, object: nil)
 
         guard !changingSpace || userConfiguration.enablesLayoutHUDOnSpaceChange() else {
             return
