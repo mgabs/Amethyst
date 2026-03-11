@@ -795,7 +795,7 @@ class UserConfiguration: NSObject {
 
     func focusFollowsWindowThrownDelay() -> TimeInterval {
         let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownDelay))
-        return max(delay, 0.05)
+        return delay > 0 ? delay : 0.5
     }
 
     func applicationActivationDelay() -> TimeInterval {

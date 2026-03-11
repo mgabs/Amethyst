@@ -964,11 +964,11 @@ extension WindowManager: WindowTransitionTarget {
             }
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
+            eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
+            window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
             if let targetScreenManager = screenManager(for: targetScreen) {
                 targetScreenManager.resetLayout(for: targetSpace)
             }
-            eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
-            window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
             if targetScreen.screenID() != screen.screenID() {
                 // necessary to set frame here as window is expected to be at origin relative to targe screen when moved, can be improved.
                 window.moveScaled(to: targetScreen)

@@ -277,7 +277,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set([] as Any?, forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -291,7 +291,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["test.test.Test"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -305,7 +305,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["test.test.*"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -319,7 +319,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["*.Test"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -333,7 +333,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["test.*.Test"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -347,7 +347,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["test.test.Other"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -361,7 +361,7 @@ class UserConfigurationTests: QuickSpec {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
 
-                storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                 storage.set(["test.other.*"], forKey: .floatingBundleIdentifiers)
 
                 let bundleIdentifiable = TestBundleIdentifiable()
@@ -377,7 +377,7 @@ class UserConfigurationTests: QuickSpec {
                     let configuration = UserConfiguration(storage: storage)
                     let floatingBundle = FloatingBundle(id: "test.test.Test", windowTitles: ["test"])
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
                     configuration.setFloatingBundles([floatingBundle])
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -391,7 +391,7 @@ class UserConfigurationTests: QuickSpec {
                     let storage = TestConfigurationStorage()
                     let configuration = UserConfiguration(storage: storage)
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
                     storage.set(["test.test.Test"], forKey: .floatingBundleIdentifiers)
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -405,7 +405,7 @@ class UserConfigurationTests: QuickSpec {
                     let storage = TestConfigurationStorage()
                     let configuration = UserConfiguration(storage: storage)
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
                     storage.set([], forKey: .floatingBundleIdentifiers)
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -423,7 +423,7 @@ class UserConfigurationTests: QuickSpec {
                     let configuration = UserConfiguration(storage: storage)
                     let floatingBundle = FloatingBundle(id: "test.test.Test", windowTitles: ["test1"])
 
-                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                     configuration.setFloatingBundles([floatingBundle])
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -438,7 +438,7 @@ class UserConfigurationTests: QuickSpec {
                     let configuration = UserConfiguration(storage: storage)
                     let floatingBundle = FloatingBundle(id: "test.test.Test", windowTitles: ["test1"])
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
                     configuration.setFloatingBundles([floatingBundle])
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -453,7 +453,7 @@ class UserConfigurationTests: QuickSpec {
                     let configuration = UserConfiguration(storage: storage)
                     let floatingBundle = FloatingBundle(id: "test.test.Test", windowTitles: ["test1"])
 
-                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                     configuration.setFloatingBundles([floatingBundle])
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -462,7 +462,7 @@ class UserConfigurationTests: QuickSpec {
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: "")).to(equal(.unreliable(.notFloating)))
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: nil)).to(equal(.unreliable(.notFloating)))
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
 
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: "")).to(equal(.unreliable(.floating)))
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: nil)).to(equal(.unreliable(.floating)))
@@ -472,7 +472,7 @@ class UserConfigurationTests: QuickSpec {
                     let storage = TestConfigurationStorage()
                     let configuration = UserConfiguration(storage: storage)
 
-                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(true, forKey: .floatingBundleIdentifiersIsBlocklist)
                     configuration.setFloatingBundles([])
 
                     let bundleIdentifiable = TestBundleIdentifiable()
@@ -481,7 +481,7 @@ class UserConfigurationTests: QuickSpec {
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: "")).to(equal(.reliable(.notFloating)))
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: nil)).to(equal(.reliable(.notFloating)))
 
-                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlacklist)
+                    storage.set(false, forKey: .floatingBundleIdentifiersIsBlocklist)
 
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: "")).to(equal(.reliable(.floating)))
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: nil)).to(equal(.reliable(.floating)))

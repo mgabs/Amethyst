@@ -1,4 +1,3 @@
-
 @testable import Amethyst
 import Nimble
 import Quick
