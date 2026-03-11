@@ -49,6 +49,14 @@ killall Dock
 
 See [Troubleshooting](docs/troubleshooting.md) for some common issues.
 
+## Recent Improvements
+
+This fork includes several quality-of-life improvements to window management:
+
+- **Manual Realignment**: A new command (`mod3 + r`) allows you to manually reset all windows on all screens to their default layout proportions (e.g., 50/50 split for two windows).
+- **Automatic Proportion Reset on Move**: When moving a window to a new space or monitor, the destination layout's proportions are automatically reset to their defaults.
+- **Automatic Realignment on Maximize**: Native macOS window resize and "Zoom" (maximize) events now trigger an immediate layout reflow (if manual mouse resizing is disabled), ensuring windows snap back to their tiled positions.
+
 ## Configuration
 
 ### Keyboard Shortcuts
@@ -59,7 +67,7 @@ Amethyst uses two modifier combinations (`mod1` and `mod2`) and can optionally u
 |---|---|
 | `mod1` | `option + shift` |
 | `mod2` | `ctrl + option + shift` |
-| `mod3` | not defined by default |
+| `mod3` | `option + shift + command` |
 | `mod4` | not defined by default |
 
 And defines the following commands, mostly a mapping to xmonad key combinations.
@@ -82,6 +90,7 @@ And defines the following commands, mostly a mapping to xmonad key combinations.
 | `mod2 + k` | Swap focused window clockwise |
 | `mod1 + enter` | Swap focused window with main window |
 | `mod1 + z` | Force windows to be reevaluated |
+| `mod3 + r` | Realign the current layout |
 | `mod2 + z` | Relaunch Amethyst |
 | `mod2 + left` | Throw focused window to space left |
 | `mod2 + right` | Throw focused window to space right |

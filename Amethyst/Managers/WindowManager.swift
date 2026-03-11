@@ -860,6 +860,9 @@ extension WindowManager: ApplicationObservationDelegate {
 
     func handleWindowResize(window: Window) {
         guard userConfiguration.mouseResizesWindows() else {
+            if let screen = window.screen() {
+                markScreenForReflow(screen)
+            }
             return
         }
 
@@ -936,7 +939,11 @@ extension WindowManager: WindowTransitionTarget {
                 markScreenForReflow(currentScreen)
             }
             distributeEventToScreen(screen, change: .add(window: window))
-            markScreenForReflow(screen)
+            if let screenManager = screenManager(for: screen) {
+                screenManager.resetLayout()
+            } else {
+                markScreenForReflow(screen)
+            }
             window.focus()
             NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
@@ -957,6 +964,9 @@ extension WindowManager: WindowTransitionTarget {
             }
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
+            if let targetScreenManager = screenManager(for: targetScreen) {
+                targetScreenManager.resetLayout(for: targetSpace)
+            }
             eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
             window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
             if targetScreen.screenID() != screen.screenID() {
@@ -964,7 +974,7 @@ extension WindowManager: WindowTransitionTarget {
                 window.moveScaled(to: targetScreen)
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + UserConfiguration.shared.focusFollowsWindowThrownBetweenSpacesDelay()) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + UserConfiguration.shared.focusFollowsWindowThrownDelay()) {
                 if UserConfiguration.shared.followWindowsThrownBetweenSpaces() {
                     SISystemWideElement.switch(toSpace: UInt(targetSpaceIndex + 1))
                 } else {

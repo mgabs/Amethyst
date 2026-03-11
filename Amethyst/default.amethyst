@@ -14,6 +14,11 @@
         "shift",
         "control"
     ],
+    "mod3": [
+        "option",
+        "shift",
+        "command"
+    ],
     "cycle-layout": {
         "mod": "mod1",
         "key": "space"
@@ -199,6 +204,10 @@
     "reevaluate-windows": {
         "mod": "mod1",
         "key": "z"
+    },
+    "realign": {
+        "mod": "mod3",
+        "key": "r"
     },
     "toggle-focus-follows-mouse": {
         "mod": "mod2",

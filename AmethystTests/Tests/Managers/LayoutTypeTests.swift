@@ -50,26 +50,6 @@ class LayoutTypeTests: QuickSpec {
 
 extension LayoutType: Equatable {
     public static func == (lhs: LayoutType<Window>, rhs: LayoutType<Window>) -> Bool {
-        switch (lhs, rhs) {
-        case (.tall, .tall): return true
-        case (.tallRight, .tallRight): return true
-        case (.wide, .wide): return true
-        case (.twoPane, .twoPane): return true
-        case (.twoPaneRight, .twoPaneRight): return true
-        case (.threeColumnLeft, .threeColumnLeft): return true
-        case (.threeColumnMiddle, .threeColumnMiddle): return true
-        case (.threeColumnRight, .threeColumnRight): return true
-        case (.fourColumnLeft, .fourColumnLeft): return true
-        case (.fourColumnRight, .fourColumnRight): return true
-        case (.fullscreen, .fullscreen): return true
-        case (.column, .column): return true
-        case (.row, .row): return true
-        case (.floating, .floating): return true
-        case (.widescreenTallLeft, .widescreenTallLeft): return true
-        case (.widescreenTallRight, .widescreenTallRight): return true
-        case (.binarySpacePartitioning, .binarySpacePartitioning): return true
-        case (.custom(let key1), .custom(let key2)): return key1 == key2
-        default: return false
-        }
+        return lhs.key == rhs.key
     }
 }

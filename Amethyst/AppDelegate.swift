@@ -85,9 +85,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItemImage?.isTemplate = true
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem?.image = statusItemImage
+        statusItem?.button?.image = statusItemImage
         statusItem?.menu = statusItemMenu
-        statusItem?.highlightMode = true
 
         let hideMenuBarIcon: Bool = UserConfiguration.shared.hideMenuBarIcon()
         statusItem?.isVisible = !hideMenuBarIcon
@@ -217,10 +216,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Update menu item states
         if let submenu = sender.menu {
-            for item in submenu.items {
-                if item.action == #selector(setSpaceIndicatorStyle(_:)) {
-                    item.state = (item.tag == sender.tag) ? .on : .off
-                }
+            for item in submenu.items where item.action == #selector(setSpaceIndicatorStyle(_:)) {
+                item.state = (item.tag == sender.tag) ? .on : .off
             }
         }
 
@@ -233,10 +230,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Update menu item states
         if let submenu = sender.menu {
-            for item in submenu.items {
-                if item.action == #selector(setSpaceIndicatorColorStyle(_:)) {
-                    item.state = (item.tag == sender.tag) ? .on : .off
-                }
+            for item in submenu.items where item.action == #selector(setSpaceIndicatorColorStyle(_:)) {
+                item.state = (item.tag == sender.tag) ? .on : .off
             }
         }
 
@@ -411,7 +406,7 @@ extension AppDelegate: UserConfigurationDelegate {
         }
 
         statusItemImage?.isTemplate = true
-        statusItem?.image = statusItemImage
+        statusItem?.button?.image = statusItemImage
     }
 
     func configurationAccessibilityPermissionsDidChange(_ userConfiguration: UserConfiguration) {

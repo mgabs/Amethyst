@@ -76,7 +76,7 @@ enum ConfigurationKey: String {
     case windowMinimumWidth = "window-minimum-width"
     case windowMaxCount = "window-max-count"
     case floatingBundleIdentifiers = "floating"
-    case floatingBundleIdentifiersIsBlacklist = "floating-is-blacklist"
+    case floatingBundleIdentifiersIsBlocklist = "floating-is-blacklist"
     case ignoreMenuBar = "ignore-menu-bar"
     case floatSmallWindows = "float-small-windows"
     case smallWindowSize = "small-window-size"
@@ -90,7 +90,7 @@ enum ConfigurationKey: String {
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
-    case focusFollowsWindowThrownBetweenSpacesDelay = "focus-follows-window-thrown-between-spaces-delay"
+    case focusFollowsWindowThrownDelay = "focus-follows-window-thrown-between-spaces-delay"
     case applicationActivationDelay = "application-activation-delay"
     case windowResizeStep = "window-resize-step"
     case screenPaddingLeft = "screen-padding-left"
@@ -155,6 +155,7 @@ enum CommandKey: String {
     case relaunchAmethyst = "relaunch-amethyst"
     case increaseWindowMaxCount = "increase-window-max-count"
     case decreaseWindowMaxCount = "decrease-window-max-count"
+    case realign = "realign"
 }
 
 protocol UserConfigurationDelegate: AnyObject {
@@ -549,31 +550,31 @@ class UserConfiguration: NSObject {
     }
 
     func runningApplication(_ runningApplication: BundleIdentifiable, byDefaultFloatsForTitle title: String?) -> Reliable<DefaultFloat> {
-        let useIdentifiersAsBlacklist = floatingBundleIdentifiersIsBlacklist()
+        let useIdentifiersAsBlocklist = floatingBundleIdentifiersIsBlocklist()
 
         // If the application is in the floating list we need to continue to check title
         // Otherwise
-        //   - Blacklist means not floating
-        //   - Whitelist menas floating
+        //   - Blocklist means not floating
+        //   - Allowlist means floating
         guard let floatingBundle = runningApplicationFloatingBundle(runningApplication) else {
-            return .reliable(DefaultFloat.from(!useIdentifiersAsBlacklist))
+            return .reliable(DefaultFloat.from(!useIdentifiersAsBlocklist))
         }
 
         // If the window list is empty then all windows are included in the list
-        //   - Blacklist means floating
-        //   - Whitelist means not floating
+        //   - Blocklist means floating
+        //   - Allowlist means not floating
         if floatingBundle.windowTitles.isEmpty {
-            return .reliable(DefaultFloat.from(useIdentifiersAsBlacklist))
+            return .reliable(DefaultFloat.from(useIdentifiersAsBlocklist))
         }
 
         // If the title is `nil` then we cannot make a determination so we fall back to the default. However, we have to treat this value as unreliable as the window could have just been created and be in the process of loading.
         guard let title = title else {
-            return .unreliable(DefaultFloat.from(!useIdentifiersAsBlacklist))
+            return .unreliable(DefaultFloat.from(!useIdentifiersAsBlocklist))
         }
 
         // If the title matches it is included
-        //   - Blacklist means floating
-        //   - Whitelist means not floating
+        //   - Blocklist means floating
+        //   - Allowlist means not floating
         if floatingBundle.windowTitles.contains(where: { windowTitle in
             if title.range(of: windowTitle, options: .regularExpression) != nil {
                 return true
@@ -581,13 +582,13 @@ class UserConfiguration: NSObject {
                 return false
             }
         }) {
-            return .reliable(DefaultFloat.from(useIdentifiersAsBlacklist))
+            return .reliable(DefaultFloat.from(useIdentifiersAsBlocklist))
         }
 
         // Otherwise the window is not included
-        //   - Blacklist means not floating
-        //   - Whitelist means floating
-        let defaultFloat = DefaultFloat.from(!useIdentifiersAsBlacklist)
+        //   - Blocklist means not floating
+        //   - Allowlist means floating
+        let defaultFloat = DefaultFloat.from(!useIdentifiersAsBlocklist)
 
         // If the title is empty the window could have just been created and in the process of loading. Our float determination could still be correct, but to account for the potential change we mark it as unreliable.
         if title.isEmpty {
@@ -761,11 +762,11 @@ class UserConfiguration: NSObject {
         return CGFloat(storage.float(forKey: .screenPaddingRight))
     }
 
-    func floatingBundleIdentifiersIsBlacklist() -> Bool {
-        guard storage.object(forKey: .floatingBundleIdentifiersIsBlacklist) != nil else {
+    func floatingBundleIdentifiersIsBlocklist() -> Bool {
+        guard storage.object(forKey: .floatingBundleIdentifiersIsBlocklist) != nil else {
             return true
         }
-        return storage.bool(forKey: .floatingBundleIdentifiersIsBlacklist)
+        return storage.bool(forKey: .floatingBundleIdentifiersIsBlocklist)
     }
 
     func floatingBundles() -> [FloatingBundle] {
@@ -792,9 +793,9 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .followSpaceThrownWindows)
     }
 
-    func focusFollowsWindowThrownBetweenSpacesDelay() -> TimeInterval {
-        let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownBetweenSpacesDelay))
-        return delay > 0 ? delay : 0.5
+    func focusFollowsWindowThrownDelay() -> TimeInterval {
+        let delay = TimeInterval(storage.float(forKey: .focusFollowsWindowThrownDelay))
+        return max(delay, 0.05)
     }
 
     func applicationActivationDelay() -> TimeInterval {

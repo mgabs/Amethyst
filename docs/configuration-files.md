@@ -9,7 +9,7 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `layouts` | Ordered list of layouts to use by layout key (default tall, wide, fullscreen, and column). |
 | `mod1` | First mod (default option + shift). |
 | `mod2` | Second mod (default option + shift + control). |
-| `mod3` | Third mod (not used by default). |
+| `mod3` | Third mod (default option + shift + command). |
 | `mod4` | Fourth mod (not used by default). |
 | `window-max-count` | The max number of windows that may be visible on a screen at one time before additional windows are minimized. A value of 0 disables the feature. |
 | `window-margins` | Boolean flag for whether or not to add margins between and around windows (default `false`). |
@@ -92,6 +92,7 @@ A mod is a list of keyboard modifiers. Namely, `option`, `control`, `shift`, and
 | `enable-tiling` | Turn on tiling. |
 | `disable-tiling` | Turn off tiling. |
 | `reevaluate-windows` | Rerun the current layout's algorithm. |
+| `realign` | Realign the current layout, resetting window proportions to default. |
 | `toggle-focus-follows-mouse` | Turn on or off `focus-follows-mouse`. |
 | `relaunch-amethyst` | Automatically quit and reopen Amethyst. |
 

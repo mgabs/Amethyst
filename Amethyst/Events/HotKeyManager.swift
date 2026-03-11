@@ -252,6 +252,10 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
             windowManager.reevaluateWindows()
         }
 
+        constructCommandWithCommandKey(CommandKey.realign.rawValue) {
+            windowManager.markAllScreensForReflow()
+        }
+
         constructCommandWithCommandKey(CommandKey.toggleFocusFollowsMouse.rawValue) {
             self.userConfiguration.toggleFocusFollowsMouse()
         }

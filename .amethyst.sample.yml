@@ -47,6 +47,12 @@ mod2:
   - control
   # - command
 
+# Third mod (default option + shift + command).
+mod3:
+  - option
+  - shift
+  - command
+
 # Commands:
 # special key values
 # space
@@ -231,6 +237,11 @@ toggle-tiling:
 reevaluate-windows:
   mod: mod1
   key: z
+
+# Realign the current layout.
+realign:
+  mod: mod3
+  key: r
 
 # Turn on or off focus-follows-mouse.
 toggle-focus-follows-mouse:

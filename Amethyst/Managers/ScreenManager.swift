@@ -315,6 +315,28 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         setNeedsReflow()
     }
 
+    func resetLayout(for targetSpace: Space? = nil) {
+        let spaceUUID = targetSpace?.uuid ?? self.space?.uuid
+
+        let index = spaceUUID.flatMap { currentLayoutIndexBySpaceUUID[$0] } ?? currentLayoutIndex
+        var targetLayouts = spaceUUID.flatMap { layoutsBySpaceUUID[$0] } ?? layouts
+
+        let layoutKey = targetLayouts[index].layoutKey
+        guard let newLayout = LayoutType<Window>.layoutForKey(layoutKey) else { return }
+
+        newLayout.windowMarginSize = userConfiguration.windowMarginSize()
+        targetLayouts[index] = newLayout
+
+        if let uuid = spaceUUID {
+            layoutsBySpaceUUID[uuid] = targetLayouts
+        }
+
+        if spaceUUID == self.space?.uuid || spaceUUID == nil {
+            layouts = targetLayouts
+            setNeedsReflow()
+        }
+    }
+
     func cycleLayoutForward() {
         setCurrentLayoutIndex((currentLayoutIndex + 1) % layouts.count)
         setNeedsReflow()
