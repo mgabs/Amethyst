@@ -170,7 +170,7 @@ GEM
     mini_magick (4.13.2)
     mini_mime (1.1.5)
     multi_json (1.15.0)
-    multipart-post (2.2.3)
+    multipart-post (2.1.1)
     mutex_m (0.3.0)
     nanaimo (0.4.0)
     naturally (2.3.0)
@@ -228,7 +228,7 @@ PLATFORMS
 
 DEPENDENCIES
   fastlane
-  multipart-post (= 2.2.3)
+  multipart-post (= 2.1.1)
 
 BUNDLED WITH
    1.17.2
