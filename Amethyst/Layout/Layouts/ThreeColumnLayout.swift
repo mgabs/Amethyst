@@ -80,11 +80,13 @@ struct TriplePaneArrangement {
         // calculate widths
         let screenWidth = screenSize.width
         let mainWindowWidth = secondaryPaneCount == 0 ? screenWidth : round(screenWidth * mainPaneRatio)
-        let nonMainWindowWidth = round((screenWidth - mainWindowWidth) / 2)
+        let remainingWidth = screenWidth - mainWindowWidth
+        let secondaryPaneWidth = tertiaryPaneCount == 0 ? remainingWidth : round(remainingWidth / 2)
+        let tertiaryPaneWidth = tertiaryPaneCount == 0 ? 0.0 : remainingWidth - secondaryPaneWidth
         self.paneWindowWidth = [
             .main: mainWindowWidth,
-            .secondary: nonMainWindowWidth,
-            .tertiary: nonMainWindowWidth
+            .secondary: secondaryPaneWidth,
+            .tertiary: tertiaryPaneWidth
         ]
    }
 

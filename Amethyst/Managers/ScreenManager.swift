@@ -76,6 +76,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
     private let layoutNameWindowController: LayoutNameWindowController
 
+    private var lastWindowCount: Int = 0
+
     init(screen: Screen, delegate: Delegate, userConfiguration: UserConfiguration) {
         self.screen = screen
         self.delegate = delegate
@@ -263,6 +265,14 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         guard let windows = delegate?.activeWindowSet(forScreenManager: self) else {
             return
         }
+
+        let currentWindowCount = windows.windows.count
+        if lastWindowCount == 1 && currentWindowCount == 2 {
+            if let panedLayout = currentLayout as? PanedLayout {
+                panedLayout.recommendMainPaneRatio(0.5)
+            }
+        }
+        lastWindowCount = currentWindowCount
 
         guard let layout = currentLayout else {
             return
@@ -466,11 +476,12 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         // Use new displayNotification method with dynamic sizing
         layoutNameWindow.displayNotification(title: title, description: description)
 
-        // Move the window to the bottom of the screen
-        let screenFrame = screen.frameWithoutDockOrMenu()
+        // Center the window after resizing
+        let screenFrame = screen.frame()
+        let screenCenter = CGPoint(x: screenFrame.midX, y: screenFrame.midY)
         let windowOrigin = CGPoint(
-            x: screenFrame.midX - layoutNameWindow.frame.width / 2.0,
-            y: screenFrame.origin.y + 40
+            x: screenCenter.x - layoutNameWindow.frame.width / 2.0,
+            y: screenCenter.y - layoutNameWindow.frame.height / 2.0
         )
         layoutNameWindow.setFrameOrigin(NSPointFromCGPoint(windowOrigin))
 

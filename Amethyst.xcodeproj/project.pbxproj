@@ -84,6 +84,7 @@
 		40AB5BE923AB0A2B00E29346 /* TallRightLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40AB5BE823AB0A2B00E29346 /* TallRightLayoutTests.swift */; };
 		40AB5BEB23AB182300E29346 /* WidescreenTallLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40AB5BEA23AB182300E29346 /* WidescreenTallLayoutTests.swift */; };
 		40AB5BED23AC3CF800E29346 /* ThreeColumnLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40AB5BEC23AC3CF800E29346 /* ThreeColumnLayoutTests.swift */; };
+		BDC23406250E431D816DBED0 /* FourColumnLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B565426ABA46A49B1729DC /* FourColumnLayoutTests.swift */; };
 		40AE15E32A92E9AF00E14536 /* SwiftyBeaver in Frameworks */ = {isa = PBXBuildFile; productRef = 40AE15E22A92E9AF00E14536 /* SwiftyBeaver */; };
 		40AE15E62A92EA7500E14536 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 40AE15E52A92EA7500E14536 /* RxCocoa */; };
 		40AE15E82A92EA7500E14536 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 40AE15E72A92EA7500E14536 /* RxSwift */; };
@@ -211,6 +212,7 @@
 		40AB5BE823AB0A2B00E29346 /* TallRightLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TallRightLayoutTests.swift; sourceTree = "<group>"; };
 		40AB5BEA23AB182300E29346 /* WidescreenTallLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidescreenTallLayoutTests.swift; sourceTree = "<group>"; };
 		40AB5BEC23AC3CF800E29346 /* ThreeColumnLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeColumnLayoutTests.swift; sourceTree = "<group>"; };
+		34B565426ABA46A49B1729DC /* FourColumnLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FourColumnLayoutTests.swift; sourceTree = "<group>"; };
 		40AE16302A943EF900E14536 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		40AF71D920BB348300F58EA9 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		40B0D144232D2E630021E0A7 /* FullscreenLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullscreenLayoutTests.swift; sourceTree = "<group>"; };
@@ -474,6 +476,7 @@
 				DEADBEEF0000000000000001 /* ReflowOperationTests.swift */,
 				40AB5BE823AB0A2B00E29346 /* TallRightLayoutTests.swift */,
 				40AB5BEC23AC3CF800E29346 /* ThreeColumnLayoutTests.swift */,
+				34B565426ABA46A49B1729DC /* FourColumnLayoutTests.swift */,
 				AAAC6BAB2677DF7B00BEC1B0 /* TwoPaneLayoutTests.swift */,
 				4000DB0F239CA07000365A0C /* WideLayoutTests.swift */,
 				40AB5BEA23AB182300E29346 /* WidescreenTallLayoutTests.swift */,
@@ -826,6 +829,7 @@
 				56D75166303C5BD178EF7901 /* SpaceIndicatorManagerTests.swift in Sources */,
 				40D491DB23367630007E0CCB /* FrameAssignmentVerification.swift in Sources */,
 				40AB5BED23AC3CF800E29346 /* ThreeColumnLayoutTests.swift in Sources */,
+				BDC23406250E431D816DBED0 /* FourColumnLayoutTests.swift in Sources */,
 				40AB5BE923AB0A2B00E29346 /* TallRightLayoutTests.swift in Sources */,
 				56D75165303C5BD178EF7900 /* LayoutTypeTests.swift in Sources */,
 			);

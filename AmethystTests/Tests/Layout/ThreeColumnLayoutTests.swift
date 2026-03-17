@@ -235,13 +235,13 @@ class ThreeColumnLayoutTests: QuickSpec {
                 secondaryAssignments = frameAssignments.forWindows(windows[3...])
 
                 mainAssignments.verify(frames: [
-                    CGRect(x: 500, y: 0, width: 1000, height: 333),
-                    CGRect(x: 500, y: 333, width: 1000, height: 333),
-                    CGRect(x: 500, y: 666, width: 1000, height: 333)
+                    CGRect(x: 1000, y: 0, width: 1000, height: 333),
+                    CGRect(x: 1000, y: 333, width: 1000, height: 333),
+                    CGRect(x: 1000, y: 666, width: 1000, height: 333)
                 ])
 
                 secondaryAssignments.verify(frames: [
-                    CGRect(x: 0, y: 0, width: 500, height: 1000)
+                    CGRect(x: 0, y: 0, width: 1000, height: 1000)
                 ])
             }
 
@@ -470,7 +470,7 @@ class ThreeColumnLayoutTests: QuickSpec {
                 ])
 
                 secondaryAssignments.verify(frames: [
-                    CGRect(x: 1000, y: 0, width: 500, height: 1000)
+                    CGRect(x: 1000, y: 0, width: 1000, height: 1000)
                 ])
             }
 
@@ -699,7 +699,7 @@ class ThreeColumnLayoutTests: QuickSpec {
                 ])
 
                 secondaryAssignments.verify(frames: [
-                    CGRect(x: 0, y: 0, width: 500, height: 1000)
+                    CGRect(x: 0, y: 0, width: 1000, height: 1000)
                 ])
             }
 

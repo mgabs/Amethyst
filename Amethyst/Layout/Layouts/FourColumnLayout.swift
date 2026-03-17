@@ -75,11 +75,9 @@ struct QuadruplePaneArrangement {
         // calculate how many are in each type
         let mainPaneCount = min(numWindows, numMainPane)
         let nonMainCount: UInt = numWindows - mainPaneCount
-        // we do tertiary first because a single window produces a zero in integer division by 2
-        let nonMainPaneCount: UInt = max(nonMainCount / 3, 1)
-        let quaternaryPaneCount = nonMainPaneCount
-        let tertiaryPaneCount = nonMainPaneCount
-        let secondaryPaneCount = nonMainPaneCount + max(nonMainCount, 3) % 3
+        let secondaryPaneCount: UInt = nonMainCount > 0 ? (nonMainCount + 2) / 3 : 0
+        let tertiaryPaneCount: UInt = nonMainCount > 1 ? (nonMainCount + 1) / 3 : 0
+        let quaternaryPaneCount: UInt = nonMainCount > 2 ? nonMainCount / 3 : 0
         self.paneCount = [.main: mainPaneCount, .secondary: secondaryPaneCount, .tertiary: tertiaryPaneCount, .quaternary: quaternaryPaneCount]
 
         // calculate heights
@@ -93,13 +91,27 @@ struct QuadruplePaneArrangement {
 
         // calculate widths
         let screenWidth = screenSize.width
-        let mainWindowWidth = round(screenWidth / 4)
-        let nonMainWindowWidth = round(screenWidth / 4)
+        let mainWindowWidth = secondaryPaneCount == 0 ? screenWidth : round(screenWidth * mainPaneRatio)
+        let remainingWidth = screenWidth - mainWindowWidth
+        let activeNonMainPaneCount = (secondaryPaneCount > 0 ? 1 : 0) + (tertiaryPaneCount > 0 ? 1 : 0) + (quaternaryPaneCount > 0 ? 1 : 0)
+
+        // Divide remaining width evenly among active non-main columns.
+        // The last active column absorbs any rounding residual so all widths sum to exactly screenWidth.
+        let colWidth = activeNonMainPaneCount == 0 ? 0.0 : round(remainingWidth / CGFloat(activeNonMainPaneCount))
+        let (secondaryWidth, tertiaryWidth, quaternaryWidth): (CGFloat, CGFloat, CGFloat) = {
+            switch activeNonMainPaneCount {
+            case 1: return (remainingWidth, 0, 0)
+            case 2: return (colWidth, remainingWidth - colWidth, 0)
+            case 3: return (colWidth, colWidth, remainingWidth - colWidth * 2)
+            default: return (0, 0, 0)
+            }
+        }()
+
         self.paneWindowWidth = [
             .main: mainWindowWidth,
-            .secondary: nonMainWindowWidth,
-            .tertiary: nonMainWindowWidth,
-            .quaternary: nonMainWindowWidth
+            .secondary: secondaryWidth,
+            .tertiary: tertiaryWidth,
+            .quaternary: quaternaryWidth
         ]
    }
 
