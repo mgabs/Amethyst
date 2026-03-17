@@ -476,12 +476,11 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         // Use new displayNotification method with dynamic sizing
         layoutNameWindow.displayNotification(title: title, description: description)
 
-        // Center the window after resizing
+        // Position the window in the lower 1/3 after resizing
         let screenFrame = screen.frame()
-        let screenCenter = CGPoint(x: screenFrame.midX, y: screenFrame.midY)
         let windowOrigin = CGPoint(
-            x: screenCenter.x - layoutNameWindow.frame.width / 2.0,
-            y: screenCenter.y - layoutNameWindow.frame.height / 2.0
+            x: screenFrame.midX - layoutNameWindow.frame.width / 2.0,
+            y: screenFrame.origin.y + (screenFrame.height / 3.0) - (layoutNameWindow.frame.height / 2.0)
         )
         layoutNameWindow.setFrameOrigin(NSPointFromCGPoint(windowOrigin))
 
