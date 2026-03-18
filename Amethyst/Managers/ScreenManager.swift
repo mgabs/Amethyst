@@ -78,6 +78,10 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
     private var lastWindowCount: Int = 0
 
+    /// When true, the next reflow will not recommend main pane ratio 0.5 on 1→2 window transition.
+    /// Used for space-only switches so windows don't resize to 50% without a window move or floating toggle.
+    private var skipMainPaneRatioRecommendationOnNextReflow: Bool = false
+
     init(screen: Screen, delegate: Delegate, userConfiguration: UserConfiguration) {
         self.screen = screen
         self.delegate = delegate
@@ -202,8 +206,11 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
     }
 
-    func setNeedsReflow() {
+    func setNeedsReflow(skipMainPaneRatioRecommendation: Bool = false) {
         reflowOperationQueue.cancelAllOperations()
+        if skipMainPaneRatioRecommendation {
+            skipMainPaneRatioRecommendationOnNextReflow = true
+        }
 
         log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow")
 
@@ -267,7 +274,9 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
 
         let currentWindowCount = windows.windows.count
-        if lastWindowCount == 1 && currentWindowCount == 2 {
+        let shouldRecommendRatio = !skipMainPaneRatioRecommendationOnNextReflow
+        skipMainPaneRatioRecommendationOnNextReflow = false
+        if shouldRecommendRatio, lastWindowCount == 1 && currentWindowCount == 2 {
             if let panedLayout = currentLayout as? PanedLayout {
                 panedLayout.recommendMainPaneRatio(0.5)
             }

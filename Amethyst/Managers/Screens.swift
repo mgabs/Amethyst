@@ -108,17 +108,17 @@ extension WindowManager {
             }
         }
 
-        func markScreenForReflow(_ screen: Screen) {
+        func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false) {
             screenManagers
                 .filter { $0.screen?.screenID() == screen.screenID() }
                 .forEach { screenManager in
-                    screenManager.setNeedsReflow()
+                    screenManager.setNeedsReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
                 }
         }
 
-        func markAllScreensForReflow() {
+        func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false) {
             for screenManager in screenManagers {
-                screenManager.setNeedsReflow()
+                screenManager.setNeedsReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
             }
         }
     }

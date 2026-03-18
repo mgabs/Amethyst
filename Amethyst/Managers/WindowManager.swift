@@ -226,7 +226,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         }
 
         windows.regenerateActiveIDCache()
-        markAllScreensForReflow()
+        markAllScreensForReflow(skipMainPaneRatioRecommendation: true)
     }
 
     @objc func screenParametersDidChange(_ notification: Notification) {
@@ -370,12 +370,12 @@ extension WindowManager {
         screens.distributeEventToAllScreens(change: change)
     }
 
-    func markScreenForReflow(_ screen: Screen) {
-        screens.markScreenForReflow(screen)
+    func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false) {
+        screens.markScreenForReflow(screen, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
     }
 
-    func markAllScreensForReflow() {
-        screens.markAllScreensForReflow()
+    func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false) {
+        screens.markAllScreensForReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
     }
 
     func displayCurrentLayout() {
