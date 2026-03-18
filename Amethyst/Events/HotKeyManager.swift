@@ -81,6 +81,11 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         }
 
         constructCommandWithCommandKey(CommandKey.shrinkMain.rawValue) {
+            if let focusedWindow = Application.Window.currentlyFocused(), windowManager.isWindowFloating(focusedWindow) {
+                self.resizeFloatingWindow(focusedWindow, windowManager: windowManager, shrink: true)
+                return
+            }
+
             let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
             screenManager?.updateCurrentLayout { layout in
                 if let panedLayout = layout as? PanedLayout {
@@ -90,6 +95,11 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
         }
 
         constructCommandWithCommandKey(CommandKey.expandMain.rawValue) {
+            if let focusedWindow = Application.Window.currentlyFocused(), windowManager.isWindowFloating(focusedWindow) {
+                self.resizeFloatingWindow(focusedWindow, windowManager: windowManager, shrink: false)
+                return
+            }
+
             let screenManager: ScreenManager<WindowManager<Application>>? = windowManager.focusedScreenManager()
             screenManager?.updateCurrentLayout { layout in
                 if let panedLayout = layout as? PanedLayout {
@@ -367,6 +377,30 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
 
     private func constructCommandWithCommandKey(_ commandKey: String, handler: @escaping HotKeyHandler) {
         userConfiguration.constructCommand(for: self, commandKey: commandKey, handler: handler)
+    }
+
+    private func resizeFloatingWindow(_ window: Application.Window, windowManager: WindowManager<Application>, shrink: Bool) {
+        guard let screen = window.screen() else { return }
+        let screenFrame = screen.adjustedFrame()
+        let resizeStep = UserConfiguration.shared.windowResizeStep()
+
+        var frame = window.frame()
+        let deltaX = screenFrame.width * resizeStep
+        let deltaY = screenFrame.height * resizeStep
+
+        if shrink {
+            frame.size.width -= deltaX
+            frame.size.height -= deltaY
+            frame.origin.x += deltaX / 2.0
+            frame.origin.y += deltaY / 2.0
+        } else {
+            frame.size.width += deltaX
+            frame.size.height += deltaY
+            frame.origin.x -= deltaX / 2.0
+            frame.origin.y -= deltaY / 2.0
+        }
+
+        window.setFrame(frame, withThreshold: .zero)
     }
 
     private func carbonModifiersFromModifiers(_ modifiers: UInt) -> UInt32 {

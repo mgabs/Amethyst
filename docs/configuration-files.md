@@ -61,8 +61,8 @@ A mod is a list of keyboard modifiers. Namely, `option`, `control`, `shift`, and
 | ------- | ------------|
 | `cycle-layout` | Move to the next layout in the list. |
 | `cycle-layout-backward` | Move to the previous layout in the list. |
-| `shrink-main` | Shrink the main pane by a percentage of the screen dimension as defined by `window-resize-step`. Note that not all layouts respond to this command. |
-| `expand-main` | Expand the main pane by a percentage of the screen dimension as defined by `window-resize-step`. Note that not all layouts respond to this command. |
+| `shrink-main` | Shrink the main pane by a percentage of the screen dimension as defined by `window-resize-step`. Note that not all layouts respond to this command. If the focused window is floating, it will be shrunk instead. |
+| `expand-main` | Expand the main pane by a percentage of the screen dimension as defined by `window-resize-step`. Note that not all layouts respond to this command. If the focused window is floating, it will be expanded instead. |
 | `increase-main` | Increase the number of windows in the main pane. Note that not all layouts respond to this command. |
 | `decrease-main` | Decrease the number of windows in the main pane. Note that not all layouts respond to this command. |
 | `increase-window-max-count` | Increase the maximum number of windows allowed on screen before additional windows are minimized. |
