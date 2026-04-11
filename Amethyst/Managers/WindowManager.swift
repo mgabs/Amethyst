@@ -231,6 +231,12 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
 
     @objc func screenParametersDidChange(_ notification: Notification) {
         screens.updateScreens(windowManager: self)
+
+        // macOS can take a moment to settle window states after a display change or wake cycle.
+        // We delay the re-evaluation to ensure the accessibility tree reflects the final state.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.reevaluateWindows()
+        }
     }
 }
 
@@ -305,7 +311,8 @@ extension WindowManager {
     }
 
     fileprivate func remove(application: AnyApplication<Application>) {
-        for window in application.windows() {
+        let applicationWindows = windows.windows(forApplicationWithPID: application.pid())
+        for window in applicationWindows {
             remove(window: window)
         }
         applications.removeValue(forKey: application.pid())

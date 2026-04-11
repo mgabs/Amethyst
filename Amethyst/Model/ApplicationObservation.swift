@@ -329,9 +329,7 @@ struct ApplicationObservation<Delegate: ApplicationObservationDelegate> {
         """)
         switch notification {
         case .created:
-            // Disabling window creations because they end up being more reliably tracked with main window changed
-//            delegate?.application(application, didFindPotentiallyNewWindow: window)
-            break
+            delegate?.application(application, didFindPotentiallyNewWindow: window)
         case .windowDeminiaturized:
             delegate?.application(application, didAddWindow: window)
         case .windowMiniaturized:

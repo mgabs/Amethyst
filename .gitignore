@@ -33,3 +33,9 @@ cert.p12
 .env
 inspect_project.rb
 vendor/
+plan/
+.genie/
+debates/
+debates/
+debates
+debates/
