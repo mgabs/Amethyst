@@ -359,14 +359,14 @@ extension WindowManager {
             }
             windows.setFloating(false, forWindow: focusedWindow)
             distributeEventToScreen(screen, change: windowChange)
-            markScreenForReflow(screen)
+            markScreenForReflow(screen, skipMainPaneRatioRecommendation: false)
             return
         }
 
         let windowChange: Change = windows.isWindowFloating(focusedWindow) ? .add(window: focusedWindow) : .remove(window: focusedWindow)
         windows.setFloating(!windows.isWindowFloating(focusedWindow), forWindow: focusedWindow)
         distributeEventToScreen(screen, change: windowChange)
-        markScreenForReflow(screen)
+        markScreenForReflow(screen, skipMainPaneRatioRecommendation: false)
     }
 
     func distributeEventToScreen(_ screen: Screen, change: Change<Window>) {
