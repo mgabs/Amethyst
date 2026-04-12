@@ -42,15 +42,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     private(set) var lastFocusedWindow: Window?
     private let userConfiguration: UserConfiguration
 
-    private let reflowOperationDispatchQueue = DispatchQueue(
-        label: "ScreenManager.reflowOperationQueue",
-        qos: .utility,
-        attributes: [],
-        autoreleaseFrequency: .inherit,
-        target: nil
-    )
-    private let reflowOperationQueue = OperationQueue()
-
     private var layouts: [Layout<Window>] = []
     private var currentLayoutIndexBySpaceUUID: [String: Int] = [:]
     private var layoutsBySpaceUUID: [String: [Layout<Window>]] = [:]
@@ -92,8 +83,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         super.init()
 
         layouts = LayoutType.layoutsWithConfiguration(userConfiguration)
-
-        reflowOperationQueue.underlyingQueue = reflowOperationDispatchQueue
     }
 
     init(from decoder: Decoder) throws {
@@ -207,7 +196,6 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     }
 
     func setNeedsReflow(skipMainPaneRatioRecommendation: Bool = false) {
-        reflowOperationQueue.cancelAllOperations()
         if skipMainPaneRatioRecommendation {
             skipMainPaneRatioRecommendationOnNextReflow = true
         }
@@ -296,34 +284,13 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        let batchOperation = BlockOperation {
-            DispatchQueue.main.sync {
-                for assignment in frameAssignments {
-                    windows.perform(frameAssignment: assignment)
-                }
-            }
-        }
-
-        let completeOperation = BlockOperation()
-
-        // The complete operation should execute the completion delegate call
-        completeOperation.addExecutionBlock { [unowned completeOperation, weak self] in
-            if completeOperation.isCancelled {
-                return
-            }
-
-            DispatchQueue.main.async {
-                self?.delegate?.onReflowCompletion()
-            }
-        }
-
-        // The completion should be dependent on all assignments finishing
-        completeOperation.addDependency(batchOperation)
-
-        // Start the operation
+        // `setNeedsReflow` schedules this method on the main queue, so assignments run here
+        // without `DispatchQueue.main.sync` from a background `OperationQueue` (which risks deadlocks).
         delegate?.onReflowInitiation()
-        reflowOperationQueue.addOperation(batchOperation)
-        reflowOperationQueue.addOperation(completeOperation)
+        for assignment in frameAssignments {
+            windows.perform(frameAssignment: assignment)
+        }
+        delegate?.onReflowCompletion()
     }
 
     func updateCurrentLayout(_ updater: (Layout<Window>) -> Void) {

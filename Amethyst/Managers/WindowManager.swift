@@ -718,10 +718,7 @@ extension WindowManager {
 //            doMouseFollowsFocus(focusedWindow: focusedWindow)
 //        }
 
-        // This handler will be executed by the Operation, in a queue.  Although async
-        // (and although the docs say that it executes in a separate thread), I consider
-        // this to be thread safe, at least safe enough, because we always want the
-        // latest time that a reflow took place.
+        // Runs on the main queue after frame assignments; we record the latest reflow time.
         mouseStateKeeper.handleReflowEvent()
         lastReflowTime = Date()
     }
