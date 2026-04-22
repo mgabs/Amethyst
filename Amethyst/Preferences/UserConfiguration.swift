@@ -84,6 +84,7 @@ enum ConfigurationKey: String {
     case focusFollowsMouse = "focus-follows-mouse"
     case mouseSwapsWindows = "mouse-swaps-windows"
     case mouseResizesWindows = "mouse-resizes-windows"
+    case mouseMovesTriggerReflow = "mouse-moves-trigger-reflow"
     case layoutHUD = "enables-layout-hud"
     case layoutHUDOnSpaceChange = "enables-layout-hud-on-space-change"
     case windowCountHUD = "enables-window-count-hud"
@@ -659,6 +660,10 @@ class UserConfiguration: NSObject {
 
     func mouseResizesWindows() -> Bool {
         return storage.bool(forKey: .mouseResizesWindows)
+    }
+
+    func mouseMovesTriggerReflow() -> Bool {
+        return storage.bool(forKey: .mouseMovesTriggerReflow)
     }
 
     func enablesLayoutHUD() -> Bool {

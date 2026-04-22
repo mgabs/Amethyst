@@ -220,8 +220,16 @@ extension WindowManager {
             return windowSet(forWindows: windows(onScreen: screen))
         }
 
-        func windowSet(forActiveWindowsOnScreen screen: Screen) -> WindowSet<Window> {
-            return windowSet(forWindows: activeWindows(onScreen: screen))
+        func windowSet(forActiveWindowsOnScreen screen: Screen, on space: Space? = nil) -> WindowSet<Window> {
+            if let space = space {
+                return windowSet(forWindows: activeWindows(onScreen: screen, onSpace: space.id))
+            } else {
+                return windowSet(forWindows: activeWindows(onScreen: screen))
+            }
+        }
+
+        func windowSet(forActiveWindowsOnSpace spaceID: CGSSpaceID, onScreen screen: Screen) -> WindowSet<Window> {
+            return windowSet(forWindows: activeWindows(onScreen: screen, onSpace: spaceID))
         }
 
         func windowSet(forWindows windows: [Window]) -> WindowSet<Window> {

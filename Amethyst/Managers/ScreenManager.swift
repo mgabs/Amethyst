@@ -19,7 +19,7 @@ struct LayoutMenuItemInfo {
 protocol ScreenManagerDelegate: AnyObject {
     associatedtype Window: WindowType
     func applyWindowLimit(forScreenManager screenManager: ScreenManager<Self>, minimizingIn range: (_ windowCount: Int) -> Range<Int>)
-    func activeWindowSet(forScreenManager screenManager: ScreenManager<Self>) -> WindowSet<Window>
+    func activeWindowSet(forScreenManager screenManager: ScreenManager<Self>, on space: Space?) -> WindowSet<Window>
     func onReflowInitiation()
     func onReflowCompletion()
 }
@@ -167,7 +167,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
     }
 
-    func distributeEvent(_ change: Change<Window>) {
+    func distributeEvent(_ change: Change<Window>, on space: Space? = nil) {
         switch change {
         case let .add(window: window):
             lastFocusedWindow = window
@@ -183,7 +183,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
         log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow -- Window Change: \(change)")
 
-        guard let space, let layouts = layoutsBySpaceUUID[space.uuid] else {
+        let targetSpace = space ?? self.space
+        guard let space = targetSpace, let layouts = layoutsBySpaceUUID[space.uuid] else {
             log.warning("Trying to distribute an event to a screen with no space")
             return
         }
@@ -195,16 +196,17 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
         }
     }
 
-    func setNeedsReflow(skipMainPaneRatioRecommendation: Bool = false) {
+    func setNeedsReflow(on space: Space? = nil, skipMainPaneRatioRecommendation: Bool = false) {
         if skipMainPaneRatioRecommendation {
             skipMainPaneRatioRecommendationOnNextReflow = true
         }
 
-        log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow")
+        let targetSpace = space ?? self.space
+        log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow on space: \(targetSpace?.id ?? 0)")
 
         DispatchQueue.main.async {
             self.minimizeWindows()
-            self.reflow()
+            self.reflow(on: targetSpace)
         }
     }
 
@@ -241,39 +243,47 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             }
         })
     }
+private func reflow(on targetSpace: Space? = nil) {
+    guard let screen = screen else {
+        return
+    }
 
-    private func reflow() {
-        guard let screen = screen else {
+    guard let space = targetSpace ?? self.space, userConfiguration.tilingEnabled, space.type == CGSSpaceTypeUser else {
+        return
+    }
+
+    // During rapid Space transitions, activation/focus notifications can arrive before
+    // this screen manager updates its tracked Space. Skip reflow if state is stale.
+    // If we have a target space, we assume it is the correct one to reflow.
+    if targetSpace == nil {
+        guard let currentSpace = CGSpacesInfo<Window>.currentSpaceForScreen(screen), currentSpace.id == space.id else {
             return
         }
+    }
 
-        guard userConfiguration.tilingEnabled, space?.type == CGSSpaceTypeUser else {
-            return
-        }
+    guard let windows = delegate?.activeWindowSet(forScreenManager: self, on: space) else {
+        return
+    }
 
-        // During rapid Space transitions, activation/focus notifications can arrive before
-        // this screen manager updates its tracked Space. Skip reflow if state is stale.
-        guard let currentSpace = CGSpacesInfo<Window>.currentSpaceForScreen(screen), currentSpace.id == space?.id else {
-            return
-        }
+    let currentWindowCount = windows.windows.count
 
-        guard let windows = delegate?.activeWindowSet(forScreenManager: self) else {
-            return
-        }
+    let shouldRecommendRatio = !skipMainPaneRatioRecommendationOnNextReflow
+    skipMainPaneRatioRecommendationOnNextReflow = false
 
-        let currentWindowCount = windows.windows.count
-        let shouldRecommendRatio = !skipMainPaneRatioRecommendationOnNextReflow
-        skipMainPaneRatioRecommendationOnNextReflow = false
-        if shouldRecommendRatio, lastWindowCount == 1 && currentWindowCount == 2 {
-            if let panedLayout = currentLayout as? PanedLayout {
-                panedLayout.recommendMainPaneRatio(0.5)
-            }
-        }
-        lastWindowCount = currentWindowCount
+    let spaceLayouts = layoutsBySpaceUUID[space.uuid] ?? []
+    let spaceLayoutIndex = currentLayoutIndexBySpaceUUID[space.uuid] ?? 0
+    let layout = (space.uuid == self.space?.uuid) ? currentLayout : (spaceLayouts.indices.contains(spaceLayoutIndex) ? spaceLayouts[spaceLayoutIndex] : nil)
 
-        guard let layout = currentLayout else {
-            return
+    if shouldRecommendRatio, lastWindowCount == 1 && currentWindowCount == 2 {
+        if let panedLayout = layout as? PanedLayout {
+            panedLayout.recommendMainPaneRatio(0.5)
         }
+    }
+    lastWindowCount = currentWindowCount
+
+    guard let layout = layout else {
+        return
+    }
 
         // Calculate window margins based on the number of managed windows
         let windowMargins = userConfiguration.windowMarginsEnabled() && (userConfiguration.smartWindowMargins() ? windows.windows.count > 1 : true)
@@ -375,7 +385,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
         if let screen = screen,
            let window = Window.currentlyFocused(),
-           let windowSet = delegate?.activeWindowSet(forScreenManager: self),
+           let windowSet = delegate?.activeWindowSet(forScreenManager: self, on: space),
            let frame = currentLayout?.assignedFrame(window, of: windowSet, on: screen),
            !frame.resizeRules.isMain {
             panedLayout.expandMainPane()
@@ -391,7 +401,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
         if let screen = screen,
            let window = Window.currentlyFocused(),
-           let windowSet = delegate?.activeWindowSet(forScreenManager: self),
+           let windowSet = delegate?.activeWindowSet(forScreenManager: self, on: space),
            let frame = currentLayout?.assignedFrame(window, of: windowSet, on: screen),
            !frame.resizeRules.isMain {
             panedLayout.shrinkMainPane()

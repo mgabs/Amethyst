@@ -7,7 +7,7 @@ private final class TestDelegate: ScreenManagerDelegate {
     typealias Window = TestWindow
 
     func applyWindowLimit(forScreenManager screenManager: ScreenManager<TestDelegate>, minimizingIn range: (Int) -> Range<Int>) {}
-    func activeWindowSet(forScreenManager screenManager: ScreenManager<TestDelegate>) -> WindowSet<TestWindow> {
+    func activeWindowSet(forScreenManager screenManager: ScreenManager<TestDelegate>, on space: Space?) -> WindowSet<TestWindow> {
         return WindowSet(windows: [], activeWindows: [], mainWindows: [])
     }
     func onReflowInitiation() {}

@@ -94,11 +94,11 @@ extension WindowManager {
             markAllScreensForReflow()
         }
 
-        func distributeEventToScreen(_ screen: Screen, change: Change<Window>) {
+        func distributeEventToScreen(_ screen: Screen, change: Change<Window>, on space: Space? = nil) {
             screenManagers
                 .filter { $0.screen?.screenID() == screen.screenID() }
                 .forEach { screenManager in
-                    screenManager.distributeEvent(change)
+                    screenManager.distributeEvent(change, on: space)
                 }
         }
 
@@ -108,17 +108,17 @@ extension WindowManager {
             }
         }
 
-        func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false) {
+        func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false, on space: Space? = nil) {
             screenManagers
                 .filter { $0.screen?.screenID() == screen.screenID() }
                 .forEach { screenManager in
-                    screenManager.setNeedsReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
+                    screenManager.setNeedsReflow(on: space, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
                 }
         }
 
-        func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false) {
+        func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false, on space: Space? = nil) {
             for screenManager in screenManagers {
-                screenManager.setNeedsReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
+                screenManager.setNeedsReflow(on: space, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
             }
         }
     }

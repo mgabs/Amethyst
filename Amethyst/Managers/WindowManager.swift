@@ -369,20 +369,20 @@ extension WindowManager {
         markScreenForReflow(screen, skipMainPaneRatioRecommendation: false)
     }
 
-    func distributeEventToScreen(_ screen: Screen, change: Change<Window>) {
-        screens.distributeEventToScreen(screen, change: change)
+    func distributeEventToScreen(_ screen: Screen, change: Change<Window>, on space: Space? = nil) {
+        screens.distributeEventToScreen(screen, change: change, on: space)
     }
 
     func distributeEventToAllScreens(_ change: Change<Window>) {
         screens.distributeEventToAllScreens(change: change)
     }
 
-    func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false) {
-        screens.markScreenForReflow(screen, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
+    func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false, on space: Space? = nil) {
+        screens.markScreenForReflow(screen, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation, on: space)
     }
 
-    func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false) {
-        screens.markAllScreensForReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
+    func markAllScreensForReflow(skipMainPaneRatioRecommendation: Bool = false, on space: Space? = nil) {
+        screens.markAllScreensForReflow(skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation, on: space)
     }
 
     func displayCurrentLayout() {
@@ -788,6 +788,10 @@ extension WindowManager: MouseStateKeeperDelegate {
         }
         executeTransition(.switchWindows(draggedWindow, secondWindow))
     }
+
+    func recommendReflow() {
+        markAllScreensForReflow()
+    }
 }
 
 extension Notification.Name {
@@ -977,8 +981,12 @@ extension WindowManager: WindowTransitionTarget {
 
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
-            eventQueue.append(PendingEvent(screen: targetScreen, event: .add(window: window)))
+
             window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
+
+            distributeEventToScreen(targetScreen, change: .add(window: window), on: targetSpace)
+            markScreenForReflow(targetScreen, on: targetSpace)
+
             if let targetScreenManager = screenManager(for: targetScreen) {
                 if !destinationWindows.isEmpty {
                     targetScreenManager.resetLayout(for: targetSpace)
@@ -1092,7 +1100,8 @@ extension WindowManager: ScreenManagerDelegate {
         }
     }
 
-    func activeWindowSet(forScreenManager screenManager: ScreenManager<WindowManager<Application>>) -> WindowSet<Window> {
-        return windows.windowSet(forActiveWindowsOnScreen: screenManager.screen!)
+    func activeWindowSet(forScreenManager screenManager: ScreenManager<WindowManager<Application>>, on space: Space?) -> WindowSet<Window> {
+        let targetSpace = space ?? screenManager.space!
+        return windows.windowSet(forActiveWindowsOnSpace: targetSpace.id, onScreen: screenManager.screen!)
     }
 }

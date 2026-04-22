@@ -22,6 +22,7 @@ enum MouseState<Window: WindowType> {
     case moving(window: Window)
     case resizing(screen: Screen, ratio: CGFloat)
     case doneDragging(atTime: Date)
+    case mouseMoved
 }
 
 /// MouseStateKeeper will need a few things to do its job effectively
@@ -29,6 +30,7 @@ protocol MouseStateKeeperDelegate: AnyObject {
     associatedtype Window: WindowType
     func recommendMainPaneRatio(_ ratio: CGFloat)
     func swapDraggedWindowWithDropzone(_ draggedWindow: Window)
+    func recommendReflow()
 }
 
 /**
@@ -51,7 +53,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
         self.delegate = delegate
 
         state = .pointing
-        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged]
+        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged, .mouseMoved]
         monitor = NSEvent.addGlobalMonitorForEvents(matching: mouseEventsToWatch, handler: self.handleMouseEvent)
     }
 
@@ -67,13 +69,17 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     // is being pressed.
     func handleMouseEvent(anEvent: NSEvent) {
         switch anEvent.type {
+        case .mouseMoved:
+            if UserConfiguration.shared.mouseMovesTriggerReflow() {
+                delegate?.recommendReflow()
+            }
         case .leftMouseDown:
             self.state = .clicking
         case .leftMouseDragged:
             switch self.state {
             case .moving, .resizing:
             break // ignore - we have what we need
-            case .pointing, .clicking, .dragging, .doneDragging:
+            case .pointing, .clicking, .dragging, .doneDragging, .mouseMoved:
                 self.state = .dragging
             }
 
@@ -93,7 +99,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             case .clicking:
                 lastClick = Date()
                 self.state = .pointing
-            case .pointing:
+            case .pointing, .mouseMoved:
                 self.state = .pointing
             }
 
@@ -109,6 +115,8 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             self.state = .pointing // remove associated timestamp
         case .moving:
             self.state = .dragging // remove associated window
+        case .mouseMoved:
+            self.state = .pointing
         default: ()
         }
     }
