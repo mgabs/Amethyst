@@ -159,11 +159,11 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
             return
         }
 
-        guard let index = spaces.firstIndex(of: currentFocusedSpace), index < spaces.count else {
+        guard let sourceSpaceIndex = spaces.firstIndex(of: currentFocusedSpace), space >= 0, space < spaces.count else {
             return
         }
 
-        pushFocusedWindowToSpace(space, sourceSpace: index)
+        pushFocusedWindowToSpace(space, sourceSpace: sourceSpaceIndex)
     }
 
     func pushFocusedWindowToSpace(_ space: Int, sourceSpace: Int) {
