@@ -34,6 +34,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var isFirstLaunch = true
 
+    var updaterController: SPUStandardUpdaterController!
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         #if DEBUG
             log.addDestination(ConsoleDestination())
@@ -52,15 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UserConfiguration.shared.load()
 
         #if RELEASE
-            let appcastURLString = { () -> String? in
-                if UserConfiguration.shared.useCanaryBuild() {
-                    return Bundle.main.infoDictionary?["SUCanaryFeedURL"] as? String
-                } else {
-                    return Bundle.main.infoDictionary?["SUFeedURL"] as? String
-                }
-            }()!
-
-            SUUpdater.shared().feedURL = URL(string: appcastURLString)
+            updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
         #endif
 
         if let encodedWindowManager = UserDefaults.standard.data(forKey: AppDelegate.windowManagerEncodingKey), UserConfiguration.shared.restoreLayoutsOnLaunch() {
@@ -320,7 +314,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @IBAction func checkForUpdates(_ sender: AnyObject) {
         #if RELEASE
-            SUUpdater.shared().checkForUpdates(sender)
+            updaterController.checkForUpdates(sender)
         #endif
     }
 
@@ -393,6 +387,16 @@ extension AppDelegate: NSMenuDelegate {
         // Refresh layouts menu when main status item menu is about to open
         if menu == statusItemMenu {
             populateLayoutsMenu()
+        }
+    }
+}
+
+extension AppDelegate: SPUUpdaterDelegate {
+    func feedURLString(for updater: SPUUpdater) -> String? {
+        if UserConfiguration.shared.useCanaryBuild() {
+            return Bundle.main.infoDictionary?["SUCanaryFeedURL"] as? String
+        } else {
+            return Bundle.main.infoDictionary?["SUFeedURL"] as? String
         }
     }
 }

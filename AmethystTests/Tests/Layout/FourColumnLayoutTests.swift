@@ -48,25 +48,31 @@ class FourColumnLayoutTests: QuickSpec {
 
                     // secondary = ceil(n/3), tertiary = ceil((n-1)/3), quaternary = floor(n/3)
                     // counts verified: secondary + tertiary + quaternary == nonMainCount
-                    let cases: [(UInt, UInt, UInt, UInt)] = [
-                        // (numWindows, secondary, tertiary, quaternary)
-                        (0, 0, 0, 0),
-                        (1, 1, 0, 0),
-                        (2, 1, 1, 0),
-                        (3, 1, 1, 1),
-                        (4, 2, 1, 1),
-                        (5, 2, 2, 1),
-                        (6, 2, 2, 2),
-                        (7, 3, 2, 2),
-                        (8, 3, 3, 2),
-                        (9, 3, 3, 3)
+                    struct TestCase {
+                        let numWindows: UInt
+                        let expectedSecondary: UInt
+                        let expectedTertiary: UInt
+                        let expectedQuaternary: UInt
+                    }
+
+                    let cases = [
+                        TestCase(numWindows: 0, expectedSecondary: 0, expectedTertiary: 0, expectedQuaternary: 0),
+                        TestCase(numWindows: 1, expectedSecondary: 1, expectedTertiary: 0, expectedQuaternary: 0),
+                        TestCase(numWindows: 2, expectedSecondary: 1, expectedTertiary: 1, expectedQuaternary: 0),
+                        TestCase(numWindows: 3, expectedSecondary: 1, expectedTertiary: 1, expectedQuaternary: 1),
+                        TestCase(numWindows: 4, expectedSecondary: 2, expectedTertiary: 1, expectedQuaternary: 1),
+                        TestCase(numWindows: 5, expectedSecondary: 2, expectedTertiary: 2, expectedQuaternary: 1),
+                        TestCase(numWindows: 6, expectedSecondary: 2, expectedTertiary: 2, expectedQuaternary: 2),
+                        TestCase(numWindows: 7, expectedSecondary: 3, expectedTertiary: 2, expectedQuaternary: 2),
+                        TestCase(numWindows: 8, expectedSecondary: 3, expectedTertiary: 3, expectedQuaternary: 2),
+                        TestCase(numWindows: 9, expectedSecondary: 3, expectedTertiary: 3, expectedQuaternary: 3)
                     ]
-                    for (num, expSec, expTert, expQuat) in cases {
-                        let arr = arrangement(num)
-                        expect(arr.count(.secondary)).to(equal(expSec), description: "\(num) windows: secondary")
-                        expect(arr.count(.tertiary)).to(equal(expTert), description: "\(num) windows: tertiary")
-                        expect(arr.count(.quaternary)).to(equal(expQuat), description: "\(num) windows: quaternary")
-                        expect(arr.count(.secondary) + arr.count(.tertiary) + arr.count(.quaternary)).to(equal(num), description: "\(num) windows: total sum")
+                    for testCase in cases {
+                        let arr = arrangement(testCase.numWindows)
+                        expect(arr.count(.secondary)).to(equal(testCase.expectedSecondary), description: "\(testCase.numWindows) windows: secondary")
+                        expect(arr.count(.tertiary)).to(equal(testCase.expectedTertiary), description: "\(testCase.numWindows) windows: tertiary")
+                        expect(arr.count(.quaternary)).to(equal(testCase.expectedQuaternary), description: "\(testCase.numWindows) windows: quaternary")
+                        expect(arr.count(.secondary) + arr.count(.tertiary) + arr.count(.quaternary)).to(equal(testCase.numWindows), description: "\(testCase.numWindows) windows: total sum")
                     }
                 }
             }
