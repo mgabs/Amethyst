@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AM0000001000000000000001 /* ApplicationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000001 /* ApplicationMonitor.swift */; };
+		AM0000001000000000000002 /* ApplicationMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000002 /* ApplicationMonitorTests.swift */; };
 		BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EDD98625B1473396B76236 /* Validators.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ConfigurationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */; };
 		EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */; };
@@ -255,6 +257,8 @@
 		DEADBEEF0000000000000001 /* ReflowOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReflowOperationTests.swift; sourceTree = "<group>"; };
 		F0B42E342A3CA45E00298E30 /* TwoPaneRightLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoPaneRightLayout.swift; sourceTree = "<group>"; };
 		F46629C3272AD7A30040C275 /* FourColumnLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FourColumnLayout.swift; sourceTree = "<group>"; };
+		AM0000002000000000000001 /* ApplicationMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationMonitor.swift; sourceTree = "<group>"; };
+		AM0000002000000000000002 /* ApplicationMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationMonitorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -319,6 +323,7 @@
 		401BC8AA1CE8F82700F89B3F /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				AM0000002000000000000001 /* ApplicationMonitor.swift */,
 				2A6D9A4025E5D24D006A36B5 /* AppManager.swift */,
 				401BC8B91CE9319500F89B3F /* FocusFollowsMouseManager.swift */,
 				401C35B6224831470019ED07 /* FocusTransitionCoordinator.swift */,
@@ -513,6 +518,7 @@
 		4085824A1EA673950075A2C3 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				AM0000002000000000000002 /* ApplicationMonitorTests.swift */,
 				4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */,
 				40EC47F323F3A30100048B4F /* ScreenManagerTests.swift */,
 				56D75164303C5BD178EF7901 /* SpaceIndicatorManagerTests.swift */,
@@ -799,6 +805,7 @@
 				400540F22325CDF4004B8656 /* Reliability.swift in Sources */,
 				4029C4F11C112478001E4788 /* Layout.swift in Sources */,
 				AA4AF40D26717DA900D2AE1B /* TwoPaneLayout.swift in Sources */,
+				AM0000001000000000000001 /* ApplicationMonitor.swift in Sources */,
 				2A6D9A4125E5D24D006A36B5 /* AppManager.swift in Sources */,
 				4046EFCF2236019400113067 /* Window.swift in Sources */,
 				40A87FDC2404AEAD005EE9C6 /* main.swift in Sources */,
@@ -855,6 +862,7 @@
 				401BC8AE1CE8FD4700F89B3F /* UserConfigurationTests.swift in Sources */,
 				AAAC6BAC2677DF7B00BEC1B0 /* TwoPaneLayoutTests.swift in Sources */,
 				404BE9D11CFBDF1900D6C537 /* BinarySpacePartitioningLayoutTests.swift in Sources */,
+				AM0000001000000000000002 /* ApplicationMonitorTests.swift in Sources */,
 				4085824C1EA673AE0075A2C3 /* HotKeyManagerTests.swift in Sources */,
 				40578C1B232DC607006553A0 /* TestScreen.swift in Sources */,
 				40B0D145232D2E630021E0A7 /* FullscreenLayoutTests.swift in Sources */,
