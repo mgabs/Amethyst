@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EDD98625B1473396B76236 /* Validators.swift */; };
+		EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */; };
 		1A4B46EB20AA7717003D5110 /* NSTableView+Amethyst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4B46EA20AA7717003D5110 /* NSTableView+Amethyst.swift */; };
 		2A6D9A4125E5D24D006A36B5 /* AppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6D9A4025E5D24D006A36B5 /* AppManager.swift */; };
 		4000DB10239CA07000365A0C /* WideLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4000DB0F239CA07000365A0C /* WideLayoutTests.swift */; };
@@ -134,6 +136,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		06EDD98625B1473396B76236 /* Validators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validators.swift; sourceTree = "<group>"; };
+		57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationValidatorTests.swift; sourceTree = "<group>"; };
 		1A4B46EA20AA7717003D5110 /* NSTableView+Amethyst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTableView+Amethyst.swift"; sourceTree = "<group>"; };
 		2A6D9A4025E5D24D006A36B5 /* AppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManager.swift; sourceTree = "<group>"; };
 		39B531405ABA6A3E1D261F22 /* LayoutTypeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LayoutTypeTests.swift; sourceTree = "<group>"; };
@@ -396,6 +400,14 @@
 			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
+		E5A3E647B6D643388D9BDC81 /* Validation */ = {
+			isa = PBXGroup;
+			children = (
+				06EDD98625B1473396B76236 /* Validators.swift */,
+			);
+			path = Validation;
+			sourceTree = "<group>";
+		};
 		402DB6E71742E41A00D1C936 /* Amethyst */ = {
 			isa = PBXGroup;
 			children = (
@@ -405,6 +417,7 @@
 				4046EFCD2236018400113067 /* Model */,
 				401BC8AA1CE8F82700F89B3F /* Managers */,
 				4008E724190C4D9D0049E2F6 /* Preferences */,
+				E5A3E647B6D643388D9BDC81 /* Validation */,
 				40B392831814977D009A296B /* View */,
 				40B337E51745D1600001D8FC /* Categories */,
 				40B337E11745CE340001D8FC /* Layout */,
@@ -506,6 +519,14 @@
 			path = Debug;
 			sourceTree = "<group>";
 		};
+		2B6CB620BC0141C8B66362FE /* Validation */ = {
+			isa = PBXGroup;
+			children = (
+				57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */,
+			);
+			path = Validation;
+			sourceTree = "<group>";
+		};
 		40B0D148232D942B0021E0A7 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -513,6 +534,7 @@
 				404BE9CF1CFBDEFD00D6C537 /* Layout */,
 				401BC8AB1CE8F84500F89B3F /* Preferences */,
 				40111CC7223370E1003D20BD /* Categories */,
+				2B6CB620BC0141C8B66362FE /* Validation */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -801,6 +823,7 @@
 				1A4B46EB20AA7717003D5110 /* NSTableView+Amethyst.swift in Sources */,
 				4045416F268FFDA000861BE8 /* CustomLayout.swift in Sources */,
 				40637077224F0EFF0081299D /* Screens.swift in Sources */,
+				BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -832,6 +855,7 @@
 				BDC23406250E431D816DBED0 /* FourColumnLayoutTests.swift in Sources */,
 				40AB5BE923AB0A2B00E29346 /* TallRightLayoutTests.swift in Sources */,
 				56D75165303C5BD178EF7900 /* LayoutTypeTests.swift in Sources */,
+				EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
