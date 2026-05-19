@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EDD98625B1473396B76236 /* Validators.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* ConfigurationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */; };
 		EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */; };
 		1A4B46EB20AA7717003D5110 /* NSTableView+Amethyst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4B46EA20AA7717003D5110 /* NSTableView+Amethyst.swift */; };
 		2A6D9A4125E5D24D006A36B5 /* AppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6D9A4025E5D24D006A36B5 /* AppManager.swift */; };
@@ -137,6 +138,7 @@
 
 /* Begin PBXFileReference section */
 		06EDD98625B1473396B76236 /* Validators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validators.swift; sourceTree = "<group>"; };
+		F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationValidator.swift; sourceTree = "<group>"; };
 		57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationValidatorTests.swift; sourceTree = "<group>"; };
 		1A4B46EA20AA7717003D5110 /* NSTableView+Amethyst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSTableView+Amethyst.swift"; sourceTree = "<group>"; };
 		2A6D9A4025E5D24D006A36B5 /* AppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManager.swift; sourceTree = "<group>"; };
@@ -404,6 +406,7 @@
 			isa = PBXGroup;
 			children = (
 				06EDD98625B1473396B76236 /* Validators.swift */,
+				F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */,
 			);
 			path = Validation;
 			sourceTree = "<group>";
@@ -824,6 +827,7 @@
 				4045416F268FFDA000861BE8 /* CustomLayout.swift in Sources */,
 				40637077224F0EFF0081299D /* Screens.swift in Sources */,
 				BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* ConfigurationValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
