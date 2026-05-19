@@ -58,12 +58,10 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
     let windowTransitionCoordinator: WindowTransitionCoordinator<WindowManager<Application>>
     let focusTransitionCoordinator: FocusTransitionCoordinator<WindowManager<Application>>
 
-    private var applications: [pid_t: AnyApplication<Application>] = [:]
     private var applicationObservations: [pid_t: UndeterminedApplication] = [:]
     private var screens: Screens
     private let windows = Windows()
     private var lastReflowTime = Date()
-    private var lastFocusDate: Date?
     private var pendingTabDetection: [Window.WindowID: Window] = [:]
     private var earlyFocusedWindows: Set<Window.WindowID> = []
     private var eventQueue: [PendingEvent] = []
@@ -290,11 +288,11 @@ extension WindowManager {
     }
 
     fileprivate func applicationWithPID(_ pid: pid_t) -> AnyApplication<Application>? {
-        return applications[pid]
+        return applicationMonitor.application(withPID: pid)
     }
 
     fileprivate func add(application: AnyApplication<Application>) {
-        guard applications[application.pid()] == nil else {
+        guard applicationMonitor.application(withPID: application.pid()) == nil else {
             for window in application.windows() {
                 add(window: window)
             }
@@ -305,8 +303,6 @@ extension WindowManager {
             .addObservers()
             .subscribe(
                 onCompleted: { [weak self] in
-                    self?.applications[application.pid()] = application
-                    // Delegate to ApplicationMonitor (dual tracking)
                     self?.applicationMonitor.add(application: application)
 
                     for window in application.windows() {
@@ -322,8 +318,6 @@ extension WindowManager {
         for window in applicationWindows {
             remove(window: window)
         }
-        applications.removeValue(forKey: application.pid())
-        // Delegate to ApplicationMonitor (dual tracking)
         applicationMonitor.remove(application: application)
     }
 
@@ -648,11 +642,11 @@ extension WindowManager {
             // the window is already active, but just became focused by swapping window focus.
             // The time is in seconds, and too long a time ends up with quick switches triggering tabs to incorrectly
             // swap.
-            let changeInterval = lastFocusDate.flatMap { abs($0.timeIntervalSinceNow) }
-            if let changeInterval = changeInterval, abs(changeInterval) < 0.1 && !isInvalid {
+            let changeInterval = focusManager.timeSinceLastFocus
+            if changeInterval < 0.1 && !isInvalid {
                 log.debug("""
                 Window candidate discarded: \(existingWindow)
-                lastFocusChange: \(lastFocusDate?.description ?? "nil") now: \(changeInterval) isInvalid: \(isInvalid)
+                timeSinceLastFocus: \(changeInterval) isInvalid: \(isInvalid)
                 """)
                 continue
             }
@@ -835,8 +829,6 @@ extension WindowManager: ApplicationObservationDelegate {
 
         let previousScreen = Window.currentlyFocused()?.screen()
 
-        lastFocusDate = Date()
-        // Delegate to FocusManager (dual tracking)
         focusManager.setFocused(window: window)
 
         if pendingTabDetection.removeValue(forKey: window.id()) != nil {
