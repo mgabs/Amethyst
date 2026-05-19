@@ -270,7 +270,7 @@ class UserConfiguration: NSObject {
         }
 
         if fallbackToDefault {
-            return defaultConfiguration![keyValue].rawValue as? T
+            return defaultConfiguration?[keyValue].rawValue as? T
         }
 
         return nil
@@ -424,7 +424,7 @@ class UserConfiguration: NSObject {
         modifier1 = modifierFlagsForStrings(mod1Strings)
         modifier2 = modifierFlagsForStrings(mod2Strings)
 
-        if modifier1 == nil || modifier1!.isEmpty {
+        if modifier1 == nil || modifier1?.isEmpty == true {
             log.error("error loading a mod1")
 
             let alert = NSAlert()
@@ -433,7 +433,7 @@ class UserConfiguration: NSObject {
             alert.runModal()
         }
 
-        if modifier2 == nil || modifier2!.isEmpty {
+        if modifier2 == nil || modifier2?.isEmpty == true {
             log.error("error loading a mod2")
 
             let alert = NSAlert()
@@ -531,16 +531,16 @@ class UserConfiguration: NSObject {
     private func modifierFlagsForModifierString(_ modifierString: String) -> AMModifierFlags {
         switch modifierString {
         case "mod1":
-            return modifier1!
+            return modifier1 ?? []
         case "mod2":
-            return modifier2!
+            return modifier2 ?? []
         case "mod3":
-            return modifier3!
+            return modifier3 ?? []
         case "mod4":
-            return modifier4!
+            return modifier4 ?? []
         default:
             log.warning("Unknown modifier string: \(modifierString)")
-            return modifier1!
+            return modifier1 ?? []
         }
     }
 
@@ -700,8 +700,8 @@ class UserConfiguration: NSObject {
         // if smartWindowMargins is enabled, enabled window margins if there are more than one visible windows on screen
         let options = CGWindowListOption(arrayLiteral: .excludeDesktopElements, .optionOnScreenOnly)
         let windowsListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
-        let infoList = windowsListInfo as! [[String: Any]]
-        let visibleWindows = infoList.filter { $0["kCGWindowLayer"] as! Int == 0 }
+        let infoList = windowsListInfo as? [[String: Any]] ?? []
+        let visibleWindows = infoList.filter { $0["kCGWindowLayer"] as? Int == 0 }
         return visibleWindows.count > 1
     }
 
