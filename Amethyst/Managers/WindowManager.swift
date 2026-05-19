@@ -976,7 +976,7 @@ extension WindowManager: WindowTransitionTarget {
             guard
                 let screen = window.screen(),
                 let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true),
-                spaceIndex >= 0, spaceIndex < spaces.count
+                spaceIndex < spaces.count
             else {
                 return
             }

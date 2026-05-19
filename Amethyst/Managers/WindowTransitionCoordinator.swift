@@ -155,7 +155,7 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
     }
 
     func pushFocusedWindowToSpace(_ space: Int) {
-        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true) else {
+        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(), let spaces = CGSpacesInfo<Window>.spacesForAllScreens() else {
             return
         }
 
