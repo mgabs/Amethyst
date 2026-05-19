@@ -973,11 +973,14 @@ extension WindowManager: WindowTransitionTarget {
             window.focus()
             NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
+            log.debug("executeTransition(.moveWindowToSpaceAtIndex) called with spaceIndex: \(spaceIndex), sourceSpaceIndex: \(sourceSpaceIndex)")
             guard
                 let screen = window.screen(),
                 let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true),
-                spaceIndex < spaces.count
+                spaceIndex >= 0, spaceIndex < spaces.count
             else {
+                let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true)
+                log.warning("executeTransition(.moveWindowToSpaceAtIndex) guard failed - screen: \(window.screen() != nil), spaces count: \(spaces?.count ?? 0), spaceIndex >= 0: \(spaceIndex >= 0), spaceIndex < spaces.count: \(spaceIndex < (spaces?.count ?? 0))")
                 return
             }
 
