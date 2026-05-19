@@ -994,7 +994,7 @@ extension WindowManager: WindowTransitionTarget {
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
 
-            window.move(toSpaceAtIndex: UInt(spaceIndex + 1))
+            window.move(toSpaceAtIndex: UInt(targetSpaceIndex + 1))
 
             distributeEventToScreen(targetScreen, change: .add(window: window), on: targetSpace)
             markScreenForReflow(targetScreen, on: targetSpace)
