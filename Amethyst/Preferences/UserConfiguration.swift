@@ -241,6 +241,9 @@ class UserConfiguration: NSObject {
     var modifier3: AMModifierFlags?
     var modifier4: AMModifierFlags?
 
+    private let configValidator = ConfigurationValidator()
+    private let frameValidator = FrameValidator()
+
     init(storage: ConfigurationStorage) {
         self.storage = storage
     }
@@ -840,6 +843,48 @@ class UserConfiguration: NSObject {
 
     func setSpaceIndicatorColorStyle(_ style: SpaceIndicatorColorStyle) {
         storage.set(style.rawValue, forKey: .spaceIndicatorColorStyle)
+    }
+
+    // MARK: - Validation Accessors
+
+    /// Safe accessor for main pane ratio with validation
+    /// - Throws: ValidationError if stored value is outside (0.0, 1.0)
+    func validatedMainPaneRatio() throws -> CGFloat {
+        let rawRatio = windowResizeStep()
+        if let error = configValidator.validateMainPaneRatio(rawRatio) {
+            throw error
+        }
+        return rawRatio
+    }
+
+    /// Safe accessor for main pane ratio with default fallback
+    /// - Returns: Valid ratio, or 0.5 if current value is invalid
+    func mainPaneRatioWithDefault() -> CGFloat {
+        do {
+            return try validatedMainPaneRatio()
+        } catch {
+            return 0.5
+        }
+    }
+
+    /// Safe accessor for focus follows mouse delay
+    /// - Throws: ValidationError if value is negative
+    func validatedFocusFollowsMouseDelay() throws -> TimeInterval {
+        let rawDelay = focusFollowsWindowThrownDelay()
+        if let error = configValidator.validateFocusFollowsMouseDelay(rawDelay) {
+            throw error
+        }
+        return rawDelay
+    }
+
+    /// Safe accessor for window margin size
+    /// - Throws: ValidationError if value is negative
+    func validatedWindowMarginSize() throws -> CGFloat {
+        let rawSize = windowMarginSize()
+        if let error = configValidator.validateWindowMarginSize(rawSize) {
+            throw error
+        }
+        return rawSize
     }
 }
 
