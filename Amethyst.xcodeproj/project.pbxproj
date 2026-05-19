@@ -13,6 +13,7 @@
 		AM0000001000000000000004 /* WindowTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000004 /* WindowTrackerTests.swift */; };
 		AM0000001000000000000005 /* FocusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000005 /* FocusManager.swift */; };
 		AM0000001000000000000006 /* FocusManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000006 /* FocusManagerTests.swift */; };
+		AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */; };
 		BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EDD98625B1473396B76236 /* Validators.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ConfigurationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */; };
 		EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */; };
@@ -267,6 +268,7 @@
 		AM0000002000000000000004 /* WindowTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTrackerTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000005 /* FocusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManager.swift; sourceTree = "<group>"; };
 		AM0000002000000000000006 /* FocusManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManagerTests.swift; sourceTree = "<group>"; };
+		AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementIntegrationTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -560,6 +562,14 @@
 			path = Validation;
 			sourceTree = "<group>";
 		};
+		AM0000003000000000000001 /* Integration */ = {
+			isa = PBXGroup;
+			children = (
+				AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */,
+			);
+			path = Integration;
+			sourceTree = "<group>";
+		};
 		40B0D148232D942B0021E0A7 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -568,6 +578,7 @@
 				401BC8AB1CE8F84500F89B3F /* Preferences */,
 				40111CC7223370E1003D20BD /* Categories */,
 				2B6CB620BC0141C8B66362FE /* Validation */,
+				AM0000003000000000000001 /* Integration */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -879,6 +890,7 @@
 				AM0000001000000000000002 /* ApplicationMonitorTests.swift in Sources */,
 				AM0000001000000000000004 /* WindowTrackerTests.swift in Sources */,
 				AM0000001000000000000006 /* FocusManagerTests.swift in Sources */,
+				AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */,
 				4085824C1EA673AE0075A2C3 /* HotKeyManagerTests.swift in Sources */,
 				40578C1B232DC607006553A0 /* TestScreen.swift in Sources */,
 				40B0D145232D2E630021E0A7 /* FullscreenLayoutTests.swift in Sources */,

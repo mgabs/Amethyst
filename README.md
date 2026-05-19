@@ -237,6 +237,33 @@ You can toggle these options directly from the Amethyst menu bar icon under the 
 
 Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). Note that if configuration file is present, it will override the settings defined via the GUI.
 
+## Architecture
+
+Amethyst's window management logic is organized into focused, single-responsibility
+components. See [docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md](docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md)
+for a full refactoring summary.
+
+### Core Components
+
+| Component | Responsibility |
+|-----------|---------------|
+| **WindowManager** | Top-level orchestrator; coordinates all managers and handles hot-key dispatch |
+| **ApplicationMonitor** | Tracks running applications and handles app lifecycle events (launch, terminate, hide) |
+| **WindowTracker** | Owns the window registry, floating state, and window list mutations |
+| **FocusManager** | Manages focus transitions, focus-follows-mouse, and focus history |
+| **ScreenManager** | Owns per-screen layout state, space assignment, and reflow operations |
+| **LayoutType** | Enumerates and instantiates the available tiling layout algorithms |
+
+### Validation Layer
+
+Three validators enforce safety invariants across the codebase:
+
+- **ConfigurationValidator** — numeric bounds (ratios, counts, indices)
+- **FrameValidator** — window frame bounds against screen geometry
+- **LayoutValidator** — layout index bounds and cycling operations
+
+---
+
 ## Building Amethyst Locally
 
 ### Prerequisites
