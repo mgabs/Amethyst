@@ -68,6 +68,11 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
     private var earlyFocusedWindows: Set<Window.WindowID> = []
     private var eventQueue: [PendingEvent] = []
 
+    // MARK: - Extracted type managers (Task 10 integration)
+    private let applicationMonitor = ApplicationMonitor<AnyApplication<Application>>()
+    private let windowTracker = WindowTracker<AnyApplication<Application>>()
+    private let focusManager = FocusManager<AnyApplication<Application>>()
+
     private lazy var mouseStateKeeper = MouseStateKeeper(delegate: self)
     private lazy var applicationEventHandler = ApplicationEventHandler(delegate: self)
     private let userConfiguration: UserConfiguration
@@ -301,6 +306,8 @@ extension WindowManager {
             .subscribe(
                 onCompleted: { [weak self] in
                     self?.applications[application.pid()] = application
+                    // Delegate to ApplicationMonitor (dual tracking)
+                    self?.applicationMonitor.add(application: application)
 
                     for window in application.windows() {
                         self?.add(window: window)
@@ -316,6 +323,8 @@ extension WindowManager {
             remove(window: window)
         }
         applications.removeValue(forKey: application.pid())
+        // Delegate to ApplicationMonitor (dual tracking)
+        applicationMonitor.remove(application: application)
     }
 
     fileprivate func activate(application: AnyApplication<Application>) {
@@ -333,6 +342,12 @@ extension WindowManager {
         log.debug("Removing window: \(window)")
         pendingTabDetection.removeValue(forKey: window.id())
         earlyFocusedWindows.remove(window.id())
+        // Delegate to WindowTracker (dual tracking)
+        windowTracker.remove(window: window)
+        // Delegate to FocusManager — clear focus if this window was focused (dual tracking)
+        if focusManager.isFocused(window: window) {
+            focusManager.clearFocus()
+        }
 
         if let screen = window.screen() {
             distributeEventToScreen(screen, change: .remove(window: window))
@@ -543,6 +558,9 @@ extension WindowManager {
         guard CGWindowsInfo.windowSpace(window) != nil else {
             throw TrackingError.unknownSpace
         }
+
+        // Delegate to WindowTracker (dual tracking)
+        windowTracker.add(window: window, application: application)
 
         if let otherWindow = otherWindow {
             _ = windows.replace(window: window, withWindow: otherWindow)
@@ -818,6 +836,8 @@ extension WindowManager: ApplicationObservationDelegate {
         let previousScreen = Window.currentlyFocused()?.screen()
 
         lastFocusDate = Date()
+        // Delegate to FocusManager (dual tracking)
+        focusManager.setFocused(window: window)
 
         if pendingTabDetection.removeValue(forKey: window.id()) != nil {
             completeTabDetection(for: window, on: screen)
