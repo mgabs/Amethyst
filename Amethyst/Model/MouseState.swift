@@ -70,9 +70,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     func handleMouseEvent(anEvent: NSEvent) {
         switch anEvent.type {
         case .mouseMoved:
-            if UserConfiguration.shared.mouseMovesTriggerReflow() {
-                delegate?.recommendReflow()
-            }
+            break // Reflow only on explicit click-drag-release sequence
         case .leftMouseDown:
             self.state = .clicking
         case .leftMouseDragged:
@@ -86,6 +84,8 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
         case .leftMouseUp:
             switch self.state {
             case .dragging:
+                // Trigger reflow on click-drag-release
+                delegate?.recommendReflow()
                 // assume window move event will come shortly after
                 self.state = .doneDragging(atTime: Date())
             case let .moving(draggedWindow):
