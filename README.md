@@ -1,11 +1,10 @@
 # Amethyst
 
 > [!IMPORTANT]
-> This is a fork of [ianyh/amethyst](https://github.com/ianyh/Amethyst).
+> This is a fork of [ianyh/Amethyst](https://github.com/ianyh/Amethyst). It is not kept in sync with upstream.
 
-[![Discussions](https://img.shields.io/github/discussions/ianyh/Amethyst)](https://github.com/ianyh/Amethyst/discussions)
-[![Open Source Helpers](https://www.codetriage.com/ianyh/amethyst/badges/users.svg)](https://www.codetriage.com/ianyh/amethyst)
-[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
+[![CI](https://github.com/mgabs/Amethyst/actions/workflows/ci.yml/badge.svg)](https://github.com/mgabs/Amethyst/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mgabs/Amethyst)](https://github.com/mgabs/Amethyst/releases/latest)
 
 Tiling window manager for macOS along the lines of [xmonad](https://xmonad.org/).
 
@@ -17,13 +16,13 @@ If you want to learn more about tiling window managers and the features of Ameth
 
 ## Getting Amethyst
 
-Amethyst is available for direct download on the [releases page](https://github.com/ianyh/Amethyst/releases) or using [homebrew cask](https://github.com/Homebrew/homebrew-cask).
+Download `Amethyst-vX.Y.Z.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
 
-```
-brew install --cask amethyst
-```
+The build is signed but not notarized, so on first launch macOS will refuse to open it. Right-click the app and choose **Open**, or allow it under System Settings → Privacy & Security → **Open Anyway**. In-app updates ("Check for Updates…") are delivered from this fork's GitHub releases via Sparkle.
 
-Note: that Amethyst now is only supported on macOS 10.15+.
+`brew install --cask amethyst` installs the **upstream** Amethyst, not this fork.
+
+Requires macOS 11+.
 
 ## Using Amethyst
 
@@ -266,33 +265,45 @@ Three validators enforce safety invariants across the codebase:
 
 ## Building Amethyst Locally
 
-### Prerequisites
+Requires Xcode. Dependencies are Swift packages and resolve automatically.
 
 ```bash
-brew bundle         # Installs fastlane, xcbeautify, swiftlint
-bundle install      # Pins fastlane version via Bundler
+# unsigned Release build → build/Build/Products/Release/Amethyst.app
+xcodebuild -workspace Amethyst.xcworkspace -scheme Amethyst -configuration Release \
+  -destination 'platform=macOS' -derivedDataPath build \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+
+# tests
+xcodebuild -workspace Amethyst.xcworkspace -scheme Amethyst -destination 'platform=macOS' \
+  -derivedDataPath build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO test
 ```
 
-### Build Commands
+Or open `Amethyst.xcworkspace` in Xcode. `fastlane/` still has `local`, `local_release`, `test`, and `lint` lanes for those who prefer it (`brew bundle && bundle exec fastlane local`); CI no longer uses it.
+
+## CI/CD
+
+Two GitHub Actions workflows in `.github/workflows/`, both plain `xcodebuild` (no Ruby/fastlane):
+
+- **CI** (`ci.yml`) — builds and runs the test suite on every push to `development`/`master` and on pull requests.
+- **Release** (`release.yml`) — runs when a `v*` tag is pushed. It archives a signed Release build, zips the app and dSYMs, generates a Sparkle `appcast.xml`, and publishes everything as a GitHub Release. Tags containing `-` (e.g. `v0.25.0-beta.1`) are marked pre-release and are skipped by the updater.
+
+### Cutting a release
 
 ```bash
-bundle exec fastlane local           # Debug build (no code signing)
-bundle exec fastlane local_release   # Optimized release build (no code signing)
-bundle exec fastlane mac             # Signed release build (requires certificate)
-bundle exec fastlane test            # Run test suite
-bundle exec fastlane lint            # SwiftLint check
-bundle exec fastlane clean           # Remove build artifacts
+git tag v0.25.0
+git push origin v0.25.0
 ```
 
-The built app will be available at `./build/artifacts/Amethyst.app`.
+The tag is the version: `MARKETING_VERSION` is the tag without the `v`, `CURRENT_PROJECT_VERSION` (what Sparkle compares) is the commit count. No version bump commit is needed.
 
-### CI/CD
+### Secrets
 
-GitHub Actions workflows run automatically:
+| Secret | Purpose |
+|---|---|
+| `CERTIFICATES_P12` / `CERTIFICATES_P12_PASSWORD` | Base64 `.p12` of the signing certificate. Without it the release is ad-hoc signed and macOS will forget the Accessibility permission on every update. |
+| `SPARKLE_PRIVATE_KEY` | EdDSA private key (`generate_keys -x`) used to sign the appcast. Its public half is `SUPublicEDKey` in `Amethyst-Info.plist`; regenerating the key breaks updates for existing installs. Without it no appcast is produced and in-app updates stop working. |
 
-- **Build** — on push to `development`/`master` and PRs
-- **Tests** — on push to `development` and PRs
-- **Release** — on tag push (`v*`) or manual dispatch; creates a GitHub Release with signed app + dSYMs
+The updater feed URL is `https://github.com/mgabs/Amethyst/releases/latest/download/appcast.xml`, which GitHub redirects to the newest non-prerelease release, so no separate hosting is needed.
 
 ## Contributing
 

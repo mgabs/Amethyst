@@ -1,44 +1,78 @@
 name: Release
 
+# Tag a commit `vX.Y.Z` and push the tag. Tags containing "-" (v1.0.0-beta.1) become pre-releases.
 on:
-  workflow_dispatch: # Allows manual triggering from GitHub UI
   push:
-    tags:
-      - 'v*' # Triggers on tags starting with v (e.g. v0.1.0)
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   release:
-    name: Release
     runs-on: macos-latest
-
+    env:
+      VERSION: ${{ github.ref_name }}
+      HAS_CERT: ${{ secrets.CERTIFICATES_P12 != '' }}
+      HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v7
         with:
-          ruby-version: '3.2'
-          bundler-cache: true
+          fetch-depth: 0 # build number = commit count
 
-      - name: Install Dependencies
-        run: |
-          brew bundle
-
-      - name: Import Certificate
-        uses: apple-actions/import-codesign-certs@v2
+      - name: Import signing certificate
+        if: env.HAS_CERT == 'true'
+        uses: apple-actions/import-codesign-certs@v7.0.0
         with:
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
           p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
 
-      - name: Build Signed App
-        run: bundle exec fastlane mac
+      - name: Archive
+        run: |
+          if [[ "$HAS_CERT" == true ]]; then
+            # first imported identity, e.g. `1) <sha1> "Apple Development: me@x (TEAMID)"`; Xcode wants the sha1
+            LINE=$(security find-identity -v -p codesigning | head -1)
+            IDENTITY=$(sed -nE 's/.*\) ([0-9A-F]{40}) .*/\1/p' <<<"$LINE")
+            TEAM=$(sed -nE 's/.*\(([A-Z0-9]+)\)"$/\1/p' <<<"$LINE")
+          else
+            IDENTITY=- # ad-hoc; accessibility permission must be re-granted on every update
+            TEAM=
+          fi
+          echo "Signing as: ${IDENTITY} (team: ${TEAM:-none})"
+          xcodebuild -quiet archive \
+            -workspace Amethyst.xcworkspace -scheme Amethyst -configuration Release \
+            -destination 'platform=macOS' -derivedDataPath build/dd -archivePath build/Amethyst.xcarchive \
+            MARKETING_VERSION="${VERSION#v}" CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)" \
+            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_IDENTITY="$IDENTITY"
+
+      - name: Package
+        run: |
+          ditto -c -k --keepParent build/Amethyst.xcarchive/Products/Applications/Amethyst.app "build/Amethyst-$VERSION.zip"
+          ditto -c -k build/Amethyst.xcarchive/dSYMs "build/Amethyst-$VERSION.dSYM.zip"
+
+      - name: Generate Sparkle appcast
+        if: env.HAS_SPARKLE_KEY == 'true'
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          mkdir build/appcast && cp "build/Amethyst-$VERSION.zip" build/appcast/
+          # generate_appcast ships with the Sparkle SwiftPM artifact, so the tool version always matches the framework
+          echo "$SPARKLE_PRIVATE_KEY" | build/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "$REPO_URL/releases/download/$VERSION/" \
+            --link "$REPO_URL/releases" \
+            -o build/appcast.xml build/appcast
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3.0.3
         with:
-          files: |
-            build/artifacts/Amethyst-*.zip
-            build/artifacts/Amethyst-*.dSYM.zip
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            build/Amethyst-*.zip
+            build/appcast.xml
