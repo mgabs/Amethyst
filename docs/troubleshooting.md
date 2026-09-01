@@ -21,3 +21,27 @@ macOS has the option to assign an application specifically to no Desktops, one D
 To change this setting you can right click (or control click or whatever gesture you may have associated with right click) on the application icon in the Dock. Under Options there is an Assign To section. See the screenshot below for reference.
 
 <img src="./images/desktop-assignment.png" width="50%">
+
+## Amethyst won't open after download!
+
+### "Apple could not verify Amethyst is free of malware"
+
+Releases of this fork are signed but not notarized, so Gatekeeper blocks the first launch. Either right-click `Amethyst.app` and choose **Open**, or open System Settings → Privacy & Security, scroll to the Security section, and click **Open Anyway**. This is needed once per fresh download; in-app updates are not affected.
+
+### "Amethyst is damaged and can't be opened"
+
+Some browsers and archive tools leave a quarantine flag that Gatekeeper treats as damage. Clear it and launch again:
+
+```bash
+xattr -d com.apple.quarantine /Applications/Amethyst.app
+```
+
+## Updates aren't working!
+
+### "Check for Updates…" finds nothing, or offers the upstream Amethyst
+
+Builds of this fork older than v0.24.4 point at the upstream update feed. Download the [latest release](https://github.com/mgabs/Amethyst/releases/latest) and replace `Amethyst.app` by hand once; later updates arrive in-app.
+
+### Accessibility permission is lost after an update
+
+macOS ties the permission to the app's code signature. Official releases are signed with a stable certificate, so this should not happen. It does happen with self-built or ad-hoc-signed copies: re-grant the permission under System Settings → Privacy & Security → Accessibility.
