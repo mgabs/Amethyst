@@ -81,11 +81,7 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 }
 
 - (BOOL)isNormalWindow {
-    NSString *subrole = [self subrole];
-    if (subrole) {
-        return [subrole isEqualToString:(__bridge NSString *)kAXStandardWindowSubrole];
-    }
-    return YES;
+    return [[self subrole] isEqualToString:(__bridge NSString *)kAXStandardWindowSubrole];
 }
 
 - (BOOL)isSheet {

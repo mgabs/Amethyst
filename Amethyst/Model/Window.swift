@@ -266,15 +266,7 @@ extension AXWindow: WindowType {
      In this case the window must be movable and be a standard window.
      */
     func shouldBeManaged() -> Bool {
-        guard isMovable() else {
-            return false
-        }
-
-        guard let subrole = string(forKey: kAXSubroleAttribute as CFString), subrole == kAXStandardWindowSubrole as String else {
-            return false
-        }
-
-        return true
+        return isMovable() && isNormalWindow()
     }
 
     func shouldFloat() -> Bool {

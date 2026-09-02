@@ -49,8 +49,7 @@
 
 void observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef notification, void *refcon) {
     SIAXNotificationHandler callback = (__bridge SIAXNotificationHandler)refcon;
-    SIWindow *window = [[SIWindow alloc] initWithAXElement:element];
-    callback(window);
+    callback([[SIAccessibilityElement alloc] initWithAXElement:element]);
 }
 
 - (AXError)observeNotification:(CFStringRef)notification withElement:(SIAccessibilityElement *)accessibilityElement handler:(SIAXNotificationHandler)handler {
