@@ -11,7 +11,6 @@ import Carbon
 import Foundation
 import RxSwift
 import Silica
-import SwiftyJSON
 
 enum TrackingError: Error {
     case unreliableFloating

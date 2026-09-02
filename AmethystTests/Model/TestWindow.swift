@@ -102,10 +102,6 @@ final class TestWindow: WindowType {
 
     }
 
-    func move(toSpace spaceID: CGSSpaceID) {
-
-    }
-
     static func == (lhs: TestWindow, rhs: TestWindow) -> Bool {
         return lhs.id() == rhs.id()
     }

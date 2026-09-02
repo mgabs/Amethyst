@@ -483,51 +483,41 @@ class SpaceIndicatorManager {
     }
 
     private func getSpaceInfo() -> SpaceInfo? {
-        guard let cfScreenDescriptions = CGSCopyManagedDisplaySpaces(CGSMainConnectionID())?.takeRetainedValue() else {
-            return nil
-        }
-        guard let screenDescriptions = cfScreenDescriptions as NSArray as? [[String: AnyObject]] else {
+        let allSpaces = NSScreen.allSpaces()
+        guard !allSpaces.isEmpty else {
             return nil
         }
 
+        let screens = NSScreen.screens
         let mainScreenID = focusedScreenProvider()
+        let activeSpaceIDs = Set(screens.compactMap { $0.currentSpace()?.spaceID })
+        let focusedSpaceID = screens.first { $0.managedDisplayID() == mainScreenID }?.currentSpace()?.spaceID
+
         var currentSpaceNumber = "?"
         var activeSpaces: [(text: String, isFocused: Bool)] = []
-        var allSpaces: [(text: String, isActive: Bool, isFocused: Bool)] = []
-
+        var spaces: [(text: String, isActive: Bool, isFocused: Bool)] = []
         var counter = 1
-        for screenDescription in screenDescriptions {
-            guard let currentSpace = screenDescription["Current Space"] as? [String: Any],
-                  let spaces = screenDescription["Spaces"] as? [[String: Any]] else {
-                continue
+
+        for space in allSpaces {
+            let text = space.isFullscreen ? "F" : "\(counter)"
+            let isActive = activeSpaceIDs.contains(space.spaceID)
+            let isFocused = space.spaceID == focusedSpaceID
+
+            if isActive {
+                activeSpaces.append((text: text, isFocused: isFocused))
+                if isFocused {
+                    currentSpaceNumber = text
+                }
             }
 
-            let screenID = screenDescription["Display Identifier"] as? String
-            let isFocusedScreen = (screenID == mainScreenID)
-            let activeSpaceUUID = currentSpace["uuid"] as? String
+            spaces.append((text: text, isActive: isActive, isFocused: isFocused))
 
-            for space in spaces {
-                let isFullscreen = space["TileLayoutManager"] != nil
-                let text = isFullscreen ? "F" : "\(counter)"
-                let isActive = space["uuid"] as? String == activeSpaceUUID
-                let isFocused = isActive && isFocusedScreen
-
-                if isActive {
-                    activeSpaces.append((text: text, isFocused: isFocused))
-                    if isFocusedScreen {
-                        currentSpaceNumber = text
-                    }
-                }
-
-                allSpaces.append((text: text, isActive: isActive, isFocused: isFocused))
-
-                if !isFullscreen {
-                    counter += 1
-                }
+            if !space.isFullscreen {
+                counter += 1
             }
         }
 
-        return SpaceInfo(currentSpace: currentSpaceNumber, activeSpaces: activeSpaces, allSpaces: allSpaces)
+        return SpaceInfo(currentSpace: currentSpaceNumber, activeSpaces: activeSpaces, allSpaces: spaces)
     }
 
     func createSpaceImage(text: String, isActive: Bool, isFocused: Bool) -> NSImage {

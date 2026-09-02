@@ -127,14 +127,6 @@ protocol WindowType: Equatable {
         - space: The index of the space
      */
     func move(toSpaceAtIndex space: UInt)
-
-    /**
-     Moves the window to a space.
-     
-     - Parameters:
-         - spaceID: The id of the space.
-     */
-    func move(toSpace spaceID: CGSSpaceID)
 }
 
 extension WindowType {
@@ -392,9 +384,6 @@ extension AXWindow: WindowType {
 
     func move(toSpaceAtIndex space: UInt) {
         super.move(toSpace: space)
-    }
-
-    func move(toSpace spaceID: CGSSpaceID) {
     }
 }
 
