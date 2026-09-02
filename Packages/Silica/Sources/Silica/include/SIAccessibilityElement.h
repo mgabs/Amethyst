@@ -135,12 +135,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setSize:(CGSize)size;
 
 /**
- *  Enables enhanced user interface
- *
- *  @param accessibilityValueKey The accessibility key to get the value from.
- *
- *  @return YES if success, NO otherwise.
- *
+ Sets a boolean accessibility attribute on the element.
+
+ @param flag The value to set.
+ @param accessibilityValueKey The accessibility attribute to set.
+ @return YES if the attribute was set, NO if the accessibility API returned an error.
  */
 - (BOOL)setFlag:(BOOL)flag forKey:(CFStringRef)accessibilityValueKey;
 

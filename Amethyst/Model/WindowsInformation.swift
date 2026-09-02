@@ -6,18 +6,8 @@
 //  Copyright © 2016 Ian Ynda-Hummel. All rights reserved.
 //
 
-import ApplicationServices
 import Foundation
 import Silica
-
-extension CGRect {
-    func approximatelyEqual(to otherRect: CGRect, within tolerance: CGRect) -> Bool {
-        return abs(origin.x - otherRect.origin.x) < tolerance.origin.x &&
-        abs(origin.y - otherRect.origin.y) < tolerance.origin.y &&
-        abs(width - otherRect.width) < tolerance.width &&
-        abs(height - otherRect.height) < tolerance.height
-    }
-}
 
 /// Answers "which of these windows is under this point" using the window server's own front-to-back order and CoreGraphics window IDs.
 enum WindowsInformation<Window: WindowType> {

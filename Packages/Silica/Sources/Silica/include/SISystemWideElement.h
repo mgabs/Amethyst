@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  *  @param event The event to perform the keyboard shortcut
  */
-+ (void)switchToSpaceWithEvent:(NSEvent *)event;
++ (void)switchToSpaceWithEvent:(nullable NSEvent *)event;
 
 @end
 

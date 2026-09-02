@@ -83,15 +83,6 @@
       }
     },
     {
-      "identity" : "silica",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ianyh/silica",
-      "state" : {
-        "branch" : "master",
-        "revision" : "237b2aeba4e59279e2d4e2b0fe637994f9823257"
-      }
-    },
-    {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",

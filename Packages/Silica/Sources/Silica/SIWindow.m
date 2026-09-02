@@ -5,12 +5,9 @@
 
 #import "SIWindow.h"
 
-#import <Carbon/Carbon.h>
 #import "CGSInternal/CGSConnection.h"
-#import "CGSInternal/CGSHotKeys.h"
 #import "CGSInternal/CGSSpace.h"
 #import "NSScreen+Silica.h"
-#import "SIApplication.h"
 #import "SISystemWideElement.h"
 
 AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
@@ -66,10 +63,6 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
 - (NSString *)title {
     return [self stringForKey:kAXTitleAttribute];
-}
-
-- (NSString *)role {
-    return [self stringForKey:kAXRoleAttribute];
 }
 
 - (NSString *)subrole {
