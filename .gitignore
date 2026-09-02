@@ -41,3 +41,6 @@ debates
 debates/
 build_output.txt
 docs/superpowers/
+
+# SwiftPM local packages
+Packages/*/.build/
