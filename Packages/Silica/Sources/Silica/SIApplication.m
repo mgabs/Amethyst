@@ -7,7 +7,6 @@
 
 #import <AppKit/AppKit.h>
 #import "SIWindow.h"
-#import "SIUniversalAccessHelper.h"
 
 @interface SIApplicationObservation : NSObject
 @property (nonatomic, strong) NSString *notification;
@@ -33,20 +32,6 @@
     SIApplication *application = [[SIApplication alloc] initWithAXElement:axElementRef];
     CFRelease(axElementRef);
     return application;
-}
-
-+ (NSArray *)runningApplications {
-    if (![SIUniversalAccessHelper isAccessibilityTrusted])
-        return nil;
-
-    NSMutableArray *apps = [NSMutableArray array];
-
-    for (NSRunningApplication *runningApp in [[NSWorkspace sharedWorkspace] runningApplications]) {
-        SIApplication *app = [SIApplication applicationWithRunningApplication:runningApp];
-        [apps addObject:app];
-    }
-
-    return apps;
 }
 
 - (void)dealloc {
@@ -163,34 +148,8 @@ void observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRe
     return self.cachedWindows;
 }
 
-- (NSArray *)visibleWindows {
-    return [self.windows filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(SIWindow *window, NSDictionary *bindings) {
-        return ![[window app] isHidden] && ![window isWindowMinimized] && [window isNormalWindow];
-    }]];
-}
-
 - (NSString *)title {
     return [self stringForKey:kAXTitleAttribute];
-}
-
-- (BOOL)isHidden {
-    return [[self numberForKey:kAXHiddenAttribute] boolValue];
-}
-
-- (void)hide {
-    [[NSRunningApplication runningApplicationWithProcessIdentifier:self.processIdentifier] hide];
-}
-
-- (void)unhide {
-    [[NSRunningApplication runningApplicationWithProcessIdentifier:self.processIdentifier] unhide];
-}
-
-- (void)kill {
-    [[NSRunningApplication runningApplicationWithProcessIdentifier:self.processIdentifier] terminate];
-}
-
-- (void)kill9 {
-    [[NSRunningApplication runningApplicationWithProcessIdentifier:self.processIdentifier] forceTerminate];
 }
 
 - (void)dropWindowsCache {

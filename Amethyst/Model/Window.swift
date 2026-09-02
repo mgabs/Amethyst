@@ -308,7 +308,7 @@ extension AXWindow: WindowType {
      - Description:
      What a mess. See: https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468
      */
-    @discardableResult override func focus() -> Bool {
+    @discardableResult func focus() -> Bool {
         let pid = self.pid()
         var wid = self.cgID()
         var psn = ProcessSerialNumber()
@@ -339,7 +339,7 @@ extension AXWindow: WindowType {
             }
         }
 
-        guard super.raise() else {
+        guard raise() else {
             return false
         }
 

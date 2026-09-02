@@ -12,7 +12,6 @@
 #import "NSScreen+Silica.h"
 #import "SIApplication.h"
 #import "SISystemWideElement.h"
-#import "SIUniversalAccessHelper.h"
 
 AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
@@ -23,28 +22,6 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 @implementation SIWindow
 
 #pragma mark Window Accessors
-
-+ (NSArray *)allWindows {
-    if (![SIUniversalAccessHelper isAccessibilityTrusted]) return nil;
-    
-    NSMutableArray *windows = [NSMutableArray array];
-    
-    for (SIApplication *application in [SIApplication runningApplications]) {
-        [windows addObjectsFromArray:[application windows]];
-    }
-    
-    return windows;
-}
-
-+ (NSArray *)visibleWindows {
-    if (![SIUniversalAccessHelper isAccessibilityTrusted]) return nil;
-
-    return [[self allWindows] filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(SIWindow *win, NSDictionary *bindings) {
-        return ![[win app] isHidden]
-        && ![win isWindowMinimized]
-        && [win isNormalWindow];
-    }]];
-}
 
 + (SIWindow *)focusedWindow {
     if (!AXIsProcessTrustedWithOptions(NULL)) return nil;
@@ -69,38 +46,6 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
     }
 
     return window;
-}
-
-- (NSArray *)otherWindowsOnSameScreen {
-    return [[SIWindow visibleWindows] filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(SIWindow *win, NSDictionary *bindings) {
-        return ![self isEqual:win] && [[self screen] isEqual: [win screen]];
-    }]];
-}
-
-- (NSArray *)otherWindowsOnAllScreens {
-    return [[SIWindow visibleWindows] filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(SIWindow *win, NSDictionary *bindings) {
-        return ![self isEqual:win];
-    }]];
-}
-
-- (NSArray *)windowsToWest {
-    return [[self windowsInDirectionFn:^double(double angle) { return M_PI - fabs(angle); }
-                     shouldDisregardFn:^BOOL(double deltaX, double deltaY) { return (deltaX >= 0); }] valueForKeyPath:@"win"];
-}
-
-- (NSArray *)windowsToEast {
-    return [[self windowsInDirectionFn:^double(double angle) { return 0.0 - angle; }
-                     shouldDisregardFn:^BOOL(double deltaX, double deltaY) { return (deltaX <= 0); }] valueForKeyPath:@"win"];
-}
-
-- (NSArray *)windowsToNorth {
-    return [[self windowsInDirectionFn:^double(double angle) { return -M_PI_2 - angle; }
-                     shouldDisregardFn:^BOOL(double deltaX, double deltaY) { return (deltaY >= 0); }] valueForKeyPath:@"win"];
-}
-
-- (NSArray *)windowsToSouth {
-    return [[self windowsInDirectionFn:^double(double angle) { return M_PI_2 - angle; }
-                     shouldDisregardFn:^BOOL(double deltaX, double deltaY) { return (deltaY <= 0); }] valueForKeyPath:@"win"];
 }
 
 #pragma mark Window Properties
@@ -257,11 +202,6 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
 #pragma mark Window Actions
 
-- (void)maximize {
-    CGRect screenRect = [[self screen] frameWithoutDockOrMenu];
-    [self setFrame: screenRect];
-}
-
 - (void)minimize {
     [self setWindowMinimized:YES];
 }
@@ -285,86 +225,13 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
 #pragma mark Window Focus
 
-- (BOOL)focusWindow {
-    NSRunningApplication *runningApplication = [NSRunningApplication runningApplicationWithProcessIdentifier:self.processIdentifier];
-    BOOL success = [runningApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps];
-    if (!success) {
-        return NO;
-    }
-
-    return [self raiseWindow];
-}
-
 - (BOOL)raiseWindow {
     AXError error = AXUIElementPerformAction(self.axElementRef, kAXRaiseAction);
     if (error != kAXErrorSuccess) {
         return NO;
     }
-    
+
     return YES;
-}
-
-NSPoint SIMidpoint(NSRect r) {
-    return NSMakePoint(NSMidX(r), NSMidY(r));
-}
-
-- (NSArray *)windowsInDirectionFn:(double(^)(double angle))whichDirectionFn
-                shouldDisregardFn:(BOOL(^)(double deltaX, double deltaY))shouldDisregardFn {
-    SIWindow *thisWindow = [SIWindow focusedWindow];
-    NSPoint startingPoint = SIMidpoint([thisWindow frame]);
-    
-    NSArray *otherWindows = [thisWindow otherWindowsOnAllScreens];
-    NSMutableArray *closestOtherWindows = [NSMutableArray arrayWithCapacity:[otherWindows count]];
-    
-    for (SIWindow *win in otherWindows) {
-        NSPoint otherPoint = SIMidpoint([win frame]);
-        
-        double deltaX = otherPoint.x - startingPoint.x;
-        double deltaY = otherPoint.y - startingPoint.y;
-        
-        if (shouldDisregardFn(deltaX, deltaY))
-            continue;
-        
-        double angle = atan2(deltaY, deltaX);
-        double distance = hypot(deltaX, deltaY);
-        
-        double angleDifference = whichDirectionFn(angle);
-        
-        double score = distance / cos(angleDifference / 2.0);
-        
-        [closestOtherWindows addObject:@{
-         @"score": @(score),
-         @"win": win,
-         }];
-    }
-    
-    NSArray *sortedOtherWindows = [closestOtherWindows sortedArrayUsingComparator:^NSComparisonResult(NSDictionary* pair1, NSDictionary* pair2) {
-        return [[pair1 objectForKey:@"score"] compare:[pair2 objectForKey:@"score"]];
-    }];
-    
-    return sortedOtherWindows;
-}
-
-- (void)focusFirstValidWindowIn:(NSArray*)closestWindows {
-    for (SIWindow *win in closestWindows) {
-        if ([win focusWindow]) break;
-    }
-}
-
-- (void)focusWindowLeft {
-    [self focusFirstValidWindowIn:[self windowsToWest]];
-}
-
-- (void)focusWindowRight {
-    [self focusFirstValidWindowIn:[self windowsToEast]];
-}
-
-- (void)focusWindowUp {
-    [self focusFirstValidWindowIn:[self windowsToNorth]];
-}
-
-- (void)focusWindowDown {
-    [self focusFirstValidWindowIn:[self windowsToSouth]];
 }
 
 @end

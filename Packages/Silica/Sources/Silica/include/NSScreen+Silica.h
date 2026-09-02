@@ -27,29 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (CGRect)frameWithoutDockOrMenu;
 
-/**
- *  Returns the next screen in the global coordinate space.
- *
- *  @return The next screen in the global coordinate space.
- */
-- (NSScreen *)nextScreen;
-
-/**
- *  Returns the previous screen in the global coordinate space.
- *
- *  @return The previous screen in the global coordinate space.
- */
-- (NSScreen *)previousScreen;
-
-/**
- *  Rotates the screen by the supplied degrees.
- *
- *  @param degrees An integer expected to be one of (0, 90, 180, 270)
- *
- *  @return YES if the rotation was successful and NO otherwise.
- */
-- (BOOL)rotateTo:(int)degrees;
-
 @end
 
 NS_ASSUME_NONNULL_END

@@ -31,13 +31,6 @@ typedef void (^SIAXNotificationHandler)(SIAccessibilityElement *accessibilityEle
 + (instancetype)applicationWithRunningApplication:(NSRunningApplication *)runningApplication;
 
 /**
- *  Returns all SIApplication instaces for all running applications.
- *
- *  @return All SIApplication instaces for all running applications.
- */
-+ (nullable NSArray *)runningApplications;
-
-/**
  *  Registers a notification handler for an accessibility notification.
  *
  *  Note that a strong reference to the handler is maintained, so any memory captured by the block will not be released until the notification handler is unregistered by calling unobserveNotification:withElement:
@@ -45,7 +38,7 @@ typedef void (^SIAXNotificationHandler)(SIAccessibilityElement *accessibilityEle
  *  @param notification         The notification to register a handler for.
  *  @param accessibilityElement The accessibility element associated with the notification. Must be an element owned by the application or the application itself.
  *  @param handler              A block to be called when the notification is received for the accessibility element.
- *  @return YES if adding the observer succeeded, NO otherwise
+ *  @return kAXErrorSuccess if the observer was added, otherwise the AXError from the accessibility API.
  */
 - (AXError)observeNotification:(CFStringRef)notification withElement:(SIAccessibilityElement *)accessibilityElement handler:(SIAXNotificationHandler)handler;
 
@@ -67,45 +60,11 @@ typedef void (^SIAXNotificationHandler)(SIAccessibilityElement *accessibilityEle
 - (NSArray<SIWindow *> *)windows;
 
 /**
- *  Returns an array of SIWindow objects for all windows in the application that are currently visible.
- *
- *  @return An array of SIWindow objects for all windows in the application that are currently visible.
- */
-- (NSArray<SIWindow *> *)visibleWindows;
-
-/**
  *  Returns the title of the application.
  *
  *  @return The title of the application.
  */
 - (nullable NSString *)title;
-
-/**
- *  Returns a BOOL indicating whether or not the application is hidden.
- *
- *  @return YES if the application is hidden and NO otherwise.
- */
-- (BOOL)isHidden;
-
-/**
- *  Hides the application.
- */
-- (void)hide;
-
-/**
- *  Unhides the application.
- */
-- (void)unhide;
-
-/**
- *  Sends the application a kill signal.
- */
-- (void)kill;
-
-/**
- *  Sends the application a kill -9 signal.
- */
-- (void)kill9;
 
 /**
  *  Drops any cached windows so that the windows returned by a call to windows will be representative of the most up to date state of the application.
