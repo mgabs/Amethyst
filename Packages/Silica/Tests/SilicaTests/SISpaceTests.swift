@@ -39,4 +39,18 @@ final class SISpaceTests: XCTestCase {
         XCTAssertEqual(SISpace.spaces(withScreenDescription: [:]).count, 0)
         XCTAssertNil(SISpace.currentSpace(withScreenDescription: [:]))
     }
+
+    func testMissingTypeDefaultsToUser() {
+        let space = SISpace(description: ["ManagedSpaceID": 3, "uuid": "Z"])
+        XCTAssertEqual(space?.type, CGSSpaceTypeUser)
+        XCTAssertEqual(space?.uuid, "Z")
+        XCTAssertEqual(space?.isFullscreen, false)
+    }
+
+    func testNonDictionaryEntriesInSpacesAreSkipped() {
+        let description: [AnyHashable: Any] = [
+            "Spaces": ["not a dictionary", 42, ["ManagedSpaceID": 8, "type": 0, "uuid": "H"]]
+        ]
+        XCTAssertEqual(SISpace.spaces(withScreenDescription: description).map { $0.spaceID }, [8])
+    }
 }

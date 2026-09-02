@@ -4,6 +4,7 @@
 //
 
 #import <AppKit/AppKit.h>
+#import "CGSInternal/CGSSpace.h"
 #import "SIAccessibilityElement.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -74,6 +75,20 @@ NS_ASSUME_NONNULL_BEGIN
  *  @return YES if the window is on screen and NO otherwise.
  */
 - (BOOL)isOnScreen;
+
+#pragma mark Window Server Queries
+
+/// The window server ID of the space this window is on, or 0 when unknown.
+- (CGSSpaceID)managedSpaceID;
+
+/// IDs of every window currently on screen, across all displays' active spaces. Desktop-layer windows are not filtered out. One window-list copy.
++ (NSSet<NSNumber *> *)onScreenWindowIDs;
+
+/// IDs of on-screen windows whose bounds contain `point`, front to back. One window-list copy.
++ (NSArray<NSNumber *> *)onScreenWindowIDsAtPoint:(CGPoint)point NS_SWIFT_NAME(onScreenWindowIDs(at:));
+
+/// Pure helper behind onScreenWindowIDsAtPoint:. `descriptions` is a CGWindowListCopyWindowInfo result.
++ (NSArray<NSNumber *> *)windowIDsAtPoint:(CGPoint)point inDescriptions:(NSArray<NSDictionary *> *)descriptions NS_SWIFT_NAME(windowIDs(at:in:));
 
 #pragma mark Screen
 

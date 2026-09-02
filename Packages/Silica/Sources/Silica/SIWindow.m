@@ -95,23 +95,53 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 }
 
 - (BOOL)isOnScreen {
-    if (!self.isActive) {
-        return NO;
+    if (!self.isActive) return NO;
+    return [[SIWindow onScreenWindowIDs] containsObject:@(self.windowID)];
+}
+
+#pragma mark Window Server Queries
+
+- (CGSSpaceID)managedSpaceID {
+    CGWindowID windowID = self.windowID;
+    if (windowID == kCGNullWindowID) return 0;
+
+    CFArrayRef spaces = CGSCopySpacesForWindows(CGSMainConnectionID(), kCGSAllSpacesMask, (__bridge CFArrayRef)@[@(windowID)]);
+    if (!spaces) return 0;
+
+    NSArray<NSNumber *> *spaceIDs = CFBridgingRelease(spaces);
+    return spaceIDs.count > 0 ? spaceIDs.firstObject.unsignedLongValue : 0;
+}
+
++ (NSArray<NSDictionary *> *)onScreenWindowDescriptions {
+    CFArrayRef descriptions = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+    if (!descriptions) return @[];
+    return CFBridgingRelease(descriptions);
+}
+
++ (NSSet<NSNumber *> *)onScreenWindowIDs {
+    NSMutableSet<NSNumber *> *ids = [NSMutableSet set];
+    for (NSDictionary *description in [self onScreenWindowDescriptions]) {
+        NSNumber *windowID = description[(__bridge NSString *)kCGWindowNumber];
+        if (windowID) [ids addObject:windowID];
     }
-    
-    CFArrayRef windowDescriptions = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
-    BOOL isActive = NO;
-    for (NSDictionary *dictionary in (__bridge NSArray *)windowDescriptions) {
-        CGWindowID otherWindowID = [dictionary[(__bridge NSString *)kCGWindowNumber] intValue];
-        if (otherWindowID == self.windowID) {
-            isActive = YES;
-            break;
-        }
+    return ids;
+}
+
++ (NSArray<NSNumber *> *)onScreenWindowIDsAtPoint:(CGPoint)point {
+    return [self windowIDsAtPoint:point inDescriptions:[self onScreenWindowDescriptions]];
+}
+
++ (NSArray<NSNumber *> *)windowIDsAtPoint:(CGPoint)point inDescriptions:(NSArray<NSDictionary *> *)descriptions {
+    NSMutableArray<NSNumber *> *ids = [NSMutableArray array];
+    for (NSDictionary *description in descriptions) {
+        NSNumber *windowID = description[(__bridge NSString *)kCGWindowNumber];
+        NSDictionary *boundsDictionary = description[(__bridge NSString *)kCGWindowBounds];
+        CGRect bounds;
+        if (!windowID || ![boundsDictionary isKindOfClass:[NSDictionary class]]) continue;
+        if (!CGRectMakeWithDictionaryRepresentation((__bridge CFDictionaryRef)boundsDictionary, &bounds)) continue;
+        if (CGRectContainsPoint(bounds, point)) [ids addObject:windowID];
     }
-    
-    CFRelease(windowDescriptions);
-    
-    return isActive;
+    return ids;
 }
 
 #pragma mark Screen
