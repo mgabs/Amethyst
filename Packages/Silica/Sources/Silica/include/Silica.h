@@ -13,6 +13,7 @@
 #import "CGSInternal/CGSDisplays.h"
 #import "CGSInternal/CGSSpace.h"
 #import "NSScreen+Silica.h"
+#import "SISpace.h"
 #import "SIAccessibilityElement.h"
 #import "SIApplication.h"
 #import "SISystemWideElement.h"
