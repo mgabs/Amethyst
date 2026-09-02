@@ -134,6 +134,13 @@ protocol WindowType: Equatable {
     func move(toSpace spaceID: CGSSpaceID)
 }
 
+extension WindowType {
+    /// The space shown on the screen of the currently focused window.
+    static func currentFocusedSpace() -> Space? {
+        return currentlyFocused()?.screen()?.currentSpace()
+    }
+}
+
 enum WindowDecodingError: Error {
     case idNotFound
 }

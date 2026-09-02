@@ -9,22 +9,14 @@
 import Cocoa
 import Foundation
 import Silica
-import SwiftyJSON
 
 /// Generic protocol for objects acting as screens in the system.
 protocol ScreenType: Equatable {
     /// The list of all the screens available to the system. This is assumed to be meaningfuly ordered such that the first screen is the primary screen.
     static var availableScreens: [Self] { get }
 
-    /// If `true` this means that each screen has its own set of spaces. If `false` there is only one set of spaces shared by all screens.
-    static var screensHaveSeparateSpaces: Bool { get }
-
-    /**
-     Descriptions of all screens taken from the underlying graphics system.
-     
-     These are used to correlate information from multiple sources.
-     */
-    static func screenDescriptions() -> [JSON]?
+    /// Every space on every screen, in window-server display order.
+    static func allSpaces() -> [Space]
 
     /**
      The frame adjusted for app modifiers; e.g., window margin
@@ -45,6 +37,12 @@ protocol ScreenType: Equatable {
 
     /// The opaque idenfitifer for the screen in the underlying graphics system.
     func screenID() -> String?
+
+    /// Spaces on this screen.
+    func spaces() -> [Space]
+
+    /// The space currently shown on this screen.
+    func currentSpace() -> Space?
 
     /// Raises the window to the foreground.
     func focusScreen()
@@ -70,7 +68,10 @@ extension ScreenType {
 
 struct AMScreen: ScreenType {
     static var availableScreens: [AMScreen] { return NSScreen.screens.map { AMScreen(screen: $0) } }
-    static var screensHaveSeparateSpaces: Bool { return NSScreen.screensHaveSeparateSpaces }
+
+    static func allSpaces() -> [Space] {
+        return NSScreen.allSpaces().map(Space.init)
+    }
 
     let screen: NSScreen
 
@@ -133,10 +134,15 @@ struct AMScreen: ScreenType {
     }
 
     func screenID() -> String? {
-        guard let managedDisplay = CGSCopyBestManagedDisplayForRect(CGSMainConnectionID(), frameIncludingDockAndMenu()) else {
-            return nil
-        }
-        return String(managedDisplay.takeRetainedValue())
+        return screen.managedDisplayID()
+    }
+
+    func spaces() -> [Space] {
+        return screen.spaces().map(Space.init)
+    }
+
+    func currentSpace() -> Space? {
+        return screen.currentSpace().map(Space.init)
     }
 
     func focusScreen() {
@@ -145,15 +151,5 @@ struct AMScreen: ScreenType {
         let mouseMoveEvent = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: mouseCursorPoint, mouseButton: .left)
         mouseMoveEvent?.flags = CGEventFlags(rawValue: 0)
         mouseMoveEvent?.post(tap: .cghidEventTap)
-    }
-
-    static func screenDescriptions() -> [JSON]? {
-        guard let cfScreenDescriptions = CGSCopyManagedDisplaySpaces(CGSMainConnectionID())?.takeRetainedValue() else {
-            return nil
-        }
-        guard let screenDescriptions = cfScreenDescriptions as NSArray as? [[String: AnyObject]] else {
-            return nil
-        }
-        return screenDescriptions.map { JSON($0) }
     }
 }

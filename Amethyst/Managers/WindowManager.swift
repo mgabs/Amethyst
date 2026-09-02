@@ -558,7 +558,7 @@ extension WindowManager {
             // generate .add events — doing so gives layouts stale data for windows
             // that aren't visible on the current space.
             let windowSpace = CGWindowsInfo.windowSpace(window)
-            let currentSpaceID = CGSpacesInfo<Window>.currentSpaceForScreen(screen)?.id
+            let currentSpaceID = screen.currentSpace()?.id
             let isOnCurrentSpace: Bool
             if let currentSpaceID, let windowSpace {
                 isOnCurrentSpace = currentSpaceID == windowSpace
@@ -964,19 +964,16 @@ extension WindowManager: WindowTransitionTarget {
             window.focus()
             NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
-            guard
-                let screen = window.screen(),
-                let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true),
-                spaceIndex < spaces.count
-            else {
+            let allSpaces = Screen.allSpaces()
+            let userSpaces = allSpaces.filter { $0.type == CGSSpaceTypeUser }
+            guard let screen = window.screen(), spaceIndex < userSpaces.count else {
                 return
             }
 
-            let targetSpace = spaces[spaceIndex]
-            let allSpaces = CGSpacesInfo<Window>.spacesForAllScreens() ?? []
+            let targetSpace = userSpaces[spaceIndex]
             let targetSpaceIndex = allSpaces.firstIndex { $0.id == targetSpace.id } ?? spaceIndex
 
-            guard let targetScreen = CGSpacesInfo<Window>.screenForSpace(space: targetSpace) else {
+            guard let targetScreen = Screen.availableScreens.first(where: { $0.spaces().contains { $0.id == targetSpace.id } }) else {
                 return
             }
 
@@ -1052,7 +1049,7 @@ extension WindowManager: WindowTransitionTarget {
     }
 
     func lastMainWindowForCurrentSpace() -> Window? {
-        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+        guard let currentFocusedSpace = Window.currentFocusedSpace(),
               let lastMainWindow = windows.lastMainWindows[currentFocusedSpace.id]
         else {
             return nil

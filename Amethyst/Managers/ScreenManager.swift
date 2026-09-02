@@ -256,7 +256,7 @@ private func reflow(on targetSpace: Space? = nil) {
     // this screen manager updates its tracked Space. Skip reflow if state is stale.
     // If we have a target space, we assume it is the correct one to reflow.
     if targetSpace == nil {
-        guard let currentSpace = CGSpacesInfo<Window>.currentSpaceForScreen(screen), currentSpace.id == space.id else {
+        guard let currentSpace = screen.currentSpace(), currentSpace.id == space.id else {
             return
         }
     }

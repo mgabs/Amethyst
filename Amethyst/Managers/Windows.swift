@@ -36,7 +36,7 @@ extension WindowManager {
                 return []
             }
 
-            guard let currentSpace = CGSpacesInfo<Window>.currentSpaceForScreen(screen) else {
+            guard let currentSpace = screen.currentSpace() else {
                 log.warning("Could not find a space for screen: \(screenID)")
                 return []
             }
@@ -94,7 +94,7 @@ extension WindowManager {
 
         func add(window: Window, atFront shouldInsertAtFront: Bool) {
             if shouldInsertAtFront {
-                if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+                if let currentFocusedSpace = Window.currentFocusedSpace(),
                    let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
                     lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
                 }
@@ -117,7 +117,7 @@ extension WindowManager {
 
         func remove(window: Window) {
             for (_, lastMainWindow) in lastMainWindows where lastMainWindow?.id() == window.id() {
-                if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace() {
+                if let currentFocusedSpace = Window.currentFocusedSpace() {
                     let secondWindow = activeWindowOnCurrentScreen(atIndex: 1)
                     lastMainWindows[currentFocusedSpace.id] = secondWindow
                 }
@@ -131,7 +131,7 @@ extension WindowManager {
         }
 
         @discardableResult func replace(window: Window, withWindow otherWindow: Window) -> Bool {
-            if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+            if let currentFocusedSpace = Window.currentFocusedSpace(),
                let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
                 if firstActiveWindow == window || firstActiveWindow == otherWindow {
                     lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
@@ -154,7 +154,7 @@ extension WindowManager {
         }
 
         @discardableResult func swap(window: Window, withWindow otherWindow: Window) -> Bool {
-            if let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+            if let currentFocusedSpace = Window.currentFocusedSpace(),
                let firstActiveWindow = activeWindowOnCurrentScreen(atIndex: 0) {
                 if firstActiveWindow.id() == window.id() || firstActiveWindow.id() == otherWindow.id() {
                     lastMainWindows[currentFocusedSpace.id] = firstActiveWindow
