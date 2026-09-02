@@ -75,46 +75,75 @@ void observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRe
         AXObserverRef observerRef;
         AXError error = AXObserverCreate(self.processIdentifier, &observerCallback, &observerRef);
 
-        if (error != kAXErrorSuccess) return NO;
+        if (error != kAXErrorSuccess) return error;
 
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observerRef), kCFRunLoopDefaultMode);
 
         self.observerRef = observerRef;
         self.elementToObservations = [NSMutableDictionary dictionaryWithCapacity:1];
     }
-    
-    AXError error = AXObserverAddNotification(self.observerRef, accessibilityElement.axElementRef, notification, (__bridge void *)handler);
-    
-    if (error != kAXErrorSuccess && error != kAXErrorNotificationAlreadyRegistered) {
-        return error;
-    }
-    
+
+    // The refcon must outlive the registration, so copy the block first and hand
+    // the copy to both the observer and the bookkeeping record.
+    SIAXNotificationHandler handlerCopy = [handler copy];
+    AXError error = AXObserverAddNotification(self.observerRef, accessibilityElement.axElementRef, notification, (__bridge void *)handlerCopy);
+
     if (error == kAXErrorNotificationAlreadyRegistered) {
+        // Replace the stale registration so the handler passed now is the one that fires.
+        // If the re-add fails the notification is left unregistered; callers retry.
+        AXObserverRemoveNotification(self.observerRef, accessibilityElement.axElementRef, notification);
+        error = AXObserverAddNotification(self.observerRef, accessibilityElement.axElementRef, notification, (__bridge void *)handlerCopy);
+    }
+
+    if (error != kAXErrorSuccess) {
         return error;
     }
-    
+
     SIApplicationObservation *observation = [[SIApplicationObservation alloc] init];
     observation.notification = (__bridge NSString *)notification;
-    observation.handler = handler;
+    observation.handler = handlerCopy;
 
-    if (!self.elementToObservations[accessibilityElement]) {
-        self.elementToObservations[accessibilityElement] = [NSMutableArray array];
+    NSMutableArray<SIApplicationObservation *> *observations = self.elementToObservations[accessibilityElement];
+    if (!observations) {
+        observations = [NSMutableArray array];
+        self.elementToObservations[accessibilityElement] = observations;
     }
-    [self.elementToObservations[accessibilityElement] addObject:observation];
-    
+    // A re-add above replaced any earlier registration for this notification, so drop its record.
+    [observations filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(SIApplicationObservation *existing, NSDictionary *bindings) {
+        return ![existing.notification isEqualToString:(__bridge NSString *)notification];
+    }]];
+    [observations addObject:observation];
+
     return error;
 }
 
 - (void)unobserveNotification:(CFStringRef)notification withElement:(SIAccessibilityElement *)accessibilityElement {
-    NSArray<SIApplicationObservation *> *observations = self.elementToObservations[accessibilityElement];
-    for (SIApplicationObservation *observation in observations) {
-        AXObserverRemoveNotification(self.observerRef, accessibilityElement.axElementRef, (__bridge CFStringRef)observation.notification);
+    if (!self.observerRef) return;
+
+    NSMutableArray<SIApplicationObservation *> *remaining = [NSMutableArray array];
+    for (SIApplicationObservation *observation in self.elementToObservations[accessibilityElement]) {
+        AXError error = AXObserverRemoveNotification(self.observerRef, accessibilityElement.axElementRef, (__bridge CFStringRef)observation.notification);
+        BOOL removed = error == kAXErrorSuccess
+            || error == kAXErrorNotificationNotRegistered
+            || error == kAXErrorInvalidUIElement;
+        if (!removed) {
+            // The registration is still live; keep its handler alive so the refcon stays valid.
+            [remaining addObject:observation];
+        }
     }
-    [self.elementToObservations removeObjectForKey:accessibilityElement];
-    
-    if (self.elementToObservations.count == 0 && self.observerRef) {
-        CFRunLoopSourceInvalidate(AXObserverGetRunLoopSource(self.observerRef));
-        self.observerRef = nil;
+
+    if (remaining.count > 0) {
+        self.elementToObservations[accessibilityElement] = remaining;
+    } else {
+        [self.elementToObservations removeObjectForKey:accessibilityElement];
+    }
+
+    if (self.elementToObservations.count == 0) {
+        CFRunLoopSourceRef source = AXObserverGetRunLoopSource(self.observerRef);
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), source, kCFRunLoopDefaultMode);
+        CFRunLoopSourceInvalidate(source);
+        CFRelease(self.observerRef);
+        self.observerRef = NULL;
     }
 }
 

@@ -116,16 +116,19 @@
 }
 
 - (NSArray *)arrayForKey:(CFStringRef)accessibilityValueKey {
-    CFArrayRef arrayRef;
-    AXError error;
+    CFTypeRef valueRef = NULL;
+    AXError error = AXUIElementCopyAttributeValue(self.axElementRef, accessibilityValueKey, &valueRef);
 
-    error = AXUIElementCopyAttributeValues(self.axElementRef, accessibilityValueKey, 0, 100, &arrayRef);
-
-    if (error != kAXErrorSuccess || !arrayRef) {
+    if (error != kAXErrorSuccess || !valueRef) {
         return nil;
     }
 
-    return CFBridgingRelease(arrayRef);
+    if (CFGetTypeID(valueRef) != CFArrayGetTypeID()) {
+        CFRelease(valueRef);
+        return nil;
+    }
+
+    return CFBridgingRelease(valueRef);
 }
 
 - (SIAccessibilityElement *)elementForKey:(CFStringRef)accessibilityValueKey {
@@ -257,11 +260,8 @@
 }
 
 - (BOOL)setFlag:(BOOL)flag forKey:(CFStringRef)accessibilityValueKey {
-    AXError error;
-    
-    error = AXUIElementSetAttributeValue(self.axElementRef, accessibilityValueKey, flag ? kCFBooleanTrue : kCFBooleanFalse);
-    
-    return error != kAXErrorSuccess;
+    AXError error = AXUIElementSetAttributeValue(self.axElementRef, accessibilityValueKey, flag ? kCFBooleanTrue : kCFBooleanFalse);
+    return error == kAXErrorSuccess;
 }
 
 - (pid_t)processIdentifier {

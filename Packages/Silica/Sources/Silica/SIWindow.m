@@ -47,34 +47,28 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 }
 
 + (SIWindow *)focusedWindow {
-    if (![SIUniversalAccessHelper isAccessibilityTrusted]) return nil;
+    if (!AXIsProcessTrustedWithOptions(NULL)) return nil;
 
-    CFTypeRef applicationRef;
-    AXUIElementCopyAttributeValue([SISystemWideElement systemWideElement].axElementRef, kAXFocusedApplicationAttribute, &applicationRef);
+    CFTypeRef applicationRef = NULL;
+    AXError error = AXUIElementCopyAttributeValue([SISystemWideElement systemWideElement].axElementRef, kAXFocusedApplicationAttribute, &applicationRef);
+    if (error != kAXErrorSuccess || !applicationRef) return nil;
 
-    if (applicationRef) {
-        CFTypeRef windowRef;
-        AXError result = AXUIElementCopyAttributeValue(applicationRef, (CFStringRef)NSAccessibilityFocusedWindowAttribute, &windowRef);
+    CFTypeRef windowRef = NULL;
+    error = AXUIElementCopyAttributeValue(applicationRef, (CFStringRef)NSAccessibilityFocusedWindowAttribute, &windowRef);
+    CFRelease(applicationRef);
+    if (error != kAXErrorSuccess || !windowRef) return nil;
 
-        CFRelease(applicationRef);
+    SIWindow *window = [[SIWindow alloc] initWithAXElement:windowRef];
+    CFRelease(windowRef);
 
-        if (result == kAXErrorSuccess) {
-            SIWindow *window = [[SIWindow alloc] initWithAXElement:windowRef];
-
-            if ([window isSheet]) {
-                SIAccessibilityElement *parent = [window elementForKey:kAXParentAttribute];
-                if (parent) {
-                    CFRelease(windowRef);
-                    return [[SIWindow alloc] initWithAXElement:parent.axElementRef];
-                }
-            }
-
-            CFRelease(windowRef);
-            return window;
+    if ([window isSheet]) {
+        SIAccessibilityElement * __attribute__((objc_precise_lifetime)) parent = [window elementForKey:kAXParentAttribute];
+        if (parent) {
+            return [[SIWindow alloc] initWithAXElement:parent.axElementRef];
         }
     }
-    
-    return nil;
+
+    return window;
 }
 
 - (NSArray *)otherWindowsOnSameScreen {
@@ -116,7 +110,7 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
         CGWindowID windowID;
         AXError error = _AXUIElementGetWindow(self.axElementRef, &windowID);
         if (error != kAXErrorSuccess) {
-            return NO;
+            return kCGNullWindowID;
         }
         
         self._windowID = windowID;
