@@ -540,7 +540,7 @@ extension WindowManager {
             throw TrackingError.unknownScreen
         }
 
-        guard CGWindowsInfo.windowSpace(window) != nil else {
+        guard window.spaceID() != nil else {
             throw TrackingError.unknownSpace
         }
 
@@ -557,7 +557,7 @@ extension WindowManager {
             // Windows tracked during a space change for a different space should not
             // generate .add events — doing so gives layouts stale data for windows
             // that aren't visible on the current space.
-            let windowSpace = CGWindowsInfo.windowSpace(window)
+            let windowSpace = window.spaceID()
             let currentSpaceID = screen.currentSpace()?.id
             let isOnCurrentSpace: Bool
             if let currentSpaceID, let windowSpace {
@@ -613,13 +613,12 @@ extension WindowManager {
             }
 
             // The window needs to have been active _at some point_, but must not be currently on screen.
-            let didLeaveScreen = (isActive || windows.isWindowActive(existingWindow)) && !existingWindow.isOnScreen()
+            let didLeaveScreen = isActive && !isOnScreen
             let isInvalid = existingWindow.cgID() == kCGNullWindowID
 
             log.debug("""
             Considering window: \(existingWindow)
             isActive: \(isActive), isOnScreen: \(isOnScreen), isInvalid: \(isInvalid), managed: \(existingWindow.shouldBeManaged())
-            Recomputed isActive: \(windows.isWindowActive(existingWindow)), isOnScreen: \(existingWindow.isOnScreen())
             """)
 
             // The window needs to have either left the screen and therefore is being replaced

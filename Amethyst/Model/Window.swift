@@ -109,6 +109,9 @@ protocol WindowType: Equatable {
     /// Whether or not the window is currently on any screen.
     func isOnScreen() -> Bool
 
+    /// The window server's space ID for this window, or `nil` when the window server does not report one.
+    func spaceID() -> CGSSpaceID?
+
     /**
      Moves the window to a space.
      
@@ -380,6 +383,11 @@ extension AXWindow: WindowType {
         }
 
         move(to: screen.screen)
+    }
+
+    func spaceID() -> CGSSpaceID? {
+        let spaceID = managedSpaceID()
+        return spaceID == 0 ? nil : spaceID
     }
 
     func move(toSpaceAtIndex space: UInt) {

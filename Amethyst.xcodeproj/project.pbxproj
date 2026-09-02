@@ -85,7 +85,6 @@
 		4062AD371C1FA83300DB612B /* RowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4062AD361C1FA83300DB612B /* RowLayout.swift */; };
 		4062AD3B1C206EA900DB612B /* WidescreenTallLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4062AD3A1C206EA900DB612B /* WidescreenTallLayout.swift */; };
 		40637073224EF9B20081299D /* Change.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637072224EF9B20081299D /* Change.swift */; };
-		40637075224EFED70081299D /* CGInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637074224EFED70081299D /* CGInfo.swift */; };
 		40637077224F0EFF0081299D /* Screens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637076224F0EFF0081299D /* Screens.swift */; };
 		4085824C1EA673AE0075A2C3 /* HotKeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */; };
 		4087BB042D447F480062A52B /* static-ratio-tall-native-commands.js in Resources */ = {isa = PBXBuildFile; fileRef = 4087BB032D447F480062A52B /* static-ratio-tall-native-commands.js */; };
@@ -218,7 +217,6 @@
 		4062AD361C1FA83300DB612B /* RowLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowLayout.swift; sourceTree = "<group>"; };
 		4062AD3A1C206EA900DB612B /* WidescreenTallLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidescreenTallLayout.swift; sourceTree = "<group>"; };
 		40637072224EF9B20081299D /* Change.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Change.swift; sourceTree = "<group>"; };
-		40637074224EFED70081299D /* CGInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGInfo.swift; sourceTree = "<group>"; };
 		40637076224F0EFF0081299D /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens.swift; sourceTree = "<group>"; };
 		4076368C2394BFB500308336 /* AmethystDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AmethystDebug.entitlements; sourceTree = "<group>"; };
 		4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HotKeyManagerTests.swift; sourceTree = "<group>"; };
@@ -487,7 +485,6 @@
 			children = (
 				4046EFD02238949900113067 /* Application.swift */,
 				401C35B02244626E0019ED07 /* ApplicationObservation.swift */,
-				40637074224EFED70081299D /* CGInfo.swift */,
 				40637072224EF9B20081299D /* Change.swift */,
 				401C35B22244650F0019ED07 /* MouseState.swift */,
 				400540F12325CDF4004B8656 /* Reliability.swift */,
@@ -857,7 +854,6 @@
 				4062AD351C1FA62500DB612B /* WideLayout.swift in Sources */,
 				401C35B32244650F0019ED07 /* MouseState.swift in Sources */,
 				4062AD2D1C1F9B8B00DB612B /* FullscreenLayout.swift in Sources */,
-				40637075224EFED70081299D /* CGInfo.swift in Sources */,
 				1A4B46EB20AA7717003D5110 /* NSTableView+Amethyst.swift in Sources */,
 				4045416F268FFDA000861BE8 /* CustomLayout.swift in Sources */,
 				40637077224F0EFF0081299D /* Screens.swift in Sources */,

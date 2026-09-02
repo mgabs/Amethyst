@@ -38,7 +38,7 @@ protocol ScreenType: Equatable {
     /// The opaque idenfitifer for the screen in the underlying graphics system.
     func screenID() -> String?
 
-    /// Spaces on this screen.
+    /// Spaces on this screen. When displays do not have separate spaces, every screen reports the shared set.
     func spaces() -> [Space]
 
     /// The space currently shown on this screen.
