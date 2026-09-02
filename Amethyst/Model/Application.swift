@@ -26,12 +26,7 @@ protocol ApplicationType: Equatable {
     /// The optional title of the application
     func title() -> String?
 
-    /**
-     The windows owned by the application.
-     
-     - Note:
-     This value is cached. Call `dropWindowsCache()` if you believe this may be out of date.
-     */
+    /// The windows owned by the application.
     func windows() -> [Window]
 
     /// The process ID of the application.
@@ -47,9 +42,6 @@ protocol ApplicationType: Equatable {
      We can receive an unreliable result. It is up to the caller to determine whether or not that result is good enough.
      */
     func defaultFloatForWindow(_ window: Window) -> Reliable<DefaultFloat>
-
-    /// Clears the internal cache of application windows.
-    func dropWindowsCache()
 
     /**
      Observe an AX notification on the application itself with a given handler.
@@ -144,10 +136,6 @@ class AnyApplication<Application: ApplicationType>: ApplicationType {
 
     func defaultFloatForWindow(_ window: Window) -> Reliable<DefaultFloat> {
         return internalApplication.defaultFloatForWindow(window)
-    }
-
-    func dropWindowsCache() {
-        internalApplication.dropWindowsCache()
     }
 
     func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> AXError {

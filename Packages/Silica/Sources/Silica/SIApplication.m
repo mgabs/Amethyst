@@ -19,8 +19,6 @@
 @interface SIApplication ()
 @property (nonatomic, assign) AXObserverRef observerRef;
 @property (nonatomic, strong) NSMutableDictionary *elementToObservations;
-
-@property (nonatomic, strong) NSMutableArray *cachedWindows;
 @end
 
 @implementation SIApplication
@@ -134,26 +132,16 @@ void observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRe
 
 #pragma mark Public Accessors
 
-- (NSArray *)windows {
-    if (!self.cachedWindows) {
-        self.cachedWindows = [NSMutableArray array];
-        NSArray *windowRefs = [self arrayForKey:kAXWindowsAttribute];
-        for (NSUInteger index = 0; index < windowRefs.count; ++index) {
-            AXUIElementRef windowRef = (__bridge AXUIElementRef)windowRefs[index];
-            SIWindow *window = [[SIWindow alloc] initWithAXElement:windowRef];
-
-            [self.cachedWindows addObject:window];
-        }
+- (NSArray<SIWindow *> *)windows {
+    NSMutableArray<SIWindow *> *windows = [NSMutableArray array];
+    for (id windowRef in [self arrayForKey:kAXWindowsAttribute]) {
+        [windows addObject:[[SIWindow alloc] initWithAXElement:(__bridge AXUIElementRef)windowRef]];
     }
-    return self.cachedWindows;
+    return windows;
 }
 
 - (NSString *)title {
     return [self stringForKey:kAXTitleAttribute];
-}
-
-- (void)dropWindowsCache {
-    self.cachedWindows = nil;
 }
 
 @end

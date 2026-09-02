@@ -66,11 +66,6 @@ typedef void (^SIAXNotificationHandler)(SIAccessibilityElement *accessibilityEle
  */
 - (nullable NSString *)title;
 
-/**
- *  Drops any cached windows so that the windows returned by a call to windows will be representative of the most up to date state of the application.
- */
-- (void)dropWindowsCache;
-
 @end
 
 NS_ASSUME_NONNULL_END

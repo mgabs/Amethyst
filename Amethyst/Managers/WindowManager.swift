@@ -196,7 +196,6 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
             return
         }
 
-        application.dropWindowsCache()
         for window in application.windows() {
             add(window: window)
         }
@@ -220,8 +219,6 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
             guard let application = applicationWithPID(pid) else {
                 continue
             }
-
-            application.dropWindowsCache()
 
             for window in application.windows() {
                 add(window: window)

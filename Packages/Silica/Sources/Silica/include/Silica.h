@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import <IOKit/IOKitLib.h>
 
 #import "CGSInternal/CGSConnection.h"
 #import "CGSInternal/CGSDisplays.h"
