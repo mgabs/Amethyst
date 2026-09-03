@@ -16,7 +16,7 @@ If you want to learn more about tiling window managers and the features of Ameth
 
 ## Getting Amethyst
 
-Download `Amethyst-vX.Y.Z.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
+Download `Amethyst-vX.Y.Z-bNNNN.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
 
 The build is signed but not notarized, so on first launch macOS will say it could not verify the app. Right-click `Amethyst.app` and choose **Open**, or allow it under System Settings → Privacy & Security → **Open Anyway**. See [Troubleshooting](docs/troubleshooting.md#amethyst-wont-open-after-download) if it still refuses.
 
@@ -281,27 +281,36 @@ xcodebuild -workspace Amethyst.xcworkspace -scheme Amethyst -destination 'platfo
   -derivedDataPath build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO test
 ```
 
-Or open `Amethyst.xcworkspace` in Xcode. `fastlane/` still has `local`, `local_release`, `test`, and `lint` lanes for those who prefer it (`brew bundle && bundle exec fastlane local`); CI no longer uses it.
+Or open `Amethyst.xcworkspace` in Xcode.
+
+A release build, identical to what CI publishes, is one fastlane lane (needs the signing certificate in your keychain):
+
+```bash
+brew bundle && bundle install   # xcbeautify, swiftlint; fastlane via Bundler
+bundle exec fastlane mac        # → build/artifacts/Amethyst-vX.Y.Z-bNNNN.zip (+ dSYMs)
+```
+
+Other lanes: `local` (Debug, unsigned), `local_release` (Release, unsigned), `test`, `lint`, `clean`.
 
 ## CI/CD
 
-Two GitHub Actions workflows in `.github/workflows/`, both plain `xcodebuild` (no Ruby/fastlane):
+Two GitHub Actions workflows in `.github/workflows/`:
 
-- **CI** (`ci.yml`) — builds and runs the test suite on every push to `development`/`master` and on pull requests.
-- **Release** (`release.yml`) — runs on every push to `master`. It reads `MARKETING_VERSION` from the Xcode project and, if no release with that version exists yet, archives a signed universal build, zips the app and dSYMs, generates a Sparkle `appcast.xml`, tags the commit `vX.Y.Z`, and publishes a GitHub Release. Pushes that don't change the version are a no-op. A version containing `-` (e.g. `0.25.0-beta.1`) is marked pre-release and skipped by the updater.
+- **CI** (`ci.yml`) — plain `xcodebuild test` on every push to `development`/`master` and on pull requests.
+- **Release** (`release.yml`) — runs on every push to `master`. It reads `MARKETING_VERSION` from the Xcode project and, if no release with that version exists yet, runs `fastlane mac` (signed universal build, zipped app and dSYMs), generates a Sparkle `appcast.xml`, tags the commit `vX.Y.Z`, and publishes a GitHub Release. Pushes that don't change the version are a no-op. A version containing `-` (e.g. `0.25.0-beta.1`) is marked pre-release and skipped by the updater.
 
 ### Cutting a release
 
 1. Bump the version: Xcode → Amethyst target → General → Version, or `sed -i '' 's/MARKETING_VERSION = .*;/MARKETING_VERSION = 0.26.0;/' Amethyst.xcodeproj/project.pbxproj`.
 2. Merge to `master`.
 
-`CURRENT_PROJECT_VERSION` (what Sparkle compares) is the commit count on `master`, so no build-number bump is needed.
+`CURRENT_PROJECT_VERSION` (what Sparkle compares) is the commit count, set by the `mac` lane, so no build-number bump is needed.
 
 ### Secrets
 
 | Secret | Purpose |
 |---|---|
-| `CERTIFICATES_P12` / `CERTIFICATES_P12_PASSWORD` | Base64 `.p12` of the signing certificate. Without it the release is ad-hoc signed and macOS will forget the Accessibility permission on every update. |
+| `CERTIFICATES_P12` / `CERTIFICATES_P12_PASSWORD` | Base64 `.p12` of the signing certificate. Required; `fastlane mac` signs with it. |
 | `SPARKLE_PRIVATE_KEY` | EdDSA private key (`generate_keys -x`) used to sign the appcast. Its public half is `SUPublicEDKey` in `Amethyst-Info.plist`; regenerating the key breaks updates for existing installs. Without it no appcast is produced and in-app updates stop working. |
 
 The updater feed URL is `https://github.com/mgabs/Amethyst/releases/latest/download/appcast.xml`, which GitHub redirects to the newest non-prerelease release, so no separate hosting is needed.

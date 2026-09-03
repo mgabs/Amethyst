@@ -40,7 +40,6 @@ jobs:
     runs-on: macos-latest
     env:
       VERSION: ${{ needs.version.outputs.tag }}
-      HAS_CERT: ${{ secrets.CERTIFICATES_P12 != '' }}
       HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
@@ -48,44 +47,29 @@ jobs:
         with:
           fetch-depth: 0 # build number = commit count
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
       - name: Import signing certificate
-        if: env.HAS_CERT == 'true'
         uses: apple-actions/import-codesign-certs@v7.0.0
         with:
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
           p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
 
-      - name: Archive
-        run: |
-          if [[ "$HAS_CERT" == true ]]; then
-            # first imported identity, e.g. `1) <sha1> "Apple Development: me@x (TEAMID)"`; Xcode wants the sha1
-            LINE=$(security find-identity -v -p codesigning | head -1)
-            IDENTITY=$(sed -nE 's/.*\) ([0-9A-F]{40}) .*/\1/p' <<<"$LINE")
-            TEAM=$(sed -nE 's/.*\(([A-Z0-9]+)\)"$/\1/p' <<<"$LINE")
-          else
-            IDENTITY=- # ad-hoc; accessibility permission must be re-granted on every update
-            TEAM=
-          fi
-          echo "Signing as: ${IDENTITY} (team: ${TEAM:-none})"
-          xcodebuild -quiet archive \
-            -workspace Amethyst.xcworkspace -scheme Amethyst -configuration Release \
-            -destination 'platform=macOS' -derivedDataPath build/dd -archivePath build/Amethyst.xcarchive \
-            MARKETING_VERSION="${VERSION#v}" CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)" \
-            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_IDENTITY="$IDENTITY"
-
-      - name: Package
-        run: |
-          ditto -c -k --keepParent build/Amethyst.xcarchive/Products/Applications/Amethyst.app "build/Amethyst-$VERSION.zip"
-          ditto -c -k build/Amethyst.xcarchive/dSYMs "build/Amethyst-$VERSION.dSYM.zip"
+      # Same lane as a local release build: signed archive + export, zips app and dSYMs into build/artifacts
+      - name: Build
+        run: bundle exec fastlane mac
 
       - name: Generate Sparkle appcast
         if: env.HAS_SPARKLE_KEY == 'true'
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          mkdir build/appcast && cp "build/Amethyst-$VERSION.zip" build/appcast/
+          mkdir build/appcast && cp build/artifacts/Amethyst-v*-b*.zip build/appcast/
           # generate_appcast ships with the Sparkle SwiftPM artifact, so the tool version always matches the framework
-          echo "$SPARKLE_PRIVATE_KEY" | build/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
+          echo "$SPARKLE_PRIVATE_KEY" | build/derived_data/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
             --ed-key-file - \
             --download-url-prefix "$REPO_URL/releases/download/$VERSION/" \
             --link "$REPO_URL/releases" \
@@ -98,5 +82,5 @@ jobs:
           tag_name: ${{ env.VERSION }}
           prerelease: ${{ contains(env.VERSION, '-') }}
           files: |
-            build/Amethyst-*.zip
+            build/artifacts/Amethyst-*.zip
             build/appcast.xml
