@@ -1,9 +1,11 @@
 name: Release
 
-# Tag a commit `vX.Y.Z` and push the tag. Tags containing "-" (v1.0.0-beta.1) become pre-releases.
+# Every push to master whose MARKETING_VERSION (Amethyst.xcodeproj) has no release yet is built,
+# tagged vX.Y.Z, and published. Bump the version, merge to master, done.
+# A version containing "-" (1.0.0-beta.1) is published as a pre-release, which the updater skips.
 on:
   push:
-    tags: ['v*']
+    branches: [master]
 
 permissions:
   contents: write
@@ -13,10 +15,31 @@ defaults:
     shell: bash
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      released: ${{ steps.v.outputs.released }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$(sed -nE 's/.*MARKETING_VERSION = ([^;]+);.*/\1/p' Amethyst.xcodeproj/project.pbxproj | head -1)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "released=true" >> "$GITHUB_OUTPUT"; echo "$TAG already released, nothing to do"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"; echo "releasing $TAG"
+          fi
+
   release:
+    needs: version
+    if: needs.version.outputs.released == 'false'
     runs-on: macos-latest
     env:
-      VERSION: ${{ github.ref_name }}
+      VERSION: ${{ needs.version.outputs.tag }}
       HAS_CERT: ${{ secrets.CERTIFICATES_P12 != '' }}
       HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
@@ -72,7 +95,8 @@ jobs:
         uses: softprops/action-gh-release@v3.0.3
         with:
           generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          tag_name: ${{ env.VERSION }}
+          prerelease: ${{ contains(env.VERSION, '-') }}
           files: |
             build/Amethyst-*.zip
             build/appcast.xml

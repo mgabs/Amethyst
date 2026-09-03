@@ -288,16 +288,14 @@ Or open `Amethyst.xcworkspace` in Xcode. `fastlane/` still has `local`, `local_r
 Two GitHub Actions workflows in `.github/workflows/`, both plain `xcodebuild` (no Ruby/fastlane):
 
 - **CI** (`ci.yml`) — builds and runs the test suite on every push to `development`/`master` and on pull requests.
-- **Release** (`release.yml`) — runs when a `v*` tag is pushed. It archives a signed Release build, zips the app and dSYMs, generates a Sparkle `appcast.xml`, and publishes everything as a GitHub Release. Tags containing `-` (e.g. `v0.25.0-beta.1`) are marked pre-release and are skipped by the updater.
+- **Release** (`release.yml`) — runs on every push to `master`. It reads `MARKETING_VERSION` from the Xcode project and, if no release with that version exists yet, archives a signed universal build, zips the app and dSYMs, generates a Sparkle `appcast.xml`, tags the commit `vX.Y.Z`, and publishes a GitHub Release. Pushes that don't change the version are a no-op. A version containing `-` (e.g. `0.25.0-beta.1`) is marked pre-release and skipped by the updater.
 
 ### Cutting a release
 
-```bash
-git tag v0.25.0
-git push origin v0.25.0
-```
+1. Bump the version: Xcode → Amethyst target → General → Version, or `sed -i '' 's/MARKETING_VERSION = .*;/MARKETING_VERSION = 0.26.0;/' Amethyst.xcodeproj/project.pbxproj`.
+2. Merge to `master`.
 
-The tag is the version: `MARKETING_VERSION` is the tag without the `v`, `CURRENT_PROJECT_VERSION` (what Sparkle compares) is the commit count. No version bump commit is needed.
+`CURRENT_PROJECT_VERSION` (what Sparkle compares) is the commit count on `master`, so no build-number bump is needed.
 
 ### Secrets
 
