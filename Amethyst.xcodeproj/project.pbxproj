@@ -1302,7 +1302,7 @@
 			repositoryURL = "https://github.com/Quick/Quick";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 6.1.0;
+				minimumVersion = 7.6.2;
 			};
 		};
 		40AE15EF2A92EC5300E14536 /* XCRemoteSwiftPackageReference "Nimble" */ = {
