@@ -296,7 +296,7 @@ Other lanes: `local` (Debug, unsigned), `local_release` (Release, unsigned), `te
 
 Two GitHub Actions workflows in `.github/workflows/`:
 
-- **CI** (`ci.yml`) — plain `xcodebuild test` on every push to `development`/`master` and on pull requests.
+- **CI** (`ci.yml`) — plain `xcodebuild test` on every push to `master` and on pull requests.
 - **Release** (`release.yml`) — runs on every push to `master`. It reads `MARKETING_VERSION` from the Xcode project and, if no release with that version exists yet, runs `fastlane mac` (signed universal build, zipped app and dSYMs), generates a Sparkle `appcast.xml`, tags the commit `vX.Y.Z`, and publishes a GitHub Release. Pushes that don't change the version are a no-op. A version containing `-` (e.g. `0.25.0-beta.1`) is marked pre-release and skipped by the updater.
 
 ### Cutting a release
@@ -317,7 +317,7 @@ The updater feed URL is `https://github.com/mgabs/Amethyst/releases/latest/downl
 
 ## Contributing
 
-If you'd like to contribute please branch off of the `development` branch and open pull requests against it rather than `master`. Otherwise just try to stick to the general style of the code.
+`master` is the only long-lived branch. Branch off it and open pull requests against it; CI runs on every PR. Try to stick to the general style of the code.
 
 ## Donating
 

@@ -2,13 +2,10 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
-    target-branch: development
     schedule: { interval: monthly }
   - package-ecosystem: bundler
     directory: /
-    target-branch: development
     schedule: { interval: monthly }
   - package-ecosystem: swift
     directory: /
-    target-branch: development
     schedule: { interval: monthly }
