@@ -63,7 +63,6 @@ private final class MockFocusApplication: ApplicationType {
     func windows() -> [TestWindow] { return [] }
     func pid() -> pid_t { return mockPID }
     func defaultFloatForWindow(_ window: TestWindow) -> Reliable<DefaultFloat> { return .reliable(.floating) }
-    func dropWindowsCache() {}
     func observe(notification: String, handler: @escaping SIAXNotificationHandler) -> AXError { return .success }
     func observe(notification: String, window: TestWindow, handler: @escaping SIAXNotificationHandler) -> AXError { return .success }
     func unobserve(notification: String) {}

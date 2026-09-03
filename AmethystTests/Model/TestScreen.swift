@@ -8,13 +8,11 @@
 
 @testable import Amethyst
 import Foundation
-import SwiftyJSON
 
 final class TestScreen: ScreenType {
     static var availableScreens: [TestScreen] = []
-    static var screensHaveSeparateSpaces = true
 
-    static func screenDescriptions() -> [JSON]? {
+    static func allSpaces() -> [Space] {
         return []
     }
 
@@ -48,6 +46,14 @@ final class TestScreen: ScreenType {
 
     func screenID() -> String? {
         return id
+    }
+
+    func spaces() -> [Space] {
+        return []
+    }
+
+    func currentSpace() -> Space? {
+        return nil
     }
 
     func focusScreen() {

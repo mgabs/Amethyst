@@ -35,7 +35,6 @@
 		400D48FD2A92B06B0082750F /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 400D48FC2A92B06B0082750F /* SwiftyJSON */; };
 		400D49002A92B0A00082750F /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 400D48FF2A92B0A00082750F /* Yams */; };
 		400F2DF32AABF4FC00C1AAE2 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 400F2DF22AABF4FC00C1AAE2 /* KeyboardShortcuts */; };
-		40111CC9223370FD003D20BD /* SIWindow+AmethystTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40111CC8223370FD003D20BD /* SIWindow+AmethystTests.swift */; };
 		401ADBAF2D55A1B6001FF53A /* recommended-main-pane-ratio.js in Resources */ = {isa = PBXBuildFile; fileRef = 401ADBAE2D55A1B6001FF53A /* recommended-main-pane-ratio.js */; };
 		401BBCB62333067F005118F8 /* ColumnLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401BBCB52333067F005118F8 /* ColumnLayoutTests.swift */; };
 		401BC8981CE7E45300F89B3F /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401BC8971CE7E45300F89B3F /* WindowManager.swift */; };
@@ -52,8 +51,6 @@
 		401C35B522482EAF0019ED07 /* WindowTransitionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401C35B422482EAF0019ED07 /* WindowTransitionCoordinator.swift */; };
 		401C35B7224831470019ED07 /* FocusTransitionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401C35B6224831470019ED07 /* FocusTransitionCoordinator.swift */; };
 		4029C4F11C112478001E4788 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4029C4F01C112478001E4788 /* Layout.swift */; };
-		402DA3D72F53DCDB00B08CA2 /* Silica in Frameworks */ = {isa = PBXBuildFile; productRef = 402DA3D62F53DCDB00B08CA2 /* Silica */; };
-		402DA3DA2F53DCFE00B08CA2 /* Silica in Frameworks */ = {isa = PBXBuildFile; productRef = 402DA3D92F53DCFE00B08CA2 /* Silica */; };
 		402DB6E21742E41A00D1C936 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 402DB6E11742E41A00D1C936 /* Cocoa.framework */; };
 		402DB6EC1742E41A00D1C936 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 402DB6EA1742E41A00D1C936 /* InfoPlist.strings */; };
 		402DB6F21742E41A00D1C936 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 402DB6F01742E41A00D1C936 /* Credits.rtf */; };
@@ -87,7 +84,6 @@
 		4062AD371C1FA83300DB612B /* RowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4062AD361C1FA83300DB612B /* RowLayout.swift */; };
 		4062AD3B1C206EA900DB612B /* WidescreenTallLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4062AD3A1C206EA900DB612B /* WidescreenTallLayout.swift */; };
 		40637073224EF9B20081299D /* Change.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637072224EF9B20081299D /* Change.swift */; };
-		40637075224EFED70081299D /* CGInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637074224EFED70081299D /* CGInfo.swift */; };
 		40637077224F0EFF0081299D /* Screens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40637076224F0EFF0081299D /* Screens.swift */; };
 		4085824C1EA673AE0075A2C3 /* HotKeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */; };
 		4087BB042D447F480062A52B /* static-ratio-tall-native-commands.js in Resources */ = {isa = PBXBuildFile; fileRef = 4087BB032D447F480062A52B /* static-ratio-tall-native-commands.js */; };
@@ -127,7 +123,6 @@
 		40E705D8176EAD7800850DA6 /* default.amethyst in Resources */ = {isa = PBXBuildFile; fileRef = 40E705D7176EAD7800850DA6 /* default.amethyst */; };
 		40EC47F423F3A30100048B4F /* ScreenManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EC47F323F3A30100048B4F /* ScreenManagerTests.swift */; };
 		56D75166303C5BD178EF7901 /* SpaceIndicatorManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D75164303C5BD178EF7901 /* SpaceIndicatorManagerTests.swift */; };
-		40EFFB4A2F0226EF00EDD929 /* Silica in Frameworks */ = {isa = PBXBuildFile; productRef = 40EFFB492F0226EF00EDD929 /* Silica */; };
 		4493EAA22139D9F000AA9623 /* ThreeColumnLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4493EAA12139D9EF00AA9623 /* ThreeColumnLayout.swift */; };
 		56D75165303C5BD178EF7900 /* LayoutTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B531405ABA6A3E1D261F22 /* LayoutTypeTests.swift */; };
 		AA4AF40D26717DA900D2AE1B /* TwoPaneLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4AF40C26717DA900D2AE1B /* TwoPaneLayout.swift */; };
@@ -164,7 +159,6 @@
 		4006CF8D1CDFFE90004CA512 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4006CF8F1CE017BA004CA512 /* UserConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserConfiguration.swift; sourceTree = "<group>"; };
 		400A5E9C2327350C00F0A2C3 /* Space.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Space.swift; sourceTree = "<group>"; };
-		40111CC8223370FD003D20BD /* SIWindow+AmethystTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SIWindow+AmethystTests.swift"; sourceTree = "<group>"; };
 		401A529824D3B63A004359A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		401ADBAE2D55A1B6001FF53A /* recommended-main-pane-ratio.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "recommended-main-pane-ratio.js"; sourceTree = "<group>"; };
 		401BBCB52333067F005118F8 /* ColumnLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnLayoutTests.swift; sourceTree = "<group>"; };
@@ -221,7 +215,6 @@
 		4062AD361C1FA83300DB612B /* RowLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RowLayout.swift; sourceTree = "<group>"; };
 		4062AD3A1C206EA900DB612B /* WidescreenTallLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WidescreenTallLayout.swift; sourceTree = "<group>"; };
 		40637072224EF9B20081299D /* Change.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Change.swift; sourceTree = "<group>"; };
-		40637074224EFED70081299D /* CGInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CGInfo.swift; sourceTree = "<group>"; };
 		40637076224F0EFF0081299D /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens.swift; sourceTree = "<group>"; };
 		4076368C2394BFB500308336 /* AmethystDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AmethystDebug.entitlements; sourceTree = "<group>"; };
 		4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HotKeyManagerTests.swift; sourceTree = "<group>"; };
@@ -282,9 +275,7 @@
 				40AE16312A943EF900E14536 /* CoreGraphics.framework in Frameworks */,
 				40AE15E32A92E9AF00E14536 /* SwiftyBeaver in Frameworks */,
 				40C3F9231BD1B35E00F58660 /* libc++.tbd in Frameworks */,
-				402DA3DA2F53DCFE00B08CA2 /* Silica in Frameworks */,
 				402DB6FF1742E44E00D1C936 /* Carbon.framework in Frameworks */,
-				402DA3D72F53DCDB00B08CA2 /* Silica in Frameworks */,
 				400D49002A92B0A00082750F /* Yams in Frameworks */,
 				40AE15E62A92EA7500E14536 /* RxCocoa in Frameworks */,
 				40C3F91F1BD1B22E00F58660 /* SystemConfiguration.framework in Frameworks */,
@@ -297,7 +288,6 @@
 				40CF37C029B440A100CDB07A /* ArgumentParser in Frameworks */,
 				400D48FA2A92B0130082750F /* Sparkle in Frameworks */,
 				400F2DF32AABF4FC00C1AAE2 /* KeyboardShortcuts in Frameworks */,
-				40EFFB4A2F0226EF00EDD929 /* Silica in Frameworks */,
 				402F6FA62A81C9E30036B512 /* SkyLight.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -325,7 +315,6 @@
 		40111CC7223370E1003D20BD /* Categories */ = {
 			isa = PBXGroup;
 			children = (
-				40111CC8223370FD003D20BD /* SIWindow+AmethystTests.swift */,
 			);
 			path = Categories;
 			sourceTree = "<group>";
@@ -493,7 +482,6 @@
 			children = (
 				4046EFD02238949900113067 /* Application.swift */,
 				401C35B02244626E0019ED07 /* ApplicationObservation.swift */,
-				40637074224EFED70081299D /* CGInfo.swift */,
 				40637072224EF9B20081299D /* Change.swift */,
 				401C35B22244650F0019ED07 /* MouseState.swift */,
 				400540F12325CDF4004B8656 /* Reliability.swift */,
@@ -673,9 +661,6 @@
 				400F2DF22AABF4FC00C1AAE2 /* KeyboardShortcuts */,
 				40D540EF2ABFC7560007F40A /* MASShortcut */,
 				40E2D22F2D544F1E00D16B87 /* Silica */,
-				40EFFB492F0226EF00EDD929 /* Silica */,
-				402DA3D62F53DCDB00B08CA2 /* Silica */,
-				402DA3D92F53DCFE00B08CA2 /* Silica */,
 			);
 			productName = Amethyst;
 			productReference = 402DB6DE1742E41A00D1C936 /* Amethyst.app */;
@@ -750,7 +735,7 @@
 				40AE15EF2A92EC5300E14536 /* XCRemoteSwiftPackageReference "Nimble" */,
 				400F2DF12AABF4FC00C1AAE2 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				40D540EE2ABFC7560007F40A /* XCRemoteSwiftPackageReference "MASShortcut" */,
-				402DA3D82F53DCFE00B08CA2 /* XCRemoteSwiftPackageReference "silica" */,
+				402DA3E02F53E00000B08CA2 /* XCLocalSwiftPackageReference "Packages/Silica" */,
 			);
 			productRefGroup = 402DB6DF1742E41A00D1C936 /* Products */;
 			projectDirPath = "";
@@ -866,7 +851,6 @@
 				4062AD351C1FA62500DB612B /* WideLayout.swift in Sources */,
 				401C35B32244650F0019ED07 /* MouseState.swift in Sources */,
 				4062AD2D1C1F9B8B00DB612B /* FullscreenLayout.swift in Sources */,
-				40637075224EFED70081299D /* CGInfo.swift in Sources */,
 				1A4B46EB20AA7717003D5110 /* NSTableView+Amethyst.swift in Sources */,
 				4045416F268FFDA000861BE8 /* CustomLayout.swift in Sources */,
 				40637077224F0EFF0081299D /* Screens.swift in Sources */,
@@ -882,7 +866,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				403E1A2A2337173600DB7B2A /* FloatingLayoutTests.swift in Sources */,
-				40111CC9223370FD003D20BD /* SIWindow+AmethystTests.swift in Sources */,
 				401BBCB62333067F005118F8 /* ColumnLayoutTests.swift in Sources */,
 				401BC8AE1CE8FD4700F89B3F /* UserConfigurationTests.swift in Sources */,
 				AAAC6BAC2677DF7B00BEC1B0 /* TwoPaneLayoutTests.swift in Sources */,
@@ -1070,7 +1053,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = 43F1251A43FAD491C0C97E1D1FFE22B9BCEE87E6;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 126;
+				CURRENT_PROJECT_VERSION = 1456;
 				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 7X39ZNJZMN;
@@ -1090,7 +1073,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11;
-				MARKETING_VERSION = 0.24.3;
+				MARKETING_VERSION = 0.25.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"DEBUG\"";
@@ -1113,7 +1096,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = 43F1251A43FAD491C0C97E1D1FFE22B9BCEE87E6;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 126;
+				CURRENT_PROJECT_VERSION = 1456;
 				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 7X39ZNJZMN;
@@ -1133,7 +1116,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11;
-				MARKETING_VERSION = 0.24.3;
+				MARKETING_VERSION = 0.25.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				ONLY_ACTIVE_ARCH = NO;
@@ -1242,6 +1225,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		402DA3E02F53E00000B08CA2 /* XCLocalSwiftPackageReference "Packages/Silica" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Silica;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		400D48F22A92AF1E0082750F /* XCRemoteSwiftPackageReference "Cartography" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1289,14 +1279,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.0.0;
-			};
-		};
-		402DA3D82F53DCFE00B08CA2 /* XCRemoteSwiftPackageReference "silica" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ianyh/silica";
-			requirement = {
-				branch = master;
-				kind = branch;
 			};
 		};
 		40AE15E12A92E9AF00E14536 /* XCRemoteSwiftPackageReference "SwiftyBeaver" */ = {
@@ -1380,15 +1362,6 @@
 			package = 400F2DF12AABF4FC00C1AAE2 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
 		};
-		402DA3D62F53DCDB00B08CA2 /* Silica */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = Silica;
-		};
-		402DA3D92F53DCFE00B08CA2 /* Silica */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 402DA3D82F53DCFE00B08CA2 /* XCRemoteSwiftPackageReference "silica" */;
-			productName = Silica;
-		};
 		40AE15E22A92E9AF00E14536 /* SwiftyBeaver */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 40AE15E12A92E9AF00E14536 /* XCRemoteSwiftPackageReference "SwiftyBeaver" */;
@@ -1425,10 +1398,6 @@
 			productName = MASShortcut;
 		};
 		40E2D22F2D544F1E00D16B87 /* Silica */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = Silica;
-		};
-		40EFFB492F0226EF00EDD929 /* Silica */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Silica;
 		};

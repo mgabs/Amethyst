@@ -90,15 +90,15 @@ final class TestWindow: WindowType {
         return true
     }
 
+    func spaceID() -> CGSSpaceID? {
+        return nil
+    }
+
     func move(toSpace space: UInt) {
 
     }
 
     func move(toSpaceAtIndex space: UInt) {
-
-    }
-
-    func move(toSpace spaceID: CGSSpaceID) {
 
     }
 

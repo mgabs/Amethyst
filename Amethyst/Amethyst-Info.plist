@@ -26,15 +26,15 @@
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>Amethyst needs accessibility permissions to move and resize windows.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSAccessibilityUsageDescription</key>
-	<string>Amethyst needs accessibility permissions to move and resize windows.</string>
-	<key>SUCanaryFeedURL</key>
-	<string>https://ianyh.com/amethyst/canary-appcast.xml</string>
 	<key>SUFeedURL</key>
-	<string>https://ianyh.com/amethyst/appcast.xml</string>
+	<string>https://github.com/mgabs/Amethyst/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>vooy5UjIpFkPKFLN9c56opy0RVqybuZlgfKorGyuN6g=</string>
 </dict>
 </plist>

@@ -21,40 +21,11 @@ extension WindowManager {
         init() {}
 
         func updateSpaces() {
-            guard let screensInfo = CGScreensInfo<Window>() else {
-                return
-            }
-
-            if Screen.screensHaveSeparateSpaces {
-                for screenDictionary in screensInfo.descriptions {
-                    guard let screenID = screenDictionary["Display Identifier"].string else {
-                        log.error("Could not identify screen with info: \(screenDictionary)")
-                        continue
-                    }
-
-                    guard let screenManager = screenManagersCache[screenID] else {
-                        log.error("Screen with identifier not managed: \(screenID)")
-                        continue
-                    }
-
-                    let space = CGSpacesInfo<Window>.space(fromScreenDescription: screenDictionary)
-
-                    guard screenManager.space != space else {
-                        continue
-                    }
-
-                    screenManager.updateSpace(to: space)
+            for screenManager in screenManagers {
+                guard let space = screenManager.screen?.currentSpace(), screenManager.space != space else {
+                    continue
                 }
-            } else {
-                for screenManager in screenManagers {
-                    let space = CGSpacesInfo<Window>.space(fromScreenDescription: screensInfo.descriptions[0])
-
-                    guard screenManager.space != space else {
-                        continue
-                    }
-
-                    screenManager.updateSpace(to: space)
-                }
+                screenManager.updateSpace(to: space)
             }
         }
 

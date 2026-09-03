@@ -109,6 +109,9 @@ protocol WindowType: Equatable {
     /// Whether or not the window is currently on any screen.
     func isOnScreen() -> Bool
 
+    /// The window server's space ID for this window, or `nil` when the window server does not report one.
+    func spaceID() -> CGSSpaceID?
+
     /**
      Moves the window to a space.
      
@@ -124,14 +127,13 @@ protocol WindowType: Equatable {
         - space: The index of the space
      */
     func move(toSpaceAtIndex space: UInt)
+}
 
-    /**
-     Moves the window to a space.
-     
-     - Parameters:
-         - spaceID: The id of the space.
-     */
-    func move(toSpace spaceID: CGSSpaceID)
+extension WindowType {
+    /// The space shown on the screen of the currently focused window.
+    static func currentFocusedSpace() -> Space? {
+        return currentlyFocused()?.screen()?.currentSpace()
+    }
 }
 
 enum WindowDecodingError: Error {
@@ -266,15 +268,7 @@ extension AXWindow: WindowType {
      In this case the window must be movable and be a standard window.
      */
     func shouldBeManaged() -> Bool {
-        guard isMovable() else {
-            return false
-        }
-
-        guard let subrole = string(forKey: kAXSubroleAttribute as CFString), subrole == kAXStandardWindowSubrole as String else {
-            return false
-        }
-
-        return true
+        return isMovable() && isNormalWindow()
     }
 
     func shouldFloat() -> Bool {
@@ -308,7 +302,7 @@ extension AXWindow: WindowType {
      - Description:
      What a mess. See: https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468
      */
-    @discardableResult override func focus() -> Bool {
+    @discardableResult func focus() -> Bool {
         let pid = self.pid()
         var wid = self.cgID()
         var psn = ProcessSerialNumber()
@@ -339,7 +333,7 @@ extension AXWindow: WindowType {
             }
         }
 
-        guard super.raise() else {
+        guard raise() else {
             return false
         }
 
@@ -383,11 +377,13 @@ extension AXWindow: WindowType {
         move(to: screen.screen)
     }
 
-    func move(toSpaceAtIndex space: UInt) {
-        super.move(toSpace: space)
+    func spaceID() -> CGSSpaceID? {
+        let spaceID = managedSpaceID()
+        return spaceID == 0 ? nil : spaceID
     }
 
-    func move(toSpace spaceID: CGSSpaceID) {
+    func move(toSpaceAtIndex space: UInt) {
+        super.move(toSpace: space)
     }
 }
 

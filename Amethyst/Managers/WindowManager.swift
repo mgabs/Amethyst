@@ -11,7 +11,6 @@ import Carbon
 import Foundation
 import RxSwift
 import Silica
-import SwiftyJSON
 
 enum TrackingError: Error {
     case unreliableFloating
@@ -196,7 +195,6 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
             return
         }
 
-        application.dropWindowsCache()
         for window in application.windows() {
             add(window: window)
         }
@@ -220,8 +218,6 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
             guard let application = applicationWithPID(pid) else {
                 continue
             }
-
-            application.dropWindowsCache()
 
             for window in application.windows() {
                 add(window: window)
@@ -277,12 +273,6 @@ extension WindowManager: ApplicationEventHandlerDelegate {
 }
 
 extension WindowManager {
-    func preferencesDidClose() {
-        DispatchQueue.main.async {
-            self.focusTransitionCoordinator.focusScreen(at: 0)
-        }
-    }
-
     func focusedScreenManager() -> ScreenManager<WindowManager<Application>>? {
         return screens.focusedScreenManager()
     }
@@ -549,7 +539,7 @@ extension WindowManager {
             throw TrackingError.unknownScreen
         }
 
-        guard CGWindowsInfo.windowSpace(window) != nil else {
+        guard window.spaceID() != nil else {
             throw TrackingError.unknownSpace
         }
 
@@ -566,8 +556,8 @@ extension WindowManager {
             // Windows tracked during a space change for a different space should not
             // generate .add events — doing so gives layouts stale data for windows
             // that aren't visible on the current space.
-            let windowSpace = CGWindowsInfo.windowSpace(window)
-            let currentSpaceID = CGSpacesInfo<Window>.currentSpaceForScreen(screen)?.id
+            let windowSpace = window.spaceID()
+            let currentSpaceID = screen.currentSpace()?.id
             let isOnCurrentSpace: Bool
             if let currentSpaceID, let windowSpace {
                 isOnCurrentSpace = currentSpaceID == windowSpace
@@ -622,13 +612,12 @@ extension WindowManager {
             }
 
             // The window needs to have been active _at some point_, but must not be currently on screen.
-            let didLeaveScreen = (isActive || windows.isWindowActive(existingWindow)) && !existingWindow.isOnScreen()
+            let didLeaveScreen = isActive && !isOnScreen
             let isInvalid = existingWindow.cgID() == kCGNullWindowID
 
             log.debug("""
             Considering window: \(existingWindow)
             isActive: \(isActive), isOnScreen: \(isOnScreen), isInvalid: \(isInvalid), managed: \(existingWindow.shouldBeManaged())
-            Recomputed isActive: \(windows.isWindowActive(existingWindow)), isOnScreen: \(existingWindow.isOnScreen())
             """)
 
             // The window needs to have either left the screen and therefore is being replaced
@@ -973,19 +962,16 @@ extension WindowManager: WindowTransitionTarget {
             window.focus()
             NotificationCenter.default.post(name: .windowDidMoveToSpace, object: nil)
         case let .moveWindowToSpaceAtIndex(window, spaceIndex, sourceSpaceIndex):
-            guard
-                let screen = window.screen(),
-                let spaces = CGSpacesInfo<Window>.spacesForAllScreens(includeOnlyUserSpaces: true),
-                spaceIndex < spaces.count
-            else {
+            let allSpaces = Screen.allSpaces()
+            let userSpaces = allSpaces.filter { $0.type == CGSSpaceTypeUser }
+            guard let screen = window.screen(), spaceIndex < userSpaces.count else {
                 return
             }
 
-            let targetSpace = spaces[spaceIndex]
-            let allSpaces = CGSpacesInfo<Window>.spacesForAllScreens() ?? []
+            let targetSpace = userSpaces[spaceIndex]
             let targetSpaceIndex = allSpaces.firstIndex { $0.id == targetSpace.id } ?? spaceIndex
 
-            guard let targetScreen = CGSpacesInfo<Window>.screenForSpace(space: targetSpace) else {
+            guard let targetScreen = Screen.availableScreens.first(where: { $0.spaces().contains { $0.id == targetSpace.id } }) else {
                 return
             }
 
@@ -1061,7 +1047,7 @@ extension WindowManager: WindowTransitionTarget {
     }
 
     func lastMainWindowForCurrentSpace() -> Window? {
-        guard let currentFocusedSpace = CGSpacesInfo<Window>.currentFocusedSpace(),
+        guard let currentFocusedSpace = Window.currentFocusedSpace(),
               let lastMainWindow = windows.lastMainWindows[currentFocusedSpace.id]
         else {
             return nil

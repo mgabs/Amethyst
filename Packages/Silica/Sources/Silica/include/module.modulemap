@@ -1,0 +1,4 @@
+module Silica {
+    header "Silica.h"
+    export *
+}
