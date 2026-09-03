@@ -12,7 +12,7 @@ import Quick
 import Silica
 
 class HotKeyManagerTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("hotKeyNameToDefaultsKey") {
             it("has the right number of screens") {
                 let keyMapping = HotKeyManager<SIApplication>.hotKeyNameToDefaultsKey()

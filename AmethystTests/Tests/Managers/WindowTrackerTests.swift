@@ -41,7 +41,7 @@ private final class MockApplication: ApplicationType {
 }
 
 class WindowTrackerTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var tracker: WindowTracker<MockApplication>!
 
         beforeEach {

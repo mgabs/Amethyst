@@ -11,8 +11,13 @@ import Nimble
 import Quick
 import Cocoa
 
+/// Quick 7 runs examples on the main thread, where `DispatchQueue.main.sync` traps; run inline in that case.
+func onMain(_ body: () -> Void) {
+    Thread.isMainThread ? body() : DispatchQueue.main.sync(execute: body)
+}
+
 class SpaceIndicatorManagerTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("SpaceIndicatorManager") {
             var statusItem: NSStatusItem!
             var userConfiguration: UserConfiguration!
@@ -20,7 +25,7 @@ class SpaceIndicatorManagerTests: QuickSpec {
 
             beforeEach {
                 // NSWindow (and thus NSStatusItem) must be created on the main thread
-                DispatchQueue.main.sync {
+                onMain {
                     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                     userConfiguration = UserConfiguration.shared
                     manager = SpaceIndicatorManager(statusItem: statusItem, userConfiguration: userConfiguration) {
@@ -32,7 +37,7 @@ class SpaceIndicatorManagerTests: QuickSpec {
             describe("createSpaceImage") {
                 it("creates an image with the correct size") {
                     var image: NSImage?
-                    DispatchQueue.main.sync {
+                    onMain {
                         image = manager.createSpaceImage(text: "1", isActive: true, isFocused: true)
                     }
                     expect(image?.size.width).to(equal(16))
@@ -42,7 +47,7 @@ class SpaceIndicatorManagerTests: QuickSpec {
                 it("respects the isActive state for alpha") {
                     var activeImage: NSImage?
                     var inactiveImage: NSImage?
-                    DispatchQueue.main.sync {
+                    onMain {
                         activeImage = manager.createSpaceImage(text: "1", isActive: true, isFocused: false)
                         inactiveImage = manager.createSpaceImage(text: "1", isActive: false, isFocused: false)
                     }
@@ -55,7 +60,7 @@ class SpaceIndicatorManagerTests: QuickSpec {
                     let styles: [SpaceIndicatorColorStyle] = [.bordered, .solid, .solidInverted]
 
                     for style in styles {
-                        DispatchQueue.main.sync {
+                        onMain {
                             UserConfiguration.shared.setSpaceIndicatorColorStyle(style)
                             let image = manager.createSpaceImage(text: "1", isActive: true, isFocused: true)
                             // Underline is thick (rawValue 2), we check it doesn't crash
@@ -68,7 +73,7 @@ class SpaceIndicatorManagerTests: QuickSpec {
             describe("combine") {
                 it("combines multiple images with spacing") {
                     var combined: NSImage?
-                    DispatchQueue.main.sync {
+                    onMain {
                         let img1 = NSImage(size: NSSize(width: 16, height: 16))
                         let img2 = NSImage(size: NSSize(width: 16, height: 16))
                         combined = manager.combine(images: [img1, img2])

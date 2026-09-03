@@ -12,7 +12,7 @@ import Nimble
 import Quick
 
 class BinarySpacePartitioningLayoutTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("TreeNode") {
             describe("finding") {
                 it("finds a node that exists") {

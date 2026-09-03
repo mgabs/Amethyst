@@ -11,7 +11,7 @@ import Nimble
 import Quick
 
 class LayoutTypeTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("LayoutType") {
             describe("from(key:)") {
                 it("returns the correct layout type for each key") {

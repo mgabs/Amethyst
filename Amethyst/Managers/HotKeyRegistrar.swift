@@ -16,6 +16,14 @@ protocol HotKeyRegistrar {
 
 extension HotKeyManager: HotKeyRegistrar {
     func registerHotKey(with string: String?, modifiers: AMModifierFlags?, handler: @escaping () -> Void, defaultsKey: String, override: Bool) {
+        // KeyboardShortcuts 3 is @MainActor; hot keys are registered from the main thread at launch
+        MainActor.assumeIsolated {
+            registerHotKeyOnMain(with: string, modifiers: modifiers, handler: handler, defaultsKey: defaultsKey, override: override)
+        }
+    }
+
+    @MainActor
+    private func registerHotKeyOnMain(with string: String?, modifiers: AMModifierFlags?, handler: @escaping () -> Void, defaultsKey: String, override: Bool) {
         let name = KeyboardShortcuts.Name(defaultsKey)
         let migrationKey = "migrated-\(name.rawValue)"
         let isMigrated = UserDefaults.standard.bool(forKey: migrationKey)

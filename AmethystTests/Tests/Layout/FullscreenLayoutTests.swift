@@ -18,7 +18,7 @@ class FullscreenLayoutTests: QuickSpec {
         return operationQueue
     }()
 
-    override func spec() {
+    override class func spec() {
         afterEach {
             TestScreen.availableScreens = []
         }

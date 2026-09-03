@@ -14,7 +14,7 @@ import Quick
 import Silica
 
 class FocusManagerTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var focusManager: FocusManager<MockFocusApplication>!
 
         beforeEach {

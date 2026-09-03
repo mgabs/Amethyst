@@ -12,7 +12,7 @@ import Quick
 import Silica
 
 class FloatingLayoutTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         afterEach {
             TestScreen.availableScreens = []
         }

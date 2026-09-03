@@ -29,7 +29,7 @@ private final class TestDelegate: ScreenManagerDelegate {
 }
 
 class ScreenManagerTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("coding") {
             it("decodes layouts") {
                 let configuration = UserConfiguration(storage: TestConfigurationStorage())

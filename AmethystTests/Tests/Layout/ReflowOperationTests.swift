@@ -12,7 +12,7 @@ import Quick
 import Silica
 
 class ReflowOperationTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("FrameAssignment") {
             it("performs assignment") {
                 let screen = TestScreen(frame: CGRect(x: 0, y: 0, width: 2000, height: 1000))

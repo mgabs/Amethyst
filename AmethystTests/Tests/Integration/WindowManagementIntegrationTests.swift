@@ -45,7 +45,7 @@ private final class IntegrationMockApplication: ApplicationType {
 // MARK: - Integration Tests
 
 class WindowManagementIntegrationTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var applicationMonitor: ApplicationMonitor<IntegrationMockApplication>!
         var windowTracker: WindowTracker<IntegrationMockApplication>!
         var focusManager: FocusManager<IntegrationMockApplication>!

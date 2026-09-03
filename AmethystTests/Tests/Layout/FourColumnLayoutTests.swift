@@ -9,7 +9,7 @@ import Quick
 import Silica
 
 class FourColumnLayoutTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         afterEach {
             TestScreen.availableScreens = []
         }

@@ -15,7 +15,7 @@ private final class TestDelegate: ScreenManagerDelegate {
 }
 
 class ResetLayoutTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("resetLayout") {
             var configuration: UserConfiguration!
             var screenManager: ScreenManager<TestDelegate>!

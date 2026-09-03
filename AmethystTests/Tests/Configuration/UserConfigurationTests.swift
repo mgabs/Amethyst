@@ -68,7 +68,7 @@ class UserConfigurationTests: QuickSpec {
         var bundleIdentifier: String?
     }
 
-    override func spec() {
+    override class func spec() {
         describe("constructing commands") {
             context("overrides") {
                 it("when user configuration exists") {

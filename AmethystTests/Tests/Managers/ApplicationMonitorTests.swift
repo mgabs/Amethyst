@@ -41,7 +41,7 @@ private final class MockApplication: ApplicationType {
 }
 
 class ApplicationMonitorTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var monitor: ApplicationMonitor<MockApplication>!
 
         beforeEach {

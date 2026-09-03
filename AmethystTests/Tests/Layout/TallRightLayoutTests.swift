@@ -12,7 +12,7 @@ import Quick
 import Silica
 
 class TallRightLayoutTests: QuickSpec {
-    override func spec() {
+    override class func spec() {
         afterEach {
             TestScreen.availableScreens = []
         }
