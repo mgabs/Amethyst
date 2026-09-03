@@ -44,4 +44,8 @@ Builds of this fork older than v0.24.4 point at the upstream update feed. Downlo
 
 ### Accessibility permission is lost after an update
 
-macOS ties the permission to the app's code signature. Official releases are signed with a stable certificate, so this should not happen. It does happen with self-built or ad-hoc-signed copies: re-grant the permission under System Settings → Privacy & Security → Accessibility.
+macOS ties the permission to the app's code signature. Official releases are signed with a stable certificate, so this should not happen. It does happen with self-built or ad-hoc-signed copies: re-grant the permission under System Settings → Privacy & Security → Accessibility. If a stale duplicate entry lingers, clear it first:
+
+```bash
+tccutil reset Accessibility com.amethyst.Amethyst
+```

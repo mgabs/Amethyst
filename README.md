@@ -254,6 +254,7 @@ for a full refactoring summary.
 | **FocusManager** | Manages focus transitions, focus-follows-mouse, and focus history |
 | **ScreenManager** | Owns per-screen layout state, space assignment, and reflow operations |
 | **LayoutType** | Enumerates and instantiates the available tiling layout algorithms |
+| **Silica** (`Packages/Silica`) | Objective-C wrapper over the Accessibility and private CoreGraphics APIs: `SIWindow`, `SIApplication`, `SISpace`, and `NSScreen` space queries. All CGS parsing lives here; the Swift side only sees typed objects and window IDs |
 
 ### Validation Layer
 
@@ -267,7 +268,7 @@ Three validators enforce safety invariants across the codebase:
 
 ## Building Amethyst Locally
 
-Requires Xcode. Dependencies are Swift packages and resolve automatically.
+Requires Xcode. Dependencies are Swift packages and resolve automatically. [Silica](https://github.com/ianyh/Silica) (the Accessibility/CoreGraphics wrapper) is vendored at `Packages/Silica` as a local package, so it builds and is tested with the app instead of tracking upstream `master`; edit it there.
 
 ```bash
 # unsigned Release build → build/Build/Products/Release/Amethyst.app
