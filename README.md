@@ -334,21 +334,14 @@ The updater feed URL is `https://github.com/mgabs/Amethyst/releases/latest/downl
 
 ## Donating
 
-Amethyst is free and always will be. That said, a couple of people have expressed their desire to donate money in appreciation. Given the current political climate I would recommend donating to one of these organizations instead:
+Amethyst is free and always will be. If you want to show appreciation for this fork, please give instead to humanitarian relief for Gaza and Palestine. These organisations deliver food, water, shelter, and medical care on the ground:
 
-* [American Civil Liberties Union](https://www.aclu.org/)
-* [Planned Parenthood](https://www.plannedparenthood.org/)
-* [Southern Poverty Law Center](https://www.splcenter.org/)
-* [National Resources Defense Council](https://www.nrdc.org/)
-* [International Refugee Assistance Project](https://refugeerights.org/)
-* [NAACP Legal Defense Fund](https://www.naacpldf.org/)
-* [The Trevor Project](https://www.thetrevorproject.org/)
-* [Mexican American Legal Defense Fund](https://www.maldef.org/)
-* [ProPublica](https://www.propublica.org/)
-
-And a bunch of technology-oriented ones:
-
-* [National Center for Women & Information Technology](https://ncwit.org/about-ncwit/donate/)
-* [girls who code](https://girlswhocode.com/get-involved/)
-* [Trans*H4CK](https://www.transhack.org/sponsorship/)
-* [Black Girls CODE](https://wearebgc.org/donate/)
+* [UNRWA](https://www.unrwa.org/) — UN Relief and Works Agency for Palestine Refugees
+* [Palestine Children's Relief Fund](https://www.pcrf.net/)
+* [Palestine Red Crescent Society](https://www.palestinercs.org/)
+* [Medical Aid for Palestinians](https://www.map.org.uk/)
+* [Anera](https://www.anera.org/)
+* [Médecins Sans Frontières](https://www.msf.org/)
+* [International Committee of the Red Cross](https://www.icrc.org/)
+* [UNICEF](https://www.unicef.org/)
+* [World Food Programme](https://www.wfp.org/)
