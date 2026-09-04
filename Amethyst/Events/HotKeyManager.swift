@@ -381,7 +381,9 @@ class HotKeyManager<Application: ApplicationType>: NSObject {
 
     private func resizeFloatingWindow(_ window: Application.Window, windowManager: WindowManager<Application>, shrink: Bool) {
         guard let screen = window.screen() else { return }
-        let screenFrame = screen.adjustedFrame()
+        // Same inset decision as the tiled layouts, so smart margins apply here too.
+        let windowMargins = windowManager.currentLayout()?.windowMargins ?? false
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         let resizeStep = UserConfiguration.shared.windowResizeStep()
 
         var frame = window.frame()
