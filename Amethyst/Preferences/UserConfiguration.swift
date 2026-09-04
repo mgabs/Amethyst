@@ -546,7 +546,7 @@ class UserConfiguration: NSObject {
                 return
             }
 
-            let hasAccessibilityPermissions = self.confirmAccessibilityPermissions()
+            let hasAccessibilityPermissions = self.confirmAccessibilityPermissions(promptIfNeeded: false)
 
             if self.hasAccessibilityPermissions != hasAccessibilityPermissions {
                 self.hasAccessibilityPermissions = hasAccessibilityPermissions
@@ -887,9 +887,14 @@ class UserConfiguration: NSObject {
 }
 
 extension UserConfiguration {
-    @discardableResult func confirmAccessibilityPermissions() -> Bool {
+    /// Checks accessibility trust. Only `load()` prompts; every later check is silent, otherwise a stale grant
+    /// (e.g. after the signing identity changed) reopens the system dialog on every activation and hotkey.
+    @discardableResult func confirmAccessibilityPermissions(promptIfNeeded: Bool = true) -> Bool {
+        // The test host is an ad-hoc-signed copy of the app; prompting from it registers that identity with TCC and
+        // revokes the installed app's grant.
+        let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         let options = [
-            kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
+            kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: promptIfNeeded && !isRunningTests
         ]
 
         return AXIsProcessTrustedWithOptions(options as CFDictionary)
