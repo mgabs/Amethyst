@@ -250,7 +250,7 @@ You can toggle these options directly from the Amethyst menu bar icon under the 
 
 ### Configuration File
 
-Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). Note that if configuration file is present, it will override the settings defined via the GUI.
+Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). The file is read at launch, and every key it contains overrides the stored setting for that key; keys it omits keep their last stored value.
 
 ## Architecture
 
