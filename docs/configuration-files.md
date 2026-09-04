@@ -35,6 +35,9 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `enables-layout-hud` | `true` to display the name of the layout when a new layout is selected (default `true`). |
 | `enables-layout-hud-on-space-change` | `true` to display the name of the layout when moving to a new space (default `true`). |
 | `enables-window-count-hud` | `true` to display notifications when window max count changes (default `false`). |
+| `focused-window-border` | Draw an outline just outside the focused window (default `true`). Only windows Amethyst manages get one; Spotlight and ignored apps do not. |
+| `focused-window-border-color` | Outline colour as `#RRGGBB` or `#RRGGBBAA` (default `#006400`, dark green). |
+| `focused-window-border-width` | Outline width in points (default `4`). `0` disables the outline. |
 | `use-canary-build` | `true` to get updates to beta versions of the software (default `false`). |
 | `new-windows-to-main` | `true` to insert new windows into the first position and `false` to insert new windows into the last position (default `false`). |
 | `follow-space-thrown-windows` | `true` to automatically move to a space when throwing a window to it (default `true`). | 

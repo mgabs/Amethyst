@@ -71,6 +71,7 @@ Bug fixes that do not depend on the above (throw-to-space index and bounds check
 - **Automatic Realignment on Maximize**: Native macOS window resize and "Zoom" (maximize) events now trigger an immediate layout reflow (if manual mouse resizing is disabled), ensuring windows snap back to their tiled positions.
 - **Space Indicator**: A menu-bar indicator of the current space, with per-monitor and all-spaces styles. See [Space Indicator](#space-indicator).
 - **Resize for floating windows**: The shrink and expand main-pane shortcuts resize the focused window when it is floating.
+- **Focused window border**: A configurable outline around the active managed window, dark green by default. Keys `focused-window-border`, `focused-window-border-color`, `focused-window-border-width`.
 
 ## Configuration
 
