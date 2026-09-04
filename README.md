@@ -255,8 +255,7 @@ Amethyst supports configuration via YAML in the home directory. See [Configurati
 ## Architecture
 
 Amethyst's window management logic is organized into focused, single-responsibility
-components. See [docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md](docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md)
-for a full refactoring summary.
+components.
 
 ### Core Components
 
