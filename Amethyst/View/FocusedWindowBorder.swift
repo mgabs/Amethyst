@@ -18,21 +18,30 @@ final class FocusedWindowBorder: NSWindow {
         ignoresMouseEvents = true
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        // Normal level on purpose: `order(.below, relativeTo:)` only interleaves windows within the same level band,
+        // and the app windows we outline live at normal level.
+        level = .normal
+        // `.transient` hides the outline from Mission Control and Exposé; `.canJoinAllSpaces` keeps it on every space.
+        collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
+        borderView.wantsLayer = true
         contentView = borderView
     }
 
     /// Positions the outline around `frame` (AppKit coordinates) and orders it just beneath the window with `windowNumber`.
+    /// Main thread only, like every AppKit window call.
     func show(around frame: CGRect, below windowNumber: CGWindowID, color: NSColor, width: CGFloat) {
+        dispatchPrecondition(condition: .onQueue(.main))
         borderView.color = color
         borderView.width = width
-        setFrame(FocusedWindowBorder.borderFrame(around: frame, width: width), display: false)
-        borderView.needsDisplay = true
-        // Cross-process window numbers are accepted here; if the call has no effect the outline stays at its own level.
+        setFrame(FocusedWindowBorder.borderFrame(around: frame, width: width), display: true)
+        // Foreign window numbers are accepted and this also orders the window on screen on its first call. If the
+        // target sits at another level the call has no effect and the outline stays wherever it last was.
         order(.below, relativeTo: Int(windowNumber))
     }
 
+    /// Main thread only.
     func hide() {
+        dispatchPrecondition(condition: .onQueue(.main))
         orderOut(nil)
     }
 
@@ -65,7 +74,9 @@ private final class BorderView: NSView {
             return
         }
         // Inset by half the width so the whole stroke lands inside our bounds; the app window covers the inner half.
-        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2), xRadius: width, yRadius: width)
+        // macOS window corners are about 10pt; keep the stroke concentric with them.
+        let radius = 10 + width / 2
+        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2), xRadius: radius, yRadius: radius)
         path.lineWidth = width
         color.setStroke()
         path.stroke()
