@@ -166,6 +166,14 @@ class WindowManagementIntegrationTests: QuickSpec {
 
                 expect(windowSet.windows.map { $0.isFocused }).to(equal([false, true]))
             }
+
+            it("shows the border only for tracked, managed windows on user spaces") {
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser)).to(beTrue())
+                expect(FocusedWindowBorder.isEligible(tracked: false, managed: true, spaceType: CGSSpaceTypeUser)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: false, spaceType: CGSSpaceTypeUser)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeFullscreen)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: nil)).to(beFalse())
+            }
         }
     }
 }
