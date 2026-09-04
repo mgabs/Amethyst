@@ -2,6 +2,12 @@
 
 Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/amethyst/amethyst.yml` in this order. A sample can be found at [/.amethyst.sample.yml](../.amethyst.sample.yml)
 
+## How the file is applied
+
+- The file is read once, at launch. After editing it, relaunch Amethyst (`mod2 + z` by default).
+- Every key present in the file overwrites the stored setting for that key. A key that is *absent* leaves the previously stored value in place, so to turn something off write `key: false` rather than deleting the line.
+- Unknown keys are ignored without a warning. If a setting seems to have no effect, check its spelling against the tables below first.
+
 ## Configuration Keys
 
 | Key | Description |
@@ -13,7 +19,7 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `mod4` | Fourth mod (not used by default). |
 | `window-max-count` | The max number of windows that may be visible on a screen at one time before additional windows are minimized. A value of 0 disables the feature. |
 | `window-margins` | Boolean flag for whether or not to add margins between and around windows (default `false`). |
-| `smart-window-margins` | Boolean flag for whether or not to set window margins if there is only one window on the screen, assuming window margins are enabled (default `false`). |
+| `smart-window-margins` | With `window-margins` enabled, drop the margins while only one tiled window is on a screen's current space, and bring them back once a second one is tiled (default `false`). Floating windows and windows on other displays do not count. The Fullscreen layout never applies margins while this is on. |
 | `window-margin-size` | The size of the margins between and around windows (in px, default `0`). |
 | `window-minimum-height` | The smallest height that a window can be sized to regardless of its layout frame (in px, default `0`). |
 | `window-minimum-width` | The smallest width that a window can be sized to regardless of its layout frame (in px, default `0`) |

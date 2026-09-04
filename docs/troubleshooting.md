@@ -49,3 +49,5 @@ macOS ties the permission to the app's code signature. Official releases are sig
 ```bash
 tccutil reset Accessibility com.amethyst.Amethyst
 ```
+
+Do not keep a signed copy and an unsigned copy around at the same time. They share the bundle identifier but not the signing identity, so granting permission to one revokes it for the other, and an ad-hoc build changes identity on every rebuild. The fastlane `debug` and `local` lanes, and any `xcodebuild` call with `CODE_SIGNING_ALLOWED=NO`, produce unsigned copies; a plain Run from Xcode signs with the project's certificate and is safe to use alongside the installed app.

@@ -60,7 +60,7 @@ class RowLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneCount = windows.count - mainPaneCount
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
 
         let mainPaneHeight = floor(screenFrame.size.height * (hasSecondaryPane ? CGFloat(mainPaneRatio) : 1.0))
         let mainPaneWindowHeight = floor(mainPaneHeight / CGFloat(mainPaneCount))

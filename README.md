@@ -1,7 +1,7 @@
 # Amethyst
 
 > [!IMPORTANT]
-> This is a fork of [ianyh/Amethyst](https://github.com/ianyh/Amethyst). It is not kept in sync with upstream.
+> This is a fork of [ianyh/Amethyst](https://github.com/ianyh/Amethyst). It is not kept in sync with upstream; see [About this fork](#about-this-fork) for why.
 
 [![CI](https://github.com/mgabs/Amethyst/actions/workflows/ci.yml/badge.svg)](https://github.com/mgabs/Amethyst/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/mgabs/Amethyst)](https://github.com/mgabs/Amethyst/releases/latest)
@@ -50,13 +50,27 @@ killall Dock
 
 See [Troubleshooting](docs/troubleshooting.md) for some common issues.
 
-## Recent Improvements
+## About this fork
 
-This fork includes several quality-of-life improvements to window management:
+This repository branched from upstream `master` at the end of February 2026 (just after Amethyst 0.24.1) and has not merged upstream since. It started as a place to fix window-tracking bugs and tune a few behaviours for daily use. The fixes could have gone back as pull requests. The changes below could not, and once they were in, rebasing onto upstream stopped being practical.
+
+### Decisions that make it non-mergeable
+
+- **Silica is vendored and reshaped.** Upstream depends on `ianyh/Silica` at `master`. This fork copies it into `Packages/Silica`, then removes the API Amethyst never calls (directional focus, screen rotation, the Universal Access helper, app hide/kill, `activateWithOptions` focusing), fixes inverted return values and CoreFoundation lifetimes, drops the `SIApplication` windows cache, and adds `SISpace`, `managedSpaceID`, and on-screen window-ID queries built on private `CGS*` calls. Merging would need coordinated changes in two upstream repositories and the return of code this fork deleted.
+- **Its own release and update channel.** Builds are signed with this fork's certificate, updates are served by Sparkle 2 from this fork's GitHub Releases with its own EdDSA key, and the release job tags and publishes on every push to `master` that changes `MARKETING_VERSION`. Upstream ships through its own appcast and Homebrew. An update channel is the identity of an app; two forks cannot share one.
+- **The core was partly split.** `ApplicationMonitor`, `WindowTracker`, and `FocusManager` were extracted from `WindowManager` (which still owns the window registry), a validation layer (`ConfigurationValidator`, `FrameValidator`, `LayoutValidator`) was added, and windows are matched by CoreGraphics window ID and pid instead of frame and title. Upstream kept the single `WindowManager`; the diff touches nearly every core file, so it conflicts with anything upstream lands there.
+- **Defaults were changed on purpose.** Paned layouts reset to a 50% main pane when a second window appears, the destination layout resets when a window is thrown to another space or screen, native resize and zoom trigger a reflow, mouse drags only reflow on release, toggling float forces a realign, and the layout HUD sits in the lower third of the screen. These are the behaviours this fork wants. Upstream users expect the old ones, so they cannot be offered as-is.
+- **A menu-bar Space Indicator.** New UI with multi-monitor and theme options, depending on the private space APIs above.
+
+Bug fixes that do not depend on the above (throw-to-space index and bounds checks, applying frames on the main thread, the small-window and margin fixes) are small and could still be offered upstream individually. Everything else is best treated as a separate project that happens to share history with Amethyst.
+
+### What it adds
 
 - **Manual Realignment**: A new command (`mod3 + r`) allows you to manually reset all windows on all screens to their default layout proportions (e.g., 50/50 split for two windows).
 - **Automatic Proportion Reset on Move**: When moving a window to a new space or monitor, the destination layout's proportions are automatically reset to their defaults.
 - **Automatic Realignment on Maximize**: Native macOS window resize and "Zoom" (maximize) events now trigger an immediate layout reflow (if manual mouse resizing is disabled), ensuring windows snap back to their tiled positions.
+- **Space Indicator**: A menu-bar indicator of the current space, with per-monitor and all-spaces styles. See [Space Indicator](#space-indicator).
+- **Resize for floating windows**: The shrink and expand main-pane shortcuts resize the focused window when it is floating.
 
 ## Configuration
 
@@ -236,13 +250,12 @@ You can toggle these options directly from the Amethyst menu bar icon under the 
 
 ### Configuration File
 
-Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). Note that if configuration file is present, it will override the settings defined via the GUI.
+Amethyst supports configuration via YAML in the home directory. See [Configuration Files](docs/configuration-files.md). The file is read at launch, and every key it contains overrides the stored setting for that key; keys it omits keep their last stored value.
 
 ## Architecture
 
 Amethyst's window management logic is organized into focused, single-responsibility
-components. See [docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md](docs/superpowers/plans/ARCHITECTURE_REFACTOR_COMPLETION.md)
-for a full refactoring summary.
+components.
 
 ### Core Components
 
@@ -321,21 +334,14 @@ The updater feed URL is `https://github.com/mgabs/Amethyst/releases/latest/downl
 
 ## Donating
 
-Amethyst is free and always will be. That said, a couple of people have expressed their desire to donate money in appreciation. Given the current political climate I would recommend donating to one of these organizations instead:
+Amethyst is free and always will be. If you want to show appreciation for this fork, please give instead to humanitarian relief for Gaza and Palestine. These organisations deliver food, water, shelter, and medical care on the ground:
 
-* [American Civil Liberties Union](https://www.aclu.org/)
-* [Planned Parenthood](https://www.plannedparenthood.org/)
-* [Southern Poverty Law Center](https://www.splcenter.org/)
-* [National Resources Defense Council](https://www.nrdc.org/)
-* [International Refugee Assistance Project](https://refugeerights.org/)
-* [NAACP Legal Defense Fund](https://www.naacpldf.org/)
-* [The Trevor Project](https://www.thetrevorproject.org/)
-* [Mexican American Legal Defense Fund](https://www.maldef.org/)
-* [ProPublica](https://www.propublica.org/)
-
-And a bunch of technology-oriented ones:
-
-* [National Center for Women & Information Technology](https://ncwit.org/about-ncwit/donate/)
-* [girls who code](https://girlswhocode.com/get-involved/)
-* [Trans*H4CK](https://www.transhack.org/sponsorship/)
-* [Black Girls CODE](https://wearebgc.org/donate/)
+* [UNRWA](https://www.unrwa.org/) — UN Relief and Works Agency for Palestine Refugees
+* [Palestine Children's Relief Fund](https://www.pcrf.net/)
+* [Palestine Red Crescent Society](https://www.palestinercs.org/)
+* [Medical Aid for Palestinians](https://www.map.org.uk/)
+* [Anera](https://www.anera.org/)
+* [Médecins Sans Frontières](https://www.msf.org/)
+* [International Committee of the Red Cross](https://www.icrc.org/)
+* [UNICEF](https://www.unicef.org/)
+* [World Food Programme](https://www.wfp.org/)

@@ -14,18 +14,22 @@ import Silica
 private final class TestDelegate: ScreenManagerDelegate {
     typealias Window = TestWindow
 
-    func applyWindowLimit(forScreenManager screenManager: ScreenManager<TestDelegate>, minimizingIn range: (Int) -> Range<Int>) {
-        fatalError()
-    }
+    private(set) var activeWindowSetCalls = 0
+
+    func applyWindowLimit(forScreenManager screenManager: ScreenManager<TestDelegate>, minimizingIn range: (Int) -> Range<Int>) {}
+
     func activeWindowSet(forScreenManager screenManager: ScreenManager<TestDelegate>, on space: Space?) -> WindowSet<TestWindow> {
-        fatalError()
+        activeWindowSetCalls += 1
+        return WindowSet(
+            windows: [],
+            isWindowWithIDActive: { _ in false },
+            isWindowWithIDFloating: { _ in false },
+            windowForID: { _ in nil }
+        )
     }
-    func onReflowInitiation() {
-        fatalError()
-    }
-    func onReflowCompletion() {
-        fatalError()
-    }
+
+    func onReflowInitiation() {}
+    func onReflowCompletion() {}
 }
 
 class ScreenManagerTests: QuickSpec {
@@ -183,6 +187,55 @@ class ScreenManagerTests: QuickSpec {
                     expect((decodedLayouts.first as? WideLayout<TestWindow>)?.mainPaneCount).to(equal(2))
                     expect((decodedLayouts.last as? TallLayout<TestWindow>)?.mainPaneCount).to(equal(2))
                 }
+            }
+        }
+
+        describe("reflow scheduling") {
+            it("coalesces repeated setNeedsReflow calls into one reflow per run loop turn") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                let delegate = TestDelegate()
+                let screenManager = ScreenManager<TestDelegate>(screen: TestScreen(), delegate: delegate, userConfiguration: configuration)
+                screenManager.updateSpace(to: Space(id: 1, type: CGSSpaceTypeUser, uuid: "space-1"))
+
+                screenManager.setNeedsReflow()
+                screenManager.setNeedsReflow()
+                screenManager.setNeedsReflow()
+
+                expect(delegate.activeWindowSetCalls).toEventually(equal(1))
+
+                // A request made after the flush must schedule a new reflow.
+                screenManager.setNeedsReflow()
+                expect(delegate.activeWindowSetCalls).toEventually(equal(2))
+            }
+
+            it("queues one reflow per distinct target space") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                let delegate = TestDelegate()
+                let screenManager = ScreenManager<TestDelegate>(screen: TestScreen(), delegate: delegate, userConfiguration: configuration)
+                screenManager.updateSpace(to: Space(id: 1, type: CGSSpaceTypeUser, uuid: "space-1"))
+                let otherSpace = Space(id: 2, type: CGSSpaceTypeUser, uuid: "space-2")
+
+                screenManager.setNeedsReflow()
+                screenManager.setNeedsReflow(on: otherSpace)
+                screenManager.setNeedsReflow()
+                screenManager.setNeedsReflow(on: otherSpace)
+
+                expect(delegate.activeWindowSetCalls).toEventually(equal(2))
+            }
+        }
+
+        describe("screen identity") {
+            it("caches the screen ID and refreshes it when the screen changes") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                let first = TestScreen()
+                let second = TestScreen()
+                let screenManager = ScreenManager<TestDelegate>(screen: first, delegate: TestDelegate(), userConfiguration: configuration)
+
+                expect(screenManager.screenID).to(equal(first.screenID()))
+
+                screenManager.updateScreen(to: second)
+
+                expect(screenManager.screenID).to(equal(second.screenID()))
             }
         }
     }

@@ -60,7 +60,7 @@ class ColumnLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneCount = windows.count - mainPaneCount
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         let mainPaneWidth = round(screenFrame.width * (hasSecondaryPane ? CGFloat(mainPaneRatio) : 1.0))
         let mainPaneWindowWidth = round(mainPaneWidth / CGFloat(mainPaneCount))
         let secondaryPaneWindowWidth = hasSecondaryPane ? round((screenFrame.width - mainPaneWidth) / CGFloat(secondaryPaneCount)) : 0.0

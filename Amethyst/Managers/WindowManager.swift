@@ -473,10 +473,6 @@ extension WindowManager {
             return
         }
 
-        defer {
-            windows.regenerateActiveIDCache()
-        }
-
         guard !windows.isWindowTracked(window) else {
             log.debug("Window was already tracked: \(window)")
             return
@@ -516,6 +512,10 @@ extension WindowManager {
             }
             .subscribe()
             .disposed(by: disposeBag)
+
+        // Same point the old `defer` fired for accepted windows. Rejected or duplicate windows above return earlier
+        // and skip this window-server dump.
+        windows.regenerateActiveIDCache()
     }
 
     private func determineFloatForWindow(_ window: Window, application: AnyApplication<Application>, force: Bool) throws {
@@ -598,12 +598,12 @@ extension WindowManager {
 
         // We take the windows that are being tracked so we can properly detect when a tab switch is a new tab.
         // It is important here to compute isActive and isOnScreen as soon as possible for improved accuracy.
+        let onScreenIDs = windows.onScreenWindowIDs()
         let applicationWindows = windows.windows(forApplicationWithPID: window.pid())
-            .map { ($0, windows.isWindowActive($0), $0.isOnScreen()) }
+            .map { ($0, windows.isWindowActive($0), $0.isActive() && onScreenIDs.contains($0.cgID())) }
 
-        var string = "\n\tNew Window: \(window)"
-        applicationWindows.forEach { string += "\n\tExisting window: \($0)" }
-        log.debug(string)
+        // Autoclosure: the titles are only fetched when debug logging is on.
+        log.debug("\n\tNew Window: \(window)" + applicationWindows.map { "\n\tExisting window: \($0.0)" }.joined())
 
         for (existingWindow, isActive, isOnScreen) in applicationWindows {
             guard existingWindow != window else {
@@ -676,14 +676,18 @@ extension WindowManager {
     }
 
     private func completeTabDetection(for window: Window, on screen: Screen) {
+        // Two deliberately separate window-server reads: `isWindowActive` below compares against the snapshot taken here,
+        // `onScreenIDs` is a second live read, and `didLeaveScreen` is the difference between them.
         windows.regenerateActiveIDCache()
+        let onScreenIDs = windows.onScreenWindowIDs()
 
         let applicationWindows = windows.windows(forApplicationWithPID: window.pid())
 
         for existingWindow in applicationWindows {
             guard existingWindow != window else { continue }
 
-            let didLeaveScreen = windows.isWindowActive(existingWindow) && !existingWindow.isOnScreen()
+            let isOnScreen = existingWindow.isActive() && onScreenIDs.contains(existingWindow.cgID())
+            let didLeaveScreen = windows.isWindowActive(existingWindow) && !isOnScreen
             let isInvalid = existingWindow.cgID() == kCGNullWindowID
 
             guard didLeaveScreen || isInvalid else { continue }
@@ -922,11 +926,13 @@ extension WindowManager {
     }
 
     func screenManager(for screen: Screen) -> ScreenManager<WindowManager<Application>>? {
-        return screens.screenManagers.first { $0.screen?.screenID() == screen.screenID() }
+        let targetScreenID = screen.screenID()
+        return screens.screenManagers.first { $0.screenID == targetScreenID }
     }
 
     func screenManagerIndex(for screen: Screen) -> Int? {
-        return screens.screenManagers.firstIndex { $0.screen?.screenID() == screen.screenID() }
+        let targetScreenID = screen.screenID()
+        return screens.screenManagers.firstIndex { $0.screenID == targetScreenID }
     }
 }
 
@@ -1019,15 +1025,12 @@ extension WindowManager: WindowTransitionTarget {
     }
 
     func activeWindows(on screen: Screen) -> [Window] {
-        return windows.activeWindows(onScreen: screen).filter { window in
-            return window.shouldBeManaged() && !self.windows.isWindowFloating(window)
-        }
+        // Floating windows are already excluded by `Windows.activeWindows`.
+        return windows.activeWindows(onScreen: screen).filter { $0.shouldBeManaged() }
     }
 
     func activeWindows(on screen: Screen, onSpace space: Space) -> [Window] {
-        return windows.activeWindows(onScreen: screen, onSpace: space.id).filter { window in
-            return window.shouldBeManaged() && !self.windows.isWindowFloating(window)
-        }
+        return windows.activeWindows(onScreen: screen, onSpace: space.id).filter { $0.shouldBeManaged() }
     }
 
     func nextScreenIndexClockwise(from screen: Screen) -> Int {
@@ -1072,7 +1075,7 @@ extension WindowManager: FocusTransitionTarget {
     }
 
     func lastFocusedWindow(on screen: Screen) -> Window? {
-        return screens.screenManagers.first { $0.screen?.screenID() == screen.screenID() }?.lastFocusedWindow
+        return screenManager(for: screen)?.lastFocusedWindow
     }
 
     func nextWindowIDClockwise(on screen: Screen) -> Window.WindowID? {

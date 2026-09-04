@@ -264,7 +264,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        let hasAccessibilityPermissions = UserConfiguration.shared.confirmAccessibilityPermissions()
+        let hasAccessibilityPermissions = UserConfiguration.shared.confirmAccessibilityPermissions(promptIfNeeded: false)
         if UserConfiguration.shared.hasAccessibilityPermissions != hasAccessibilityPermissions {
             UserConfiguration.shared.hasAccessibilityPermissions = hasAccessibilityPermissions
         }

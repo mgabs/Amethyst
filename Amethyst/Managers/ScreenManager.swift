@@ -35,6 +35,9 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     weak var delegate: Delegate?
 
     private(set) var screen: Screen?
+    /// Cached `screen.screenID()` (a window-server round trip). Set in `init` and refreshed by `updateScreen(to:)`,
+    /// which `Screens.updateScreens` calls on every screen-parameters change; the ID only moves when display frames do.
+    private(set) var screenID: String?
     private(set) var space: Space?
 
     /// The last window that has been focused on the screen. This value is updated by the notification observations in
@@ -73,8 +76,12 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     /// Used for space-only switches so windows don't resize to 50% without a window move or floating toggle.
     private var skipRatioRecommendation: Bool = false
 
+    /// Spaces (by ID; 0 stands for "the manager's current space") with a reflow already queued on the main queue.
+    private var pendingReflowSpaceIDs: Set<CGSSpaceID> = []
+
     init(screen: Screen, delegate: Delegate, userConfiguration: UserConfiguration) {
         self.screen = screen
+        self.screenID = screen.screenID()
         self.delegate = delegate
         self.userConfiguration = userConfiguration
 
@@ -148,6 +155,7 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
     func updateScreen(to screen: Screen) {
         self.screen = screen
+        self.screenID = screen.screenID()
     }
 
     func updateSpace(to space: Space) {
@@ -197,14 +205,29 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
     }
 
     func setNeedsReflow(on space: Space? = nil, skipMainPaneRatioRecommendation: Bool = false) {
+        // Hotkey handlers call this from a global queue; everything below mutates main-thread state.
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async {
+                self.setNeedsReflow(on: space, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
+            }
+            return
+        }
+
         if skipMainPaneRatioRecommendation {
             skipRatioRecommendation = true
         }
 
+        // Resolved now, not when the block runs: the first request for a space decides which `Space` value is reflowed.
         let targetSpace = space ?? self.space
         log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow on space: \(targetSpace?.id ?? 0)")
 
+        let spaceKey = targetSpace?.id ?? 0
+        guard pendingReflowSpaceIDs.insert(spaceKey).inserted else {
+            return
+        }
+
         DispatchQueue.main.async {
+            self.pendingReflowSpaceIDs.remove(spaceKey)
             self.minimizeWindows()
             self.reflow(on: targetSpace)
         }

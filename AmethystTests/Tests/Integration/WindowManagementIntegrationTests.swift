@@ -119,5 +119,53 @@ class WindowManagementIntegrationTests: QuickSpec {
                 expect(focusManager.lastFocusedWindow).to(equal(window2))
             }
         }
+
+        describe("Windows") {
+            typealias Windows = WindowManager<IntegrationMockApplication>.Windows
+
+            afterEach {
+                TestWindow.focused = nil
+            }
+
+            it("looks windows up by id through add, replace, swap and remove") {
+                let windows = Windows()
+                let windowA = TestWindow(element: nil)!
+                let windowB = TestWindow(element: nil)!
+                let windowC = TestWindow(element: nil)!
+
+                windows.add(window: windowA, atFront: false)
+                windows.add(window: windowB, atFront: true)
+                expect(windows.windows).to(equal([windowB, windowA]))
+                expect(windows.window(withID: windowA.id())).to(equal(windowA))
+                expect(windows.isWindowTracked(windowB)).to(beTrue())
+                expect(windows.isWindowTracked(windowC)).to(beFalse())
+
+                windows.replace(window: windowC, withWindow: windowB)
+                expect(windows.windows).to(equal([windowC, windowA]))
+                expect(windows.isWindowTracked(windowB)).to(beFalse())
+                expect(windows.window(withID: windowC.id())).to(equal(windowC))
+
+                windows.swap(window: windowA, withWindow: windowC)
+                expect(windows.windows).to(equal([windowA, windowC]))
+                expect(windows.window(withID: windowA.id())).to(equal(windowA))
+                expect(windows.window(withID: windowC.id())).to(equal(windowC))
+
+                windows.remove(window: windowA)
+                expect(windows.isWindowTracked(windowA)).to(beFalse())
+                expect(windows.window(withID: windowA.id())).to(beNil())
+                expect(windows.window(withID: windowC.id())).to(equal(windowC))
+            }
+
+            it("marks only the currently focused window as focused in a window set") {
+                let windows = Windows()
+                let windowA = TestWindow(element: nil)!
+                let windowB = TestWindow(element: nil)!
+                TestWindow.focused = windowB
+
+                let windowSet = windows.windowSet(forWindows: [windowA, windowB])
+
+                expect(windowSet.windows.map { $0.isFocused }).to(equal([false, true]))
+            }
+        }
     }
 }

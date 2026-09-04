@@ -22,7 +22,6 @@ enum MouseState<Window: WindowType> {
     case moving(window: Window)
     case resizing(screen: Screen, ratio: CGFloat)
     case doneDragging(atTime: Date)
-    case mouseMoved
 }
 
 /// MouseStateKeeper will need a few things to do its job effectively
@@ -53,7 +52,8 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
         self.delegate = delegate
 
         state = .pointing
-        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged, .mouseMoved]
+        // Mouse moves are not subscribed: reflow is only triggered by the click-drag-release sequence.
+        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged]
         monitor = NSEvent.addGlobalMonitorForEvents(matching: mouseEventsToWatch, handler: self.handleMouseEvent)
     }
 
@@ -69,15 +69,13 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     // is being pressed.
     func handleMouseEvent(anEvent: NSEvent) {
         switch anEvent.type {
-        case .mouseMoved:
-            break // Reflow only on explicit click-drag-release sequence
         case .leftMouseDown:
             self.state = .clicking
         case .leftMouseDragged:
             switch self.state {
             case .moving, .resizing:
             break // ignore - we have what we need
-            case .pointing, .clicking, .dragging, .doneDragging, .mouseMoved:
+            case .pointing, .clicking, .dragging, .doneDragging:
                 self.state = .dragging
             }
 
@@ -99,7 +97,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             case .clicking:
                 lastClick = Date()
                 self.state = .pointing
-            case .pointing, .mouseMoved:
+            case .pointing:
                 self.state = .pointing
             }
 
@@ -115,8 +113,6 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             self.state = .pointing // remove associated timestamp
         case .moving:
             self.state = .dragging // remove associated window
-        case .mouseMoved:
-            self.state = .pointing
         default: ()
         }
     }

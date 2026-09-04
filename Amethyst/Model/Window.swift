@@ -145,7 +145,14 @@ enum WindowDecodingError: Error {
  
  A final class is necessary for satisfying the `focusedWindow()` requirement in the `WindowType` protocol. Otherwise, as `SIWindow` is not final, the type system does not know how to constrain `Self`.
  */
-final class AXWindow: SIWindow {}
+final class AXWindow: SIWindow {
+    /// The pid reported through `AXParent`, cached after the first successful lookup (that lookup is an IPC round trip
+    /// and runs on every identity check). Only the `AXParent` result is cached: the raw element can transiently report a
+    /// helper process before its parent is resolvable, so the fallback below is never frozen. `0` means "not yet cached".
+    /// Read and written without a lock from main and the hotkey queue; a `pid_t` store is a single aligned word, so the
+    /// worst case is one duplicated lookup.
+    private var cachedPID: pid_t = 0
+}
 
 /**
  Identifier for `AXWindow` objects.
@@ -257,9 +264,18 @@ extension AXWindow: WindowType {
     }
 
     func pid() -> pid_t {
+        if cachedPID > 0 {
+            return cachedPID
+        }
+
         // Some window operations can surface elements owned by a helper process.
         // Use AXParent's PID when available so identity checks stay stable.
-        return forKey("AXParent" as CFString)?.processIdentifier() ?? processIdentifier()
+        if let parentPID = forKey("AXParent" as CFString)?.processIdentifier(), parentPID > 0 {
+            cachedPID = parentPID
+            return parentPID
+        }
+
+        return processIdentifier()
     }
 
     /**
