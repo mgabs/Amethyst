@@ -120,6 +120,16 @@ class ReflowOperationTests: QuickSpec {
                 let frame = CGRect(x: 50, y: 700, width: 400, height: 200)
                 expect(FocusedWindowBorder.borderFrame(around: frame, width: 4)).to(equal(CGRect(x: 46, y: 696, width: 408, height: 208)))
             }
+
+            it("flips frames on displays above and below the primary") {
+                // Secondary display stacked above a 1080pt primary: accessibility y is negative, AppKit y exceeds 1080.
+                let above = CGRect(x: 0, y: -1080, width: 800, height: 600)
+                expect(FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: above, primaryScreenHeight: 1080)).to(equal(CGRect(x: 0, y: 1560, width: 800, height: 600)))
+
+                // Secondary display below the primary: accessibility y exceeds 1080, AppKit y is negative.
+                let below = CGRect(x: 0, y: 1080, width: 800, height: 600)
+                expect(FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: below, primaryScreenHeight: 1080)).to(equal(CGRect(x: 0, y: -600, width: 800, height: 600)))
+            }
         }
     }
 }
