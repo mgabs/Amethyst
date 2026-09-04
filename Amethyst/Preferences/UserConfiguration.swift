@@ -713,7 +713,7 @@ class UserConfiguration: NSObject {
 
     /// `#RRGGBB` or `#RRGGBBAA`. Falls back to dark green (#006400) with a warning when unparseable.
     func focusedWindowBorderColor() -> NSColor {
-        let fallback = NSColor(srgbRed: 0, green: 0x64 / 255.0, blue: 0, alpha: 1)
+        let fallback = NSColor(hexString: "#006400")!
         guard let hex = storage.object(forKey: .focusedWindowBorderColor) as? String else {
             return fallback
         }
@@ -937,7 +937,10 @@ extension NSColor {
     /// Parses `#RRGGBB` or `#RRGGBBAA` (leading `#` optional) into an sRGB colour.
     convenience init?(hexString: String) {
         let digits = hexString.hasPrefix("#") ? String(hexString.dropFirst()) : hexString
-        guard digits.count == 6 || digits.count == 8, let value = UInt64(digits, radix: 16) else {
+        guard digits.count == 6 || digits.count == 8,
+              digits.allSatisfy(\.isHexDigit),
+              let value = UInt64(digits, radix: 16)
+        else {
             return nil
         }
         let hasAlpha = digits.count == 8

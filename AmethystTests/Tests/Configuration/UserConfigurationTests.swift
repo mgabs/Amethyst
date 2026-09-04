@@ -309,6 +309,9 @@ class UserConfigurationTests: QuickSpec {
                 let color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
                 expect(color.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
                 expect(color.redComponent).to(beCloseTo(0, within: 0.01))
+
+                storage.set("+00000", forKey: .focusedWindowBorderColor)
+                expect(configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
             }
 
             it("treats a non-positive width as disabled") {
