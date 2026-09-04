@@ -38,6 +38,8 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `use-canary-build` | `true` to get updates to beta versions of the software (default `false`). |
 | `new-windows-to-main` | `true` to insert new windows into the first position and `false` to insert new windows into the last position (default `false`). |
 | `follow-space-thrown-windows` | `true` to automatically move to a space when throwing a window to it (default `true`). | 
+| `focus-follows-window-thrown-between-spaces-delay` | Seconds to wait before following a window thrown to another space (default `0.5`). |
+| `application-activation-delay` | Seconds to wait after an application activates before reflowing its screen (default `0.2`). |
 | `window-resize-step` | The integer percentage of the screen dimension to increment and decrement main pane ratios by (default `5`). |
 | `screen-padding-left` | Padding to apply between windows and the left edge of the screen (in px, default `0`). |
 | `screen-padding-right` | Padding to apply between windows and the right edge of the screen (in px, default `0`). |
@@ -47,6 +49,9 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `debug-layout-info` | `true` to display some optional debug information in the layout HUD (default `false`). |
 | `disable-padding-on-builtin-display` |  `true` to disable screen padding on in-built display (default `false`). |
 | `hide-menu-bar-icon` | `true` to hide the menu bar icon (default `false`). |
+| `show-space-indicator` | `true` to show the current space in the menu bar (default `false`). See the README's Space Indicator section. |
+| `space-indicator-style` | `0` single icon, `1` one icon per monitor, `2` one icon per space (default `0`). |
+| `space-indicator-color-style` | `0` bordered, `1` solid, `2` solid inverted (default `0`). |
 
 ## Commands
 
