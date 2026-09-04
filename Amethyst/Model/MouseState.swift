@@ -22,7 +22,6 @@ enum MouseState<Window: WindowType> {
     case moving(window: Window)
     case resizing(screen: Screen, ratio: CGFloat)
     case doneDragging(atTime: Date)
-    case mouseMoved
 }
 
 /// MouseStateKeeper will need a few things to do its job effectively
@@ -76,7 +75,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             switch self.state {
             case .moving, .resizing:
             break // ignore - we have what we need
-            case .pointing, .clicking, .dragging, .doneDragging, .mouseMoved:
+            case .pointing, .clicking, .dragging, .doneDragging:
                 self.state = .dragging
             }
 
@@ -98,7 +97,7 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             case .clicking:
                 lastClick = Date()
                 self.state = .pointing
-            case .pointing, .mouseMoved:
+            case .pointing:
                 self.state = .pointing
             }
 
@@ -114,8 +113,6 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
             self.state = .pointing // remove associated timestamp
         case .moving:
             self.state = .dragging // remove associated window
-        case .mouseMoved:
-            self.state = .pointing
         default: ()
         }
     }
