@@ -168,9 +168,41 @@ class FloatingBundle: NSObject {
     @objc dynamic let id: String
     @objc dynamic let windowTitles: [String]
 
+    /// Compiled once. Set when `id` contains `*`, which is treated as a glob over the bundle identifier.
+    private let idPattern: NSRegularExpression?
+    /// Compiled once. Empty and invalid patterns are dropped, matching `String.range(of:options:.regularExpression)` returning nil.
+    private let titlePatterns: [NSRegularExpression]
+
     init(id: String, windowTitles: [String]) {
         self.id = id
         self.windowTitles = windowTitles
+
+        if id.contains("*") {
+            let pattern = id
+                .replacingOccurrences(of: ".", with: "\\.")
+                .replacingOccurrences(of: "*", with: ".*")
+            idPattern = try? NSRegularExpression(pattern: "^\(pattern)$", options: [])
+        } else {
+            idPattern = nil
+        }
+
+        // Empty and invalid patterns are dropped: `String.range(of:options:.regularExpression)` matched neither.
+        titlePatterns = windowTitles.filter { !$0.isEmpty }.compactMap { try? NSRegularExpression(pattern: $0, options: []) }
+    }
+
+    func matches(bundleIdentifier: String?) -> Bool {
+        guard let idPattern else {
+            return id == bundleIdentifier
+        }
+
+        let candidate = bundleIdentifier ?? ""
+        let range = NSRange(location: 0, length: candidate.utf16.count)
+        return idPattern.firstMatch(in: candidate, options: [], range: range) != nil
+    }
+
+    func matches(title: String) -> Bool {
+        let range = NSRange(location: 0, length: title.utf16.count)
+        return titlePatterns.contains { $0.firstMatch(in: title, options: [], range: range) != nil }
     }
 
     override func isEqual(_ object: Any?) -> Bool {
@@ -244,8 +276,23 @@ class UserConfiguration: NSObject {
     private let configValidator = ConfigurationValidator()
     private let frameValidator = FrameValidator()
 
+    /// Parsed floating bundles. Cleared by `setFloatingBundles` and by any `UserDefaults` change, since `loadConfiguration()`
+    /// and external `defaults write` bypass the setter.
+    private var cachedFloatingBundles: [FloatingBundle]?
+
     init(storage: ConfigurationStorage) {
         self.storage = storage
+        super.init()
+        NotificationCenter.default.addObserver(self, selector: #selector(userDefaultsDidChange), name: UserDefaults.didChangeNotification, object: nil)
+    }
+
+    @objc private func userDefaultsDidChange() {
+        // Posted on the writing thread; the cache is read on main.
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.cachedFloatingBundles = nil }
+            return
+        }
+        cachedFloatingBundles = nil
     }
 
     override convenience init() {
@@ -579,13 +626,7 @@ class UserConfiguration: NSObject {
         // If the title matches it is included
         //   - Blocklist means floating
         //   - Allowlist means not floating
-        if floatingBundle.windowTitles.contains(where: { windowTitle in
-            if title.range(of: windowTitle, options: .regularExpression) != nil {
-                return true
-            } else {
-                return false
-            }
-        }) {
+        if floatingBundle.matches(title: title) {
             return .reliable(DefaultFloat.from(useIdentifiersAsBlocklist))
         }
 
@@ -603,33 +644,8 @@ class UserConfiguration: NSObject {
     }
 
     func runningApplicationFloatingBundle(_ runningApplication: BundleIdentifiable) -> FloatingBundle? {
-        let floatingBundles = self.floatingBundles()
-
-        let bundleIdentifier = runningApplication.bundleIdentifier ?? ""
-
-        for floatingBundle in floatingBundles {
-            if floatingBundle.id.contains("*") {
-                do {
-                    let pattern = floatingBundle.id
-                        .replacingOccurrences(of: ".", with: "\\.")
-                        .replacingOccurrences(of: "*", with: ".*")
-                    let regex = try NSRegularExpression(pattern: "^\(pattern)$", options: [])
-                    let fullRange = NSRange(location: 0, length: bundleIdentifier.count)
-
-                    if regex.firstMatch(in: bundleIdentifier, options: [], range: fullRange) != nil {
-                        return floatingBundle
-                    }
-                } catch {
-                    continue
-                }
-            } else {
-                if floatingBundle.id == runningApplication.bundleIdentifier {
-                    return floatingBundle
-                }
-            }
-        }
-
-        return nil
+        let bundleIdentifier = runningApplication.bundleIdentifier
+        return floatingBundles().first { $0.matches(bundleIdentifier: bundleIdentifier) }
     }
 
     func ignoreMenuBar() -> Bool {
@@ -687,22 +703,6 @@ class UserConfiguration: NSObject {
 
     func windowMarginSize() -> CGFloat {
         return CGFloat(storage.float(forKey: .windowMarginSize))
-    }
-
-    func windowMargins() -> Bool {
-        if !storage.bool(forKey: .windowMargins) {
-            return false
-        }
-        // if smartWindowMargins is not enabled, enable window margins
-        if !smartWindowMargins() {
-            return true
-        }
-        // if smartWindowMargins is enabled, enabled window margins if there are more than one visible windows on screen
-        let options = CGWindowListOption(arrayLiteral: .excludeDesktopElements, .optionOnScreenOnly)
-        let windowsListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
-        let infoList = windowsListInfo as? [[String: Any]] ?? []
-        let visibleWindows = infoList.filter { $0["kCGWindowLayer"] as? Int == 0 }
-        return visibleWindows.count > 1
     }
 
     func windowMarginsEnabled() -> Bool {
@@ -778,15 +778,18 @@ class UserConfiguration: NSObject {
     }
 
     func floatingBundles() -> [FloatingBundle] {
-        guard let floatingBundles = storage.array(forKey: .floatingBundleIdentifiers) else {
-            return []
+        if let cachedFloatingBundles {
+            return cachedFloatingBundles
         }
 
-        return floatingBundles.compactMap { FloatingBundle.from($0) }
+        let bundles = (storage.array(forKey: .floatingBundleIdentifiers) ?? []).compactMap { FloatingBundle.from($0) }
+        cachedFloatingBundles = bundles
+        return bundles
     }
 
     func setFloatingBundles(_ floatingBundles: [FloatingBundle]) {
         storage.set(floatingBundles.map { $0.encoded() }, forKey: .floatingBundleIdentifiers)
+        cachedFloatingBundles = nil
     }
 
     func sendNewWindowsToMainPane() -> Bool {

@@ -59,7 +59,7 @@ class WideLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneCount = windows.count - mainPaneCount
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
 
         let mainPaneWindowHeight = round(screenFrame.height * CGFloat(hasSecondaryPane ? mainPaneRatio : 1))
         let secondaryPaneWindowHeight = screenFrame.height - mainPaneWindowHeight

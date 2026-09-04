@@ -58,7 +58,7 @@ class TwoPaneLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneCount = windows.count > 1 ? 1 : 0
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         let isHorizontal = (screenFrame.size.width / screenFrame.size.height) >= 1
 
         let mainPaneWindowHeight = screenFrame.size.height * (!isHorizontal && hasSecondaryPane ? mainPaneRatio : 1)

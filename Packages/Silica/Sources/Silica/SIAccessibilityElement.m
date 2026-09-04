@@ -11,6 +11,8 @@
 
 @interface SIAccessibilityElement ()
 @property (nonatomic, assign) AXUIElementRef axElementRef;
+- (void)writePosition:(CGPoint)position;
+- (void)writeSize:(CGSize)size;
 @end
 
 @implementation SIAccessibilityElement
@@ -197,12 +199,18 @@
 }
 
 - (void)setFrame:(CGRect)frame withThreshold:(CGSize)threshold {
-    // We only want to set the size if the size has actually changed more than a given amount.
     CGRect currentFrame = self.frame;
-    BOOL shouldSetSize = self.isResizable
-        && (fabs(currentFrame.size.width - frame.size.width) >= threshold.width
-        ||  fabs(currentFrame.size.height - frame.size.height) >= threshold.height);
-    
+    BOOL positionChanged = !CGPointEqualToPoint(currentFrame.origin, frame.origin);
+    // We only want to set the size if the size has actually changed more than a given amount.
+    BOOL sizeChanged = fabs(currentFrame.size.width - frame.size.width) >= threshold.width
+        || fabs(currentFrame.size.height - frame.size.height) >= threshold.height;
+
+    // Nothing to write: skip the resizability probe, the application lookup and the EnhancedUserInterface toggle.
+    if (!positionChanged && !sizeChanged) return;
+
+    BOOL shouldSetSize = sizeChanged && self.isResizable;
+    if (!positionChanged && !shouldSetSize) return;
+
     SIApplication *application = [self app];
     BOOL flag = [[application numberForKey:kAXEnhancedUserInterfaceKey] boolValue];
     if (flag) {
@@ -213,49 +221,46 @@
     // accessibility APIs are really finicky with setting size.
     // Note: this still occasionally silently fails to set the correct size.
     if (shouldSetSize) {
-        self.size = frame.size;
+        [self writeSize:frame.size];
     }
 
-    if (!CGPointEqualToPoint(currentFrame.origin, frame.origin)) {
-        self.position = frame.origin;
+    if (positionChanged) {
+        [self writePosition:frame.origin];
     }
 
     if (shouldSetSize) {
+        // Re-reads the frame so the second write only happens if the first one was not honored.
         self.size = frame.size;
     }
-    
+
     if (flag) {
         [application setFlag:flag forKey:kAXEnhancedUserInterfaceKey];
     }
 }
 
 - (void)setPosition:(CGPoint)position {
-    AXValueRef positionRef = AXValueCreate(kAXValueCGPointType, &position);
-    AXError error;
-    
     if (!CGPointEqualToPoint(position, [self frame].origin)) {
-        error = AXUIElementSetAttributeValue(self.axElementRef, kAXPositionAttribute, positionRef);
-        if (error != kAXErrorSuccess) {
-            CFRelease(positionRef);
-            return;
-        }
+        [self writePosition:position];
     }
-    
-    CFRelease(positionRef);
 }
 
 - (void)setSize:(CGSize)size {
-    AXValueRef sizeRef = AXValueCreate(kAXValueCGSizeType, &size);
-    AXError error;
-    
     if (!CGSizeEqualToSize(size, [self frame].size)) {
-        error = AXUIElementSetAttributeValue(self.axElementRef, kAXSizeAttribute, sizeRef);
-        if (error != kAXErrorSuccess) {
-            CFRelease(sizeRef);
-            return;
-        }
+        [self writeSize:size];
     }
-    
+}
+
+- (void)writePosition:(CGPoint)position {
+    AXValueRef positionRef = AXValueCreate(kAXValueCGPointType, &position);
+    if (!positionRef) return;
+    AXUIElementSetAttributeValue(self.axElementRef, kAXPositionAttribute, positionRef);
+    CFRelease(positionRef);
+}
+
+- (void)writeSize:(CGSize)size {
+    AXValueRef sizeRef = AXValueCreate(kAXValueCGSizeType, &size);
+    if (!sizeRef) return;
+    AXUIElementSetAttributeValue(self.axElementRef, kAXSizeAttribute, sizeRef);
     CFRelease(sizeRef);
 }
 

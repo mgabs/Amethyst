@@ -78,7 +78,7 @@ struct AMScreen: ScreenType {
     func adjustedFrame(disableWindowMargins: Bool) -> CGRect {
         var frame = UserConfiguration.shared.ignoreMenuBar() ? frameIncludingDockAndMenu() : frameWithoutDockOrMenu()
 
-        if UserConfiguration.shared.windowMargins() && !disableWindowMargins {
+        if UserConfiguration.shared.windowMarginsEnabled() && !disableWindowMargins {
             /* Inset for producing half of the full padding around screen as collapse only adds half of it to all windows */
             let padding = floor(UserConfiguration.shared.windowMarginSize() / 2)
 

@@ -53,7 +53,8 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
         self.delegate = delegate
 
         state = .pointing
-        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged, .mouseMoved]
+        // Mouse moves are not subscribed: reflow is only triggered by the click-drag-release sequence.
+        let mouseEventsToWatch: NSEvent.EventTypeMask = [.leftMouseDown, .leftMouseUp, .leftMouseDragged]
         monitor = NSEvent.addGlobalMonitorForEvents(matching: mouseEventsToWatch, handler: self.handleMouseEvent)
     }
 
@@ -69,8 +70,6 @@ class MouseStateKeeper<Delegate: MouseStateKeeperDelegate> {
     // is being pressed.
     func handleMouseEvent(anEvent: NSEvent) {
         switch anEvent.type {
-        case .mouseMoved:
-            break // Reflow only on explicit click-drag-release sequence
         case .leftMouseDown:
             self.state = .clicking
         case .leftMouseDragged:

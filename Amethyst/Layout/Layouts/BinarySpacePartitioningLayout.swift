@@ -90,7 +90,7 @@ class TreeNode<Window: WindowType>: Codable {
         }
 
         guard let grandparent = parent.parent else {
-            if node == parent.left {
+            if node === parent.left {
                 parent.windowID = parent.right?.windowID
             } else {
                 parent.windowID = parent.left?.windowID
@@ -100,15 +100,15 @@ class TreeNode<Window: WindowType>: Codable {
             return
         }
 
-        if parent == grandparent.left {
-            if node == parent.left {
+        if parent === grandparent.left {
+            if node === parent.left {
                 grandparent.left = parent.right
             } else {
                 grandparent.left = parent.left
             }
             grandparent.left?.parent = grandparent
         } else {
-            if node == parent.left {
+            if node === parent.left {
                 grandparent.right = parent.right
             } else {
                 grandparent.right = parent.left
@@ -134,7 +134,7 @@ class TreeNode<Window: WindowType>: Codable {
             newParent.right = newNode
             newParent.parent = parent
 
-            if self == parent.left {
+            if self === parent.left {
                 parent.left = newParent
             } else {
                 parent.right = newParent
@@ -309,20 +309,17 @@ class BinarySpacePartitioningLayout<Window: WindowType>: StatefulLayout<Window> 
             constructInitialTreeWithWindows(windows)
         }
 
-        let windowIDMap: [WindowID: LayoutWindow<Window>] = windows.reduce([:]) { (windowMap, window) -> [WindowID: LayoutWindow<Window>] in
-            var mutableWindowMap = windowMap
-            mutableWindowMap[window.id] = window
-            return mutableWindowMap
-        }
+        // Last wins on a duplicate ID, matching the `reduce` this replaced.
+        let windowIDMap = Dictionary(windows.map { ($0.id, $0) }, uniquingKeysWith: { _, last in last })
 
-        let baseFrame = screen.adjustedFrame()
+        let baseFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         var ret: [FrameAssignment<Window>] = []
         var traversalNodes: [TraversalNode] = [(node: rootNode, frame: baseFrame)]
+        var traversalIndex = 0
 
-        while !traversalNodes.isEmpty {
-            let traversalNode = traversalNodes[0]
-
-            traversalNodes = [TraversalNode](traversalNodes.dropFirst(1))
+        while traversalIndex < traversalNodes.count {
+            let traversalNode = traversalNodes[traversalIndex]
+            traversalIndex += 1
 
             if let windowID = traversalNode.node.windowID {
                 guard let window = windowIDMap[windowID] else {

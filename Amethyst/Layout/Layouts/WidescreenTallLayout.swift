@@ -48,7 +48,7 @@ class WidescreenTallLayout<Window: WindowType>: Layout<Window> {
 
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
 
         let mainPaneWindowHeight = screenFrame.height
         let secondaryPaneWindowHeight = hasSecondaryPane ? round(screenFrame.height / CGFloat(secondaryPaneCount)) : 0.0

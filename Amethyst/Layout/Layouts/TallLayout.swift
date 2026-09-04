@@ -62,7 +62,7 @@ class TallLayout<Window: WindowType>: Layout<Window>, PanedLayout {
         let secondaryPaneCount = windows.count - mainPaneCount
         let hasSecondaryPane = secondaryPaneCount > 0
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
 
         let mainPaneWindowHeight = round(screenFrame.size.height / CGFloat(mainPaneCount))
         let secondaryPaneWindowHeight = hasSecondaryPane ? round(screenFrame.size.height / CGFloat(secondaryPaneCount)) : 0.0

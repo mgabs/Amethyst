@@ -51,6 +51,26 @@ class ReflowOperationTests: QuickSpec {
                 expect(window.frame()).to(equal(frameAssignment.finalFrame))
             }
 
+            it("peeks based on the layout window's focus flag, not a live focus query") {
+                let screen = TestScreen(frame: CGRect(x: 0, y: 0, width: 2000, height: 1000))
+                let window = TestWindow(element: nil)!
+                window.isFocusedValue = false
+                let layoutWindow = LayoutWindow<TestWindow>(id: window.id(), frame: window.frame(), isFocused: true)
+                let frameAssignment = FrameAssignment<TestWindow>(
+                    frame: CGRect(x: 1500, y: 0, width: 1000, height: 1000),
+                    window: layoutWindow,
+                    screenFrame: screen.frame(),
+                    resizeRules: ResizeRules(isMain: true, unconstrainedDimension: .horizontal, scaleFactor: 1, windowMargins: false, windowMarginSize: 0),
+                    windowMargins: false,
+                    windowMarginSize: 0
+                )
+
+                frameAssignment.perform(withWindow: window)
+
+                // Peeking clamps the frame onto the screen: x = 2000 - 1000.
+                expect(window.frame().origin.x).to(equal(1000))
+            }
+
             it("applies margins correctly") {
                 let screen = TestScreen(frame: CGRect(x: 0, y: 0, width: 2000, height: 1000))
                 let window = TestWindow(element: nil)!

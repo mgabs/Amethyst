@@ -162,7 +162,7 @@ class CustomLayout<Window: WindowType>: StatefulLayout<Window>, PanedLayout {
             return []
         }
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         let jsScreenFrameArg = JSValue(rect: screenFrame, in: context)!
         let jsWindows: [WindowID: JSWindow<Window>] = windows.reduce([:]) { partialResult, layoutWindow in
             let id = idHash(forWindowID: layoutWindow.id) ?? UUID().uuidString

@@ -33,7 +33,8 @@ extension WindowManager {
             guard let focusedWindow = Window.currentlyFocused() else {
                 return nil
             }
-            return screenManagers.first { $0.screen?.screenID() == focusedWindow.screen()?.screenID() }
+            let focusedScreenID = focusedWindow.screen()?.screenID()
+            return screenManagers.first { $0.screenID == focusedScreenID }
         }
 
         func updateScreens(windowManager: WindowManager) {
@@ -66,8 +67,9 @@ extension WindowManager {
         }
 
         func distributeEventToScreen(_ screen: Screen, change: Change<Window>, on space: Space? = nil) {
+            let targetScreenID = screen.screenID()
             screenManagers
-                .filter { $0.screen?.screenID() == screen.screenID() }
+                .filter { $0.screenID == targetScreenID }
                 .forEach { screenManager in
                     screenManager.distributeEvent(change, on: space)
                 }
@@ -80,8 +82,9 @@ extension WindowManager {
         }
 
         func markScreenForReflow(_ screen: Screen, skipMainPaneRatioRecommendation: Bool = false, on space: Space? = nil) {
+            let targetScreenID = screen.screenID()
             screenManagers
-                .filter { $0.screen?.screenID() == screen.screenID() }
+                .filter { $0.screenID == targetScreenID }
                 .forEach { screenManager in
                     screenManager.setNeedsReflow(on: space, skipMainPaneRatioRecommendation: skipMainPaneRatioRecommendation)
                 }

@@ -11,7 +11,14 @@ import Silica
 
 extension WindowManager {
     class Windows {
-        private(set) var windows: [Window] = []
+        private(set) var windows: [Window] = [] {
+            didSet {
+                // Rebuilt on every mutation; mutations are rare, lookups run per frame assignment.
+                // First entry wins on a duplicate ID, matching the linear scan this replaced.
+                windowsByID = Dictionary(windows.map { ($0.id(), $0) }, uniquingKeysWith: { first, _ in first })
+            }
+        }
+        private var windowsByID: [Window.WindowID: Window] = [:]
         private(set) var lastMainWindows: [CGSSpaceID: Window?] = [:]
         private var activeIDCache: Set<CGWindowID> = Set()
         private var deactivatedPIDs: Set<pid_t> = Set()
@@ -20,7 +27,7 @@ extension WindowManager {
         // MARK: Window Filters
 
         func window(withID id: Window.WindowID) -> Window? {
-            return windows.first { $0.id() == id }
+            return windowsByID[id]
         }
 
         func windows(forApplicationWithPID applicationPID: pid_t) -> [Window] {
@@ -41,21 +48,7 @@ extension WindowManager {
                 return []
             }
 
-            let screenWindows = windows.filter { window in
-                let space = window.spaceID()
-
-                guard let windowScreen = window.screen(), currentSpace.id == space else {
-                    return false
-                }
-
-                let isActive = self.isWindowActive(window)
-                let isHidden = self.isWindowHidden(window)
-                let isFloating = self.isWindowFloating(window)
-
-                return windowScreen.screenID() == screen.screenID() && isActive && !isHidden && !isFloating
-            }
-
-            return screenWindows
+            return activeWindows(matchingScreenID: screenID, spaceID: currentSpace.id)
         }
 
         func activeWindows(onScreen screen: Screen, onSpace spaceID: CGSSpaceID) -> [Window] {
@@ -63,21 +56,23 @@ extension WindowManager {
                 return []
             }
 
-            let screenWindows = windows.filter { window in
-                let space = window.spaceID()
+            return activeWindows(matchingScreenID: screenID, spaceID: spaceID)
+        }
 
-                guard let windowScreen = window.screen(), spaceID == space else {
+        private func activeWindows(matchingScreenID screenID: String, spaceID: CGSSpaceID) -> [Window] {
+            return windows.filter { window in
+                // In-memory checks first.
+                guard !isWindowFloating(window), !isWindowHidden(window), activeIDCache.contains(window.cgID()) else {
                     return false
                 }
 
-                let isActive = self.isWindowActive(window)
-                let isHidden = self.isWindowHidden(window)
-                let isFloating = self.isWindowFloating(window)
+                // Window-server and accessibility round trips only for the survivors.
+                guard window.spaceID() == spaceID, window.isActive() else {
+                    return false
+                }
 
-                return windowScreen.screenID() == screenID && isActive && !isHidden && !isFloating
+                return window.screen()?.screenID() == screenID
             }
-
-            return screenWindows
         }
 
         func activeWindowOnCurrentScreen(atIndex: Int) -> Window? {
@@ -182,7 +177,7 @@ extension WindowManager {
         // MARK: Window States
 
         func isWindowTracked(_ window: Window) -> Bool {
-            return windows.contains(where: { $0.id() == window.id() })
+            return windowsByID[window.id()] != nil
         }
 
         func isWindowActive(_ window: Window) -> Bool {
@@ -209,8 +204,16 @@ extension WindowManager {
             deactivatedPIDs.insert(pid)
         }
 
-        func regenerateActiveIDCache() {
-            activeIDCache = Set(SIWindow.onScreenWindowIDs().map { $0.uint32Value })
+        /// Refreshes the snapshot and returns it, so a caller that also needs the live set does not query twice.
+        @discardableResult
+        func regenerateActiveIDCache() -> Set<CGWindowID> {
+            activeIDCache = onScreenWindowIDs()
+            return activeIDCache
+        }
+
+        /// A live window-server query. Fetch once and test membership rather than calling `isOnScreen()` per window.
+        func onScreenWindowIDs() -> Set<CGWindowID> {
+            return Set(SIWindow.onScreenWindowIDs().map { $0.uint32Value })
         }
 
         // MARK: Window Sets
@@ -232,8 +235,11 @@ extension WindowManager {
         }
 
         func windowSet(forWindows windows: [Window]) -> WindowSet<Window> {
+            // One focus query for the whole set instead of one per window.
+            let focusedID = Window.currentlyFocused()?.id()
             let layoutWindows: [LayoutWindow<Window>] = windows.map {
-                LayoutWindow(id: $0.id(), frame: $0.frame(), isFocused: $0.isFocused())
+                let id = $0.id()
+                return LayoutWindow(id: id, frame: $0.frame(), isFocused: id == focusedID)
             }
 
             return WindowSet<Window>(

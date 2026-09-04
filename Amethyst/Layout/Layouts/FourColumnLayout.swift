@@ -216,7 +216,7 @@ class FourColumnLayout<Window: WindowType>: Layout<Window> {
             return []
         }
 
-        let screenFrame = screen.adjustedFrame()
+        let screenFrame = screen.adjustedFrame(disableWindowMargins: !windowMargins)
         let paneArrangement = QuadruplePaneArrangement(
             mainPane: type(of: self).mainColumn,
             numWindows: UInt(windows.count),

@@ -487,6 +487,31 @@ class UserConfigurationTests: QuickSpec {
                     expect(configuration.runningApplication(bundleIdentifiable, byDefaultFloatsForTitle: nil)).to(equal(.reliable(.floating)))
                 }
             }
+
+            it("returns the latest bundles after they are replaced through the configuration") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+
+                configuration.setFloatingBundles([FloatingBundle(id: "com.example.a", windowTitles: [])])
+                expect(configuration.floatingBundles().map { $0.id }).to(equal(["com.example.a"]))
+
+                configuration.setFloatingBundles([FloatingBundle(id: "com.example.b", windowTitles: ["Prefs.*"])])
+                expect(configuration.floatingBundles().map { $0.id }).to(equal(["com.example.b"]))
+                expect(configuration.floatingBundles().first?.windowTitles).to(equal(["Prefs.*"]))
+            }
+
+            it("drops the cached bundles when user defaults change behind the setter") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+                configuration.setFloatingBundles([FloatingBundle(id: "com.example.a", windowTitles: [])])
+                expect(configuration.floatingBundles().map { $0.id }).to(equal(["com.example.a"]))
+
+                // Write behind the setter: the cache must still be served until a defaults change is announced.
+                storage.storage[.floatingBundleIdentifiers] = [FloatingBundle(id: "com.example.b", windowTitles: []).encoded()]
+                expect(configuration.floatingBundles().map { $0.id }).to(equal(["com.example.a"]))
+
+                NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+                expect(configuration.floatingBundles().map { $0.id }).to(equal(["com.example.b"]))
+            }
         }
 
         describe("focus follows mouse") {
