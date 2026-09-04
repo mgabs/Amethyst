@@ -272,6 +272,58 @@ class UserConfigurationTests: QuickSpec {
             }
         }
 
+        describe("focused window border") {
+            it("is enabled with a dark green 4pt border by default") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+
+                expect(configuration.focusedWindowBorderEnabled()).to(beTrue())
+                expect(configuration.focusedWindowBorderWidth()).to(equal(4))
+                let color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
+                expect(color.redComponent).to(beCloseTo(0, within: 0.01))
+                expect(color.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
+                expect(color.blueComponent).to(beCloseTo(0, within: 0.01))
+                expect(color.alphaComponent).to(beCloseTo(1, within: 0.01))
+            }
+
+            it("parses RRGGBB and RRGGBBAA colours") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                storage.set("#FF8000", forKey: .focusedWindowBorderColor)
+                var color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
+                expect(color.redComponent).to(beCloseTo(1, within: 0.01))
+                expect(color.greenComponent).to(beCloseTo(0x80 / 255.0, within: 0.01))
+                expect(color.blueComponent).to(beCloseTo(0, within: 0.01))
+                expect(color.alphaComponent).to(beCloseTo(1, within: 0.01))
+
+                storage.set("#00640080", forKey: .focusedWindowBorderColor)
+                color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
+                expect(color.alphaComponent).to(beCloseTo(0x80 / 255.0, within: 0.01))
+            }
+
+            it("falls back to dark green for an unparseable colour") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+                storage.set("green-ish", forKey: .focusedWindowBorderColor)
+
+                let color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
+                expect(color.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
+                expect(color.redComponent).to(beCloseTo(0, within: 0.01))
+            }
+
+            it("treats a non-positive width as disabled") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+
+                storage.set(Float(0), forKey: .focusedWindowBorderWidth)
+                expect(configuration.focusedWindowBorderEnabled()).to(beFalse())
+
+                storage.set(Float(2), forKey: .focusedWindowBorderWidth)
+                storage.set(false, forKey: .focusedWindowBorder)
+                expect(configuration.focusedWindowBorderEnabled()).to(beFalse())
+            }
+        }
+
         describe("floating application") {
             it("is not floating by default") {
                 let storage = TestConfigurationStorage()

@@ -87,6 +87,9 @@ enum ConfigurationKey: String {
     case layoutHUD = "enables-layout-hud"
     case layoutHUDOnSpaceChange = "enables-layout-hud-on-space-change"
     case windowCountHUD = "enables-window-count-hud"
+    case focusedWindowBorder = "focused-window-border"
+    case focusedWindowBorderColor = "focused-window-border-color"
+    case focusedWindowBorderWidth = "focused-window-border-width"
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
@@ -692,6 +695,35 @@ class UserConfiguration: NSObject {
         return storage.bool(forKey: .windowCountHUD)
     }
 
+    // MARK: Focused window border
+
+    /// On unless the key is explicitly `false` or the width is non-positive.
+    func focusedWindowBorderEnabled() -> Bool {
+        let flag = storage.object(forKey: .focusedWindowBorder) as? Bool ?? true
+        return flag && focusedWindowBorderWidth() > 0
+    }
+
+    /// Stroke width in points, drawn outside the window frame. Default 4; an unset key reads as the default.
+    func focusedWindowBorderWidth() -> CGFloat {
+        guard storage.object(forKey: .focusedWindowBorderWidth) != nil else {
+            return 4
+        }
+        return CGFloat(storage.float(forKey: .focusedWindowBorderWidth))
+    }
+
+    /// `#RRGGBB` or `#RRGGBBAA`. Falls back to dark green (#006400) with a warning when unparseable.
+    func focusedWindowBorderColor() -> NSColor {
+        let fallback = NSColor(srgbRed: 0, green: 0x64 / 255.0, blue: 0, alpha: 1)
+        guard let hex = storage.object(forKey: .focusedWindowBorderColor) as? String else {
+            return fallback
+        }
+        guard let color = NSColor(hexString: hex) else {
+            log.warning("Unparseable focused-window-border-color: \(hex); using #006400")
+            return fallback
+        }
+        return color
+    }
+
     func useCanaryBuild() -> Bool {
         return storage.bool(forKey: .useCanaryBuild)
     }
@@ -898,5 +930,21 @@ extension UserConfiguration {
         ]
 
         return AXIsProcessTrustedWithOptions(options as CFDictionary)
+    }
+}
+
+extension NSColor {
+    /// Parses `#RRGGBB` or `#RRGGBBAA` (leading `#` optional) into an sRGB colour.
+    convenience init?(hexString: String) {
+        let digits = hexString.hasPrefix("#") ? String(hexString.dropFirst()) : hexString
+        guard digits.count == 6 || digits.count == 8, let value = UInt64(digits, radix: 16) else {
+            return nil
+        }
+        let hasAlpha = digits.count == 8
+        let red = CGFloat((value >> (hasAlpha ? 24 : 16)) & 0xFF) / 255.0
+        let green = CGFloat((value >> (hasAlpha ? 16 : 8)) & 0xFF) / 255.0
+        let blue = CGFloat((value >> (hasAlpha ? 8 : 0)) & 0xFF) / 255.0
+        let alpha = hasAlpha ? CGFloat(value & 0xFF) / 255.0 : 1
+        self.init(srgbRed: red, green: green, blue: blue, alpha: alpha)
     }
 }
