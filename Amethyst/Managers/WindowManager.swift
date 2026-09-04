@@ -829,7 +829,7 @@ extension WindowManager: ApplicationObservationDelegate {
         let previousScreen = Window.currentlyFocused()?.screen()
 
         focusManager.setFocused(window: window)
-        updateFocusedWindowBorder()
+        updateFocusedWindowBorder(focused: window)
 
         if pendingTabDetection.removeValue(forKey: window.id()) != nil {
             completeTabDetection(for: window, on: screen)
@@ -868,7 +868,9 @@ extension WindowManager: ApplicationObservationDelegate {
     }
 
     func handleWindowMove(window: Window) {
-        updateFocusedWindowBorder()
+        if focusManager.isFocused(window: window) {
+            updateFocusedWindowBorder(focused: window)
+        }
         guard userConfiguration.mouseSwapsWindows() else {
             return
         }
@@ -881,7 +883,9 @@ extension WindowManager: ApplicationObservationDelegate {
     }
 
     func handleWindowResize(window: Window) {
-        updateFocusedWindowBorder()
+        if focusManager.isFocused(window: window) {
+            updateFocusedWindowBorder(focused: window)
+        }
         guard userConfiguration.mouseResizesWindows() else {
             if let screen = window.screen() {
                 markScreenForReflow(screen)
@@ -1119,16 +1123,20 @@ extension WindowManager: ScreenManagerDelegate {
 // MARK: Focused window border
 extension WindowManager {
     /// Repositions the outline around the focused managed window, or hides it. Safe to call from any hook.
-    func updateFocusedWindowBorder() {
+    /// Pass `focused` when the caller already holds the focused window, to skip the accessibility lookup.
+    private func updateFocusedWindowBorder(focused: Window? = nil) {
         guard Thread.isMainThread else {
-            DispatchQueue.main.async { self.updateFocusedWindowBorder() }
+            DispatchQueue.main.async { self.updateFocusedWindowBorder(focused: focused) }
             return
         }
 
         guard userConfiguration.focusedWindowBorderEnabled(),
-              let window = Window.currentlyFocused(),
+              let window = focused ?? Window.currentlyFocused(),
+              // In-memory checks first: they say no for untracked or hidden windows before any accessibility call.
+              windows.isWindowTracked(window),
+              !windows.isWindowHidden(window),
               FocusedWindowBorder.isEligible(
-                  tracked: windows.isWindowTracked(window),
+                  tracked: true,
                   managed: window.shouldBeManaged(),
                   spaceType: window.screen()?.currentSpace()?.type
               ),
