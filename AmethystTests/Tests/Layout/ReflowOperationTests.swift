@@ -107,5 +107,29 @@ class ReflowOperationTests: QuickSpec {
                 expect(frameAssignment.finalFrame).to(equal(expectedFrame))
             }
         }
+
+        describe("FocusedWindowBorder geometry") {
+            it("flips an accessibility frame into AppKit coordinates") {
+                // AX: 100pt from the top of a 1000pt-high primary display, 200pt tall.
+                let axFrame = CGRect(x: 50, y: 100, width: 400, height: 200)
+                let appKit = FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: axFrame, primaryScreenHeight: 1000)
+                expect(appKit).to(equal(CGRect(x: 50, y: 700, width: 400, height: 200)))
+            }
+
+            it("expands the frame by the border width on every side") {
+                let frame = CGRect(x: 50, y: 700, width: 400, height: 200)
+                expect(FocusedWindowBorder.borderFrame(around: frame, width: 4)).to(equal(CGRect(x: 46, y: 696, width: 408, height: 208)))
+            }
+
+            it("flips frames on displays above and below the primary") {
+                // Secondary display stacked above a 1080pt primary: accessibility y is negative, AppKit y exceeds 1080.
+                let above = CGRect(x: 0, y: -1080, width: 800, height: 600)
+                expect(FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: above, primaryScreenHeight: 1080)).to(equal(CGRect(x: 0, y: 1560, width: 800, height: 600)))
+
+                // Secondary display below the primary: accessibility y exceeds 1080, AppKit y is negative.
+                let below = CGRect(x: 0, y: 1080, width: 800, height: 600)
+                expect(FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: below, primaryScreenHeight: 1080)).to(equal(CGRect(x: 0, y: -600, width: 800, height: 600)))
+            }
+        }
     }
 }

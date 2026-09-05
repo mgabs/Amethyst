@@ -72,6 +72,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
 
     private lazy var mouseStateKeeper = MouseStateKeeper(delegate: self)
     private lazy var applicationEventHandler = ApplicationEventHandler(delegate: self)
+    private lazy var focusedWindowBorder = FocusedWindowBorder()
     private let userConfiguration: UserConfiguration
     private let disposeBag = DisposeBag()
     private let windowMovedSubject = PublishSubject<Window>()
@@ -103,6 +104,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         addWorkspaceNotificationObserver(NSWorkspace.didHideApplicationNotification, selector: #selector(applicationDidHide(_:)))
         addWorkspaceNotificationObserver(NSWorkspace.didUnhideApplicationNotification, selector: #selector(applicationDidUnhide(_:)))
         addWorkspaceNotificationObserver(NSWorkspace.activeSpaceDidChangeNotification, selector: #selector(activeSpaceDidChange(_:)))
+        addWorkspaceNotificationObserver(NSWorkspace.didActivateApplicationNotification, selector: #selector(workspaceDidActivateApplication(_:)))
 
         NotificationCenter.default.addObserver(
             self,
@@ -184,6 +186,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         }
 
         deactivate(application: application)
+        updateFocusedWindowBorder()
     }
 
     @objc func applicationDidUnhide(_ notification: Notification) {
@@ -226,6 +229,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
 
         windows.regenerateActiveIDCache()
         markAllScreensForReflow(skipMainPaneRatioRecommendation: true)
+        updateFocusedWindowBorder()
     }
 
     @objc func screenParametersDidChange(_ notification: Notification) {
@@ -235,6 +239,16 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         // We delay the re-evaluation to ensure the accessibility tree reflects the final state.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.reevaluateWindows()
+            self?.updateFocusedWindowBorder()
+        }
+    }
+
+    /// Accessibility focus can lag application activation, and some apps never report it; check now and once more shortly after.
+    /// Lives in the class body: `@objc` members are not allowed in extensions of a generic class.
+    @objc func workspaceDidActivateApplication(_ notification: Notification) {
+        updateFocusedWindowBorder()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.updateFocusedWindowBorder()
         }
     }
 }
@@ -343,6 +357,7 @@ extension WindowManager {
 
         windows.regenerateActiveIDCache()
         windows.remove(window: window)
+        updateFocusedWindowBorder()
     }
 
     func toggleFloatForFocusedWindow() {
@@ -726,6 +741,7 @@ extension WindowManager {
         // Runs on the main queue after frame assignments; we record the latest reflow time.
         mouseStateKeeper.handleReflowEvent()
         lastReflowTime = Date()
+        updateFocusedWindowBorder()
     }
 
     func doMouseFollowsFocus(focusedWindow: Window) {
@@ -823,6 +839,7 @@ extension WindowManager: ApplicationObservationDelegate {
         let previousScreen = Window.currentlyFocused()?.screen()
 
         focusManager.setFocused(window: window)
+        updateFocusedWindowBorder(focused: window)
 
         if pendingTabDetection.removeValue(forKey: window.id()) != nil {
             completeTabDetection(for: window, on: screen)
@@ -861,6 +878,9 @@ extension WindowManager: ApplicationObservationDelegate {
     }
 
     func handleWindowMove(window: Window) {
+        if focusManager.isFocused(window: window) {
+            updateFocusedWindowBorder(focused: window)
+        }
         guard userConfiguration.mouseSwapsWindows() else {
             return
         }
@@ -873,6 +893,9 @@ extension WindowManager: ApplicationObservationDelegate {
     }
 
     func handleWindowResize(window: Window) {
+        if focusManager.isFocused(window: window) {
+            updateFocusedWindowBorder(focused: window)
+        }
         guard userConfiguration.mouseResizesWindows() else {
             if let screen = window.screen() {
                 markScreenForReflow(screen)
@@ -1104,5 +1127,60 @@ extension WindowManager: ScreenManagerDelegate {
     func activeWindowSet(forScreenManager screenManager: ScreenManager<WindowManager<Application>>, on space: Space?) -> WindowSet<Window> {
         let targetSpace = space ?? screenManager.space!
         return windows.windowSet(forActiveWindowsOnSpace: targetSpace.id, onScreen: screenManager.screen!)
+    }
+}
+
+// MARK: Focused window border
+extension WindowManager {
+    /// The focused window as the window server sees it. Accessibility focus is trusted only when it belongs to the
+    /// frontmost application; otherwise that application's frontmost tracked window is used, because some apps
+    /// (Firefox, kitty) report accessibility focus late or not at all.
+    private func frontmostManagedWindow() -> Window? {
+        guard let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
+            return Window.currentlyFocused()
+        }
+        if let focused = Window.currentlyFocused(), focused.pid() == frontPID {
+            return focused
+        }
+        return windows.frontmostTrackedWindow(forApplicationWithPID: frontPID)
+    }
+
+    /// Repositions the outline around the focused managed window, or hides it. Safe to call from any hook.
+    /// Pass `focused` when the caller already holds the focused window, to skip the accessibility lookup.
+    private func updateFocusedWindowBorder(focused: Window? = nil) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.updateFocusedWindowBorder(focused: focused) }
+            return
+        }
+
+        guard userConfiguration.focusedWindowBorderEnabled(),
+              let window = focused ?? frontmostManagedWindow(),
+              // In-memory checks first: they say no for untracked or hidden windows before any accessibility call.
+              windows.isWindowTracked(window),
+              !windows.isWindowHidden(window),
+              FocusedWindowBorder.isEligible(
+                  tracked: true,
+                  managed: window.shouldBeManaged(),
+                  spaceType: window.screen()?.currentSpace()?.type
+              ),
+              let primaryScreen = NSScreen.screens.first
+        else {
+            focusedWindowBorder.hide()
+            return
+        }
+
+        let axFrame = window.frame()
+        guard !axFrame.isNull, axFrame.width > 0, axFrame.height > 0 else {
+            focusedWindowBorder.hide()
+            return
+        }
+
+        let frame = FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: axFrame, primaryScreenHeight: primaryScreen.frame.height)
+        focusedWindowBorder.show(
+            around: frame,
+            below: window.cgID(),
+            color: userConfiguration.focusedWindowBorderColor(),
+            width: userConfiguration.focusedWindowBorderWidth()
+        )
     }
 }
