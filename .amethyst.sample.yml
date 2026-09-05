@@ -366,6 +366,7 @@ space-indicator-color-style: 0
 focused-window-border: true
 
 # Outline colour as #RRGGBB or #RRGGBBAA (default #006400, dark green).
+# Keep the quotes: an unquoted # starts a YAML comment and the value is silently dropped.
 focused-window-border-color: "#006400"
 
 # Outline width in points (default 4). 0 disables the outline.
