@@ -104,6 +104,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         addWorkspaceNotificationObserver(NSWorkspace.didHideApplicationNotification, selector: #selector(applicationDidHide(_:)))
         addWorkspaceNotificationObserver(NSWorkspace.didUnhideApplicationNotification, selector: #selector(applicationDidUnhide(_:)))
         addWorkspaceNotificationObserver(NSWorkspace.activeSpaceDidChangeNotification, selector: #selector(activeSpaceDidChange(_:)))
+        addWorkspaceNotificationObserver(NSWorkspace.didActivateApplicationNotification, selector: #selector(workspaceDidActivateApplication(_:)))
 
         NotificationCenter.default.addObserver(
             self,
@@ -238,6 +239,15 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
         // We delay the re-evaluation to ensure the accessibility tree reflects the final state.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.reevaluateWindows()
+            self?.updateFocusedWindowBorder()
+        }
+    }
+
+    /// Accessibility focus can lag application activation, and some apps never report it; check now and once more shortly after.
+    /// Lives in the class body: `@objc` members are not allowed in extensions of a generic class.
+    @objc func workspaceDidActivateApplication(_ notification: Notification) {
+        updateFocusedWindowBorder()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             self?.updateFocusedWindowBorder()
         }
     }
@@ -1122,6 +1132,19 @@ extension WindowManager: ScreenManagerDelegate {
 
 // MARK: Focused window border
 extension WindowManager {
+    /// The focused window as the window server sees it. Accessibility focus is trusted only when it belongs to the
+    /// frontmost application; otherwise that application's frontmost tracked window is used, because some apps
+    /// (Firefox, kitty) report accessibility focus late or not at all.
+    private func frontmostManagedWindow() -> Window? {
+        guard let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
+            return Window.currentlyFocused()
+        }
+        if let focused = Window.currentlyFocused(), focused.pid() == frontPID {
+            return focused
+        }
+        return windows.frontmostTrackedWindow(forApplicationWithPID: frontPID)
+    }
+
     /// Repositions the outline around the focused managed window, or hides it. Safe to call from any hook.
     /// Pass `focused` when the caller already holds the focused window, to skip the accessibility lookup.
     private func updateFocusedWindowBorder(focused: Window? = nil) {
@@ -1131,7 +1154,7 @@ extension WindowManager {
         }
 
         guard userConfiguration.focusedWindowBorderEnabled(),
-              let window = focused ?? Window.currentlyFocused(),
+              let window = focused ?? frontmostManagedWindow(),
               // In-memory checks first: they say no for untracked or hidden windows before any accessibility call.
               windows.isWindowTracked(window),
               !windows.isWindowHidden(window),

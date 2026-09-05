@@ -34,6 +34,33 @@ extension WindowManager {
             return windows.filter { $0.pid() == applicationPID }
         }
 
+        /// The frontmost tracked window of an application in the window server's front-to-back order, or nil.
+        /// Independent of accessibility focus, which some apps (Firefox, kitty) report late or not at all.
+        func frontmostTrackedWindow(forApplicationWithPID applicationPID: pid_t) -> Window? {
+            let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+            guard let descriptions = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
+                return nil
+            }
+
+            let candidates = windows(forApplicationWithPID: applicationPID)
+            guard !candidates.isEmpty else {
+                return nil
+            }
+
+            for description in descriptions {
+                guard description[kCGWindowOwnerPID as String] as? pid_t == applicationPID,
+                      description[kCGWindowLayer as String] as? Int == 0,
+                      let number = description[kCGWindowNumber as String] as? CGWindowID
+                else {
+                    continue
+                }
+                if let window = candidates.first(where: { $0.cgID() == number }) {
+                    return window
+                }
+            }
+            return nil
+        }
+
         func windows(onScreen screen: Screen) -> [Window] {
             return windows.filter { $0.screen() == screen }
         }
