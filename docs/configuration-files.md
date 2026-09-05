@@ -36,11 +36,11 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `enables-layout-hud-on-space-change` | `true` to display the name of the layout when moving to a new space (default `true`). |
 | `enables-window-count-hud` | `true` to display notifications when window max count changes (default `false`). |
 | `focused-window-border` | Draw an outline just outside the focused window (default `true`). Only windows Amethyst manages get one; Spotlight and ignored apps do not. |
-| `focused-window-border-color` | Outline colour as `#RRGGBB` or `#RRGGBBAA` (default `#006400`, dark green). |
+| `focused-window-border-color` | Outline colour as `#RRGGBB` or `#RRGGBBAA` (default `#006400`, dark green). Quote it in YAML (`"#38c0ff"`) or drop the `#` (`38c0ff`): an unquoted `#` starts a YAML comment and the value is silently lost. |
 | `focused-window-border-width` | Outline width in points (default `4`). `0` disables the outline. |
 | `use-canary-build` | `true` to get updates to beta versions of the software (default `false`). |
 | `new-windows-to-main` | `true` to insert new windows into the first position and `false` to insert new windows into the last position (default `false`). |
-| `follow-space-thrown-windows` | `true` to automatically move to a space when throwing a window to it (default `true`). | 
+| `follow-space-thrown-windows` | `true` to automatically move to a space when throwing a window to it (default `true`). |
 | `focus-follows-window-thrown-between-spaces-delay` | Seconds to wait before following a window thrown to another space (default `0.5`). |
 | `application-activation-delay` | Seconds to wait after an application activates before reflowing its screen (default `0.2`). |
 | `window-resize-step` | The integer percentage of the screen dimension to increment and decrement main pane ratios by (default `5`). |
