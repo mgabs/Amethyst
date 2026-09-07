@@ -273,15 +273,15 @@ class UserConfigurationTests: QuickSpec {
         }
 
         describe("focused window border") {
-            it("is enabled with a dark green 4pt border by default") {
+            it("is enabled with an amber 4pt border by default") {
                 let configuration = UserConfiguration(storage: TestConfigurationStorage())
 
                 expect(configuration.focusedWindowBorderEnabled()).to(beTrue())
                 expect(configuration.focusedWindowBorderWidth()).to(equal(4))
                 let color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
-                expect(color.redComponent).to(beCloseTo(0, within: 0.01))
-                expect(color.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
-                expect(color.blueComponent).to(beCloseTo(0, within: 0.01))
+                expect(color.redComponent).to(beCloseTo(0xb3 / 255.0, within: 0.01))
+                expect(color.greenComponent).to(beCloseTo(0x81 / 255.0, within: 0.01))
+                expect(color.blueComponent).to(beCloseTo(0x15 / 255.0, within: 0.01))
                 expect(color.alphaComponent).to(beCloseTo(1, within: 0.01))
             }
 
