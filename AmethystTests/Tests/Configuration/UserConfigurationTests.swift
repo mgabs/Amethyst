@@ -301,17 +301,18 @@ class UserConfigurationTests: QuickSpec {
                 expect(color.alphaComponent).to(beCloseTo(0x80 / 255.0, within: 0.01))
             }
 
-            it("falls back to dark green for an unparseable colour") {
+            it("falls back to amber for an unparseable colour") {
                 let storage = TestConfigurationStorage()
                 let configuration = UserConfiguration(storage: storage)
                 storage.set("green-ish", forKey: .focusedWindowBorderColor)
 
                 let color = configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!
-                expect(color.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
-                expect(color.redComponent).to(beCloseTo(0, within: 0.01))
+                expect(color.redComponent).to(beCloseTo(0xb3 / 255.0, within: 0.01))
+                expect(color.greenComponent).to(beCloseTo(0x81 / 255.0, within: 0.01))
+                expect(color.blueComponent).to(beCloseTo(0x15 / 255.0, within: 0.01))
 
                 storage.set("+00000", forKey: .focusedWindowBorderColor)
-                expect(configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!.greenComponent).to(beCloseTo(0x64 / 255.0, within: 0.01))
+                expect(configuration.focusedWindowBorderColor().usingColorSpace(.sRGB)!.redComponent).to(beCloseTo(0xb3 / 255.0, within: 0.01))
             }
 
             it("treats a non-positive width as disabled") {

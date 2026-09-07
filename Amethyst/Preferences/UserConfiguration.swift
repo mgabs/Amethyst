@@ -711,14 +711,14 @@ class UserConfiguration: NSObject {
         return CGFloat(storage.float(forKey: .focusedWindowBorderWidth))
     }
 
-    /// `#RRGGBB` or `#RRGGBBAA`. Falls back to dark green (#006400) with a warning when unparseable.
+    /// `#RRGGBB` or `#RRGGBBAA`. Falls back to amber (#b38115) with a warning when unparseable.
     func focusedWindowBorderColor() -> NSColor {
-        let fallback = NSColor(hexString: "#006400")!
+        let fallback = NSColor(hexString: "#b38115")!
         guard let hex = storage.object(forKey: .focusedWindowBorderColor) as? String else {
             return fallback
         }
         guard let color = NSColor(hexString: hex) else {
-            log.warning("Unparseable focused-window-border-color: \(hex); using #006400")
+            log.warning("Unparseable focused-window-border-color: \(hex); using #b38115")
             return fallback
         }
         return color

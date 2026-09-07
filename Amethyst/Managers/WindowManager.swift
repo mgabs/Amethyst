@@ -1179,6 +1179,7 @@ extension WindowManager {
         focusedWindowBorder.show(
             around: frame,
             below: window.cgID(),
+            in: window.spaceID(),
             color: userConfiguration.focusedWindowBorderColor(),
             width: userConfiguration.focusedWindowBorderWidth()
         )
