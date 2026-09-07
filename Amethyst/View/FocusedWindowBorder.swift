@@ -21,22 +21,28 @@ final class FocusedWindowBorder: NSWindow {
         // Normal level on purpose: `order(.below, relativeTo:)` only interleaves windows within the same level band,
         // and the app windows we outline live at normal level.
         level = .normal
-        // `.transient` hides the outline from Mission Control and Exposé; `.canJoinAllSpaces` keeps it on every space.
-        collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
+        // `.stationary` keeps the outline out of Mission Control and Exposé, like the desktop. It joins the focused
+        // window's space explicitly in `show` rather than every space: with "Displays have separate Spaces" each display
+        // has its own current space, and a `.canJoinAllSpaces` outline did not follow focus to a second display.
+        collectionBehavior = [.stationary, .ignoresCycle]
         borderView.wantsLayer = true
         contentView = borderView
     }
 
-    /// Positions the outline around `frame` (AppKit coordinates) and orders it just beneath the window with `windowNumber`.
-    /// Main thread only, like every AppKit window call.
-    func show(around frame: CGRect, below windowNumber: CGWindowID, color: NSColor, width: CGFloat) {
+    /// Positions the outline around `frame` (AppKit coordinates), moves it into `spaceID` and orders it just beneath
+    /// the window with `target`. Main thread only, like every AppKit window call.
+    func show(around frame: CGRect, below target: CGWindowID, in spaceID: CGSSpaceID?, color: NSColor, width: CGFloat) {
         dispatchPrecondition(condition: .onQueue(.main))
         borderView.color = color
         borderView.width = width
         setFrame(FocusedWindowBorder.borderFrame(around: frame, width: width), display: true)
+        // A window can only be ordered relative to a window in the same space. A no-op when already there.
+        if let spaceID = spaceID, windowNumber > 0 {
+            CGSMoveWindowsToManagedSpace(CGSMainConnectionID(), [NSNumber(value: windowNumber)] as CFArray, spaceID)
+        }
         // Foreign window numbers are accepted and this also orders the window on screen on its first call. If the
         // target sits at another level the call has no effect and the outline stays wherever it last was.
-        order(.below, relativeTo: Int(windowNumber))
+        order(.below, relativeTo: Int(target))
     }
 
     /// Main thread only.
@@ -66,7 +72,7 @@ final class FocusedWindowBorder: NSWindow {
 
 /// Strokes a rounded rectangle in the outer band of its bounds.
 private final class BorderView: NSView {
-    var color: NSColor = .systemGreen
+    var color: NSColor = NSColor(hexString: "#b38115") ?? .systemOrange
     var width: CGFloat = 4
 
     override func draw(_ dirtyRect: NSRect) {
