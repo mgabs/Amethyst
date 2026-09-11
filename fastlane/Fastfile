@@ -44,7 +44,7 @@ lane :mac do
     archive_path: "#{ARCHIVE_DIR}/Amethyst.xcarchive",
     derived_data_path: DERIVED_DATA_DIR,
     export_method: "mac-application",
-    xcargs: "DEVELOPMENT_TEAM='7X39ZNJZMN' CURRENT_PROJECT_VERSION=#{BUILD_NUMBER}"
+    xcargs: "DEVELOPMENT_TEAM='RWS8MT5728' CURRENT_PROJECT_VERSION=#{BUILD_NUMBER}"
   )
 
   id = get_version_identifier
