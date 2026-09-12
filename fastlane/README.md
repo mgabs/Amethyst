@@ -27,7 +27,7 @@ Build Amethyst for release with signing
 [bundle exec] fastlane local
 ```
 
-Build a local debug version of Amethyst without code signing
+Build a local debug version of Amethyst
 
 ### local_release
 
@@ -35,7 +35,7 @@ Build a local debug version of Amethyst without code signing
 [bundle exec] fastlane local_release
 ```
 
-Build a local release (optimized) version of Amethyst without code signing
+Build a local release (optimized) version of Amethyst
 
 ### test
 

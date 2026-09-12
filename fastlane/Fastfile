@@ -58,8 +58,13 @@ lane :mac do
   Dir.chdir("..") { FileUtils.mv("#{ARTIFACTS_DIR}/Amethyst.app.dSYM.zip", "#{ARTIFACTS_DIR}/Amethyst-#{id}.dSYM.zip") }
 end
 
-desc "Build a local debug version of Amethyst without code signing"
+desc "Build a local debug version of Amethyst"
 lane :local do
+  # Signed with the "Local Self-Signed" identity (created via Keychain Access, no Apple
+  # Developer account needed) instead of ad hoc or the project's team identity. Ad hoc
+  # signatures get a new code identity on every build, which invalidates any TCC grants
+  # (e.g. Accessibility) tied to the previous build's signature; a stable local certificate
+  # keeps the same identity across rebuilds so grants persist.
   build_app(
     workspace: "./Amethyst.xcworkspace",
     scheme: "Amethyst",
@@ -68,13 +73,14 @@ lane :local do
     output_directory: ARTIFACTS_DIR,
     output_name: "Amethyst-Debug",
     derived_data_path: DERIVED_DATA_DIR,
-    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+    xcargs: "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Local Self-Signed' DEVELOPMENT_TEAM='' PROVISIONING_PROFILE_SPECIFIER=''",
     export_method: "mac-application"
   )
 end
 
-desc "Build a local release (optimized) version of Amethyst without code signing"
+desc "Build a local release (optimized) version of Amethyst"
 lane :local_release do
+  # See :local above re: signing with a stable local self-signed identity instead of ad hoc.
   build_app(
     workspace: "./Amethyst.xcworkspace",
     scheme: "Amethyst",
@@ -83,7 +89,7 @@ lane :local_release do
     output_directory: ARTIFACTS_DIR,
     output_name: "Amethyst-Local-Release",
     derived_data_path: DERIVED_DATA_DIR,
-    xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+    xcargs: "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Local Self-Signed' DEVELOPMENT_TEAM='' PROVISIONING_PROFILE_SPECIFIER=''",
     export_method: "mac-application"
   )
 end
