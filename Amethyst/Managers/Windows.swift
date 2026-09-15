@@ -23,8 +23,17 @@ extension WindowManager {
         private var activeIDCache: Set<CGWindowID> = Set()
         private var deactivatedPIDs: Set<pid_t> = Set()
         private var floatingMap: [Window.WindowID: Bool] = [:]
+        private(set) var lastKnownScreenByWindowID: [Window.WindowID: Screen] = [:]
 
         // MARK: Window Filters
+
+        func screenForWindow(_ window: Window) -> Screen? {
+            if let currentScreen = window.screen() {
+                lastKnownScreenByWindowID[window.id()] = currentScreen
+                return currentScreen
+            }
+            return lastKnownScreenByWindowID[window.id()]
+        }
 
         func window(withID id: Window.WindowID) -> Window? {
             return windowsByID[id]
@@ -89,7 +98,11 @@ extension WindowManager {
         private func activeWindows(matchingScreenID screenID: String, spaceID: CGSSpaceID) -> [Window] {
             return windows.filter { window in
                 // In-memory checks first.
-                guard !isWindowFloating(window), !isWindowHidden(window), activeIDCache.contains(window.cgID()) else {
+                guard !isWindowFloating(window), !isWindowHidden(window) else {
+                    return false
+                }
+
+                if !activeIDCache.isEmpty && !activeIDCache.contains(window.cgID()) {
                     return false
                 }
 
@@ -98,7 +111,8 @@ extension WindowManager {
                     return false
                 }
 
-                return window.screen()?.screenID() == screenID
+                let screen = screenForWindow(window)
+                return screen?.screenID() == screenID
             }
         }
 
@@ -138,6 +152,8 @@ extension WindowManager {
         }
 
         func remove(window: Window) {
+            lastKnownScreenByWindowID.removeValue(forKey: window.id())
+
             for (_, lastMainWindow) in lastMainWindows where lastMainWindow?.id() == window.id() {
                 if let currentFocusedSpace = Window.currentFocusedSpace() {
                     let secondWindow = activeWindowOnCurrentScreen(atIndex: 1)
@@ -250,6 +266,7 @@ extension WindowManager {
         }
 
         func windowSet(forActiveWindowsOnScreen screen: Screen, on space: Space? = nil) -> WindowSet<Window> {
+            regenerateActiveIDCache()
             if let space = space {
                 return windowSet(forWindows: activeWindows(onScreen: screen, onSpace: space.id))
             } else {
@@ -258,6 +275,7 @@ extension WindowManager {
         }
 
         func windowSet(forActiveWindowsOnSpace spaceID: CGSSpaceID, onScreen screen: Screen) -> WindowSet<Window> {
+            regenerateActiveIDCache()
             return windowSet(forWindows: activeWindows(onScreen: screen, onSpace: spaceID))
         }
 

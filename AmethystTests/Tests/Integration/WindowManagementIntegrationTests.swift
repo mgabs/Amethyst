@@ -156,6 +156,25 @@ class WindowManagementIntegrationTests: QuickSpec {
                 expect(windows.window(withID: windowC.id())).to(equal(windowC))
             }
 
+            it("remembers last known screen for a window even when current screen query fails") {
+                let windows = Windows()
+                let window = TestWindow(element: nil)!
+                let screen = TestScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+                window.currentScreen = screen
+
+                windows.add(window: window, atFront: false)
+                expect(windows.screenForWindow(window)).to(equal(screen))
+
+                // Simulate window destruction where window.screen() returns nil
+                window.currentScreen = nil
+                expect(window.screen()).to(beNil())
+                expect(windows.screenForWindow(window)).to(equal(screen))
+
+                // Removal clears the cached screen
+                windows.remove(window: window)
+                expect(windows.screenForWindow(window)).to(beNil())
+            }
+
             it("marks only the currently focused window as focused in a window set") {
                 let windows = Windows()
                 let windowA = TestWindow(element: nil)!

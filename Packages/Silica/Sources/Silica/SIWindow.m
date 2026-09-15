@@ -74,7 +74,14 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 }
 
 - (BOOL)isNormalWindow {
-    return [[self subrole] isEqualToString:(__bridge NSString *)kAXStandardWindowSubrole];
+    NSString *subrole = [self subrole];
+    if ([subrole isEqualToString:(__bridge NSString *)kAXStandardWindowSubrole]) {
+        return YES;
+    }
+    if (!subrole || [subrole isEqualToString:(__bridge NSString *)kAXUnknownSubrole] || [subrole isEqualToString:@"AXUnknown"]) {
+        return [self isMovable] || [self isResizable];
+    }
+    return NO;
 }
 
 - (BOOL)isSheet {
