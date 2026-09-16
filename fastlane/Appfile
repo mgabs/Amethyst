@@ -1,7 +1,7 @@
 app_identifier("com.amethyst.Amethyst") # The bundle identifier of your app
 apple_id(ENV["APPLE_ID"]) # Your Apple email address (fallback; prefer ASC API key on CI)
 
-team_id("7X39ZNJZMN") # Developer Portal Team ID
+team_id("RWS8MT5728") # Developer Portal Team ID
 
 # For more information about the Appfile, see:
 #     https://docs.fastlane.tools/advanced/#appfile
