@@ -338,6 +338,8 @@ extension WindowManager {
 
     fileprivate func remove(window: Window) {
         log.debug("Removing window: \(window)")
+        let targetScreen = windows.screenForWindow(window)
+
         pendingTabDetection.removeValue(forKey: window.id())
         earlyFocusedWindows.remove(window.id())
         // Delegate to WindowTracker (dual tracking)
@@ -347,7 +349,10 @@ extension WindowManager {
             focusManager.clearFocus()
         }
 
-        if let screen = window.screen() {
+        windows.remove(window: window)
+        windows.regenerateActiveIDCache()
+
+        if let screen = targetScreen {
             distributeEventToScreen(screen, change: .remove(window: window))
             markScreenForReflow(screen)
         } else {
@@ -355,8 +360,6 @@ extension WindowManager {
             markAllScreensForReflow()
         }
 
-        windows.regenerateActiveIDCache()
-        windows.remove(window: window)
         updateFocusedWindowBorder()
     }
 
@@ -803,11 +806,13 @@ extension WindowManager: MouseStateKeeperDelegate {
             }
         }
 
-        // Ignore if there is no window at that point
-        guard let secondWindow = WindowsInformation.alternateWindowForScreenAtPoint(pointerLocation, withWindows: windows, butNot: draggedWindow) else {
+        // If an alternate window is found at that point, swap with it
+        if let secondWindow = WindowsInformation.alternateWindowForScreenAtPoint(pointerLocation, withWindows: windows, butNot: draggedWindow) {
+            executeTransition(.switchWindows(draggedWindow, secondWindow))
             return
         }
-        executeTransition(.switchWindows(draggedWindow, secondWindow))
+
+        markScreenForReflow(screen)
     }
 
     func recommendReflow() {
@@ -882,10 +887,13 @@ extension WindowManager: ApplicationObservationDelegate {
             updateFocusedWindowBorder(focused: window)
         }
         guard userConfiguration.mouseSwapsWindows() else {
+            if let screen = windows.screenForWindow(window) {
+                markScreenForReflow(screen)
+            }
             return
         }
 
-        guard let screen = window.screen(), activeWindows(on: screen).contains(window) else {
+        guard let screen = windows.screenForWindow(window), activeWindows(on: screen).contains(window) else {
             return
         }
 
