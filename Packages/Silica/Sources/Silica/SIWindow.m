@@ -25,12 +25,30 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
     CFTypeRef applicationRef = NULL;
     AXError error = AXUIElementCopyAttributeValue([SISystemWideElement systemWideElement].axElementRef, kAXFocusedApplicationAttribute, &applicationRef);
-    if (error != kAXErrorSuccess || !applicationRef) return nil;
+    if (error != kAXErrorSuccess || !applicationRef) {
+        NSRunningApplication *frontmostApp = [NSWorkspace sharedWorkspace].frontmostApplication;
+        if (frontmostApp) {
+            applicationRef = AXUIElementCreateApplication(frontmostApp.processIdentifier);
+        }
+    }
+    if (!applicationRef) return nil;
 
     CFTypeRef windowRef = NULL;
     error = AXUIElementCopyAttributeValue(applicationRef, (CFStringRef)NSAccessibilityFocusedWindowAttribute, &windowRef);
+    if (error != kAXErrorSuccess || !windowRef) {
+        error = AXUIElementCopyAttributeValue(applicationRef, (CFStringRef)NSAccessibilityMainWindowAttribute, &windowRef);
+    }
+    if (error != kAXErrorSuccess || !windowRef) {
+        CFTypeRef windowsRef = NULL;
+        if (AXUIElementCopyAttributeValue(applicationRef, (CFStringRef)NSAccessibilityWindowsAttribute, &windowsRef) == kAXErrorSuccess && windowsRef) {
+            NSArray *windows = CFBridgingRelease(windowsRef);
+            if (windows.count > 0) {
+                windowRef = CFBridgingRetain(windows.firstObject);
+            }
+        }
+    }
     CFRelease(applicationRef);
-    if (error != kAXErrorSuccess || !windowRef) return nil;
+    if (!windowRef) return nil;
 
     SIWindow *window = [[SIWindow alloc] initWithAXElement:windowRef];
     CFRelease(windowRef);
