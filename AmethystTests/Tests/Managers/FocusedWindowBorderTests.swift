@@ -33,6 +33,13 @@ final class FocusedWindowBorderTests: QuickSpec {
                 expect(FocusedWindowBorder.isEligible(tracked: false, managed: true, spaceType: CGSSpaceTypeUser)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: false, spaceType: CGSSpaceTypeUser)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: nil)).to(beFalse())
+
+                // Space matching
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 1, screenSpaceID: 1)).to(beTrue())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 2, screenSpaceID: 1)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: nil, screenSpaceID: 1)).to(beTrue())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 1, screenSpaceID: nil)).to(beTrue())
+                expect(FocusedWindowBorder.isEligible(tracked: false, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 1, screenSpaceID: 1)).to(beFalse())
             }
 
             it("configures layer properties instead of CPU drawing") {

@@ -80,10 +80,22 @@ final class FocusedWindowBorder: NSWindow {
         return frame.insetBy(dx: -width, dy: -width)
     }
 
-    /// Only windows Amethyst manages, on a user space, get an outline. Untracked windows (Spotlight, ignored apps)
-    /// and fullscreen spaces do not.
-    static func isEligible(tracked: Bool, managed: Bool, spaceType: CGSSpaceType?) -> Bool {
-        return tracked && managed && spaceType == CGSSpaceTypeUser
+    /// Only windows Amethyst manages, on a user space, get an outline. Untracked windows (Spotlight, ignored apps),
+    /// fullscreen spaces, and windows that have moved to a different space do not.
+    static func isEligible(
+        tracked: Bool,
+        managed: Bool,
+        spaceType: CGSSpaceType?,
+        windowSpaceID: CGSSpaceID? = nil,
+        screenSpaceID: CGSSpaceID? = nil
+    ) -> Bool {
+        guard tracked && managed && spaceType == CGSSpaceTypeUser else {
+            return false
+        }
+        if let windowSpaceID = windowSpaceID, let screenSpaceID = screenSpaceID {
+            return windowSpaceID == screenSpaceID
+        }
+        return true
     }
 }
 
