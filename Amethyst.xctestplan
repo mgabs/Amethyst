@@ -13,6 +13,7 @@
     }
   ],
   "defaultOptions" : {
+    "codeCoverage" : true,
     "targetForVariableExpansion" : {
       "containerPath" : "container:Amethyst.xcodeproj",
       "identifier" : "402DB6DD1742E41A00D1C936",

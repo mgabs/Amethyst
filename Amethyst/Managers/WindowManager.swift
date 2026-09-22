@@ -205,6 +205,7 @@ final class WindowManager<Application: ApplicationType>: NSObject, Codable {
     }
 
     @objc func activeSpaceDidChange(_ notification: Notification) {
+        focusedWindowBorder.hide()
         // Update spaces across screens so that events get distributed to the correct layouts
         screens.updateSpaces()
 
@@ -348,6 +349,7 @@ extension WindowManager {
         if focusManager.isFocused(window: window) {
             focusManager.clearFocus()
         }
+        focusedWindowBorder.hideIfTargetMatches(window.cgID())
 
         windows.remove(window: window)
         windows.regenerateActiveIDCache()
@@ -866,6 +868,11 @@ extension WindowManager: ApplicationObservationDelegate {
 //        doMouseFollowsFocus(focusedWindow: window)
     }
 
+    func applicationDidLoseFocus(_ application: AnyApplication<Application>) {
+        focusManager.clearFocus()
+        updateFocusedWindowBorder()
+    }
+
     func application(_ application: AnyApplication<Application>, didFindPotentiallyNewWindow window: Window) {
         guard !windows.isWindowTracked(window) else {
             return
@@ -1018,6 +1025,7 @@ extension WindowManager: WindowTransitionTarget {
             markScreenForReflow(screen)
 
             window.move(toSpaceAtIndex: UInt(targetSpaceIndex + 1))
+            focusedWindowBorder.hideIfTargetMatches(window.cgID())
 
             distributeEventToScreen(targetScreen, change: .add(window: window), on: targetSpace)
             markScreenForReflow(targetScreen, on: targetSpace)
@@ -1169,7 +1177,9 @@ extension WindowManager {
               FocusedWindowBorder.isEligible(
                   tracked: true,
                   managed: window.shouldBeManaged(),
-                  spaceType: window.screen()?.currentSpace()?.type
+                  spaceType: window.screen()?.currentSpace()?.type,
+                  windowSpaceID: window.spaceID(),
+                  screenSpaceID: window.screen()?.currentSpace()?.id
               ),
               let primaryScreen = NSScreen.screens.first
         else {

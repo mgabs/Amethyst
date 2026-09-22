@@ -29,13 +29,24 @@ final class FocusedWindowBorder: NSWindow {
         contentView = borderView
     }
 
+    private(set) var targetWindowID: CGWindowID?
+
     /// Positions the outline around `frame` (AppKit coordinates), moves it into `spaceID` and orders it just beneath
-    /// the window with `target`. Main thread only, like every AppKit window call.
+    /// the window with `target`. Safe to call from any thread; dispatches to main queue if needed.
     func show(around frame: CGRect, below target: CGWindowID, in spaceID: CGSSpaceID?, color: NSColor, width: CGFloat) {
-        dispatchPrecondition(condition: .onQueue(.main))
-        borderView.color = color
-        borderView.width = width
-        setFrame(FocusedWindowBorder.borderFrame(around: frame, width: width), display: true)
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.show(around: frame, below: target, in: spaceID, color: color, width: width) }
+            return
+        }
+        targetWindowID = target
+        borderView.update(color: color, width: width)
+        let newFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
+        if self.frame != newFrame {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            setFrame(newFrame, display: true)
+            CATransaction.commit()
+        }
         // A window can only be ordered relative to a window in the same space. A no-op when already there.
         if let spaceID = spaceID, windowNumber > 0 {
             CGSMoveWindowsToManagedSpace(CGSMainConnectionID(), [NSNumber(value: windowNumber)] as CFArray, spaceID)
@@ -45,10 +56,26 @@ final class FocusedWindowBorder: NSWindow {
         order(.below, relativeTo: Int(target))
     }
 
-    /// Main thread only.
+    /// Safe to call from any thread; dispatches to main queue if needed.
     func hide() {
-        dispatchPrecondition(condition: .onQueue(.main))
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.hide() }
+            return
+        }
+        targetWindowID = nil
         orderOut(nil)
+    }
+
+    /// Hides the outline immediately if it is currently displayed around the window with `windowID`.
+    /// Safe to call from any thread; dispatches to main queue if needed.
+    func hideIfTargetMatches(_ windowID: CGWindowID) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.hideIfTargetMatches(windowID) }
+            return
+        }
+        if targetWindowID == windowID {
+            hide()
+        }
     }
 
     // MARK: Geometry
@@ -63,28 +90,36 @@ final class FocusedWindowBorder: NSWindow {
         return frame.insetBy(dx: -width, dy: -width)
     }
 
-    /// Only windows Amethyst manages, on a user space, get an outline. Untracked windows (Spotlight, ignored apps)
-    /// and fullscreen spaces do not.
-    static func isEligible(tracked: Bool, managed: Bool, spaceType: CGSSpaceType?) -> Bool {
-        return tracked && managed && spaceType == CGSSpaceTypeUser
+    /// Only windows Amethyst manages, on a user space, get an outline. Untracked windows (Spotlight, ignored apps),
+    /// fullscreen spaces, and windows that have moved to a different space do not.
+    static func isEligible(
+        tracked: Bool,
+        managed: Bool,
+        spaceType: CGSSpaceType?,
+        windowSpaceID: CGSSpaceID? = nil,
+        screenSpaceID: CGSSpaceID? = nil
+    ) -> Bool {
+        guard tracked && managed && spaceType == CGSSpaceTypeUser else {
+            return false
+        }
+        if let windowSpaceID = windowSpaceID, let screenSpaceID = screenSpaceID {
+            return windowSpaceID == screenSpaceID
+        }
+        return true
     }
 }
 
-/// Strokes a rounded rectangle in the outer band of its bounds.
+/// Layer-backed view displaying the focused outline via CALayer border properties.
 private final class BorderView: NSView {
-    var color: NSColor = NSColor(hexString: "#b38115") ?? .systemOrange
-    var width: CGFloat = 4
-
-    override func draw(_ dirtyRect: NSRect) {
-        guard width > 0 else {
-            return
-        }
-        // Inset by half the width so the whole stroke lands inside our bounds; the app window covers the inner half.
-        // macOS window corners are about 10pt; keep the stroke concentric with them.
-        let radius = 10 + width / 2
-        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2), xRadius: radius, yRadius: radius)
-        path.lineWidth = width
-        color.setStroke()
-        path.stroke()
+    func update(color: NSColor, width: CGFloat) {
+        wantsLayer = true
+        guard let layer = layer else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.masksToBounds = true
+        layer.borderWidth = width
+        layer.borderColor = color.cgColor
+        layer.cornerRadius = 10 + width / 2
+        CATransaction.commit()
     }
 }

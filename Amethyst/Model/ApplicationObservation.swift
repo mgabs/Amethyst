@@ -82,6 +82,18 @@ protocol ApplicationObservationDelegate: AnyObject {
          - application: The application that was activated.
      */
     func applicationDidActivate(_ application: AnyApplication<Application>)
+
+    /**
+     Called when the application has lost window focus.
+     
+     - Parameters:
+         - application: The application that lost focus.
+     */
+    func applicationDidLoseFocus(_ application: AnyApplication<Application>)
+}
+
+extension ApplicationObservationDelegate {
+    func applicationDidLoseFocus(_ application: AnyApplication<Application>) {}
 }
 
 /**
@@ -336,6 +348,7 @@ struct ApplicationObservation<Delegate: ApplicationObservationDelegate> {
             delegate?.application(application, didRemoveWindow: window)
         case .focusedWindowChanged:
             guard let focusedWindow = Window.currentlyFocused() else {
+                delegate?.applicationDidLoseFocus(application)
                 return
             }
             delegate?.application(application, didFocusWindow: focusedWindow)

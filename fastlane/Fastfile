@@ -13,7 +13,7 @@
 default_platform(:mac)
 
 # Build directories
-BUILD_DIR = "./build"
+BUILD_DIR = File.expand_path("../build", __dir__)
 ARTIFACTS_DIR = "#{BUILD_DIR}/artifacts"
 DERIVED_DATA_DIR = "#{BUILD_DIR}/derived_data"
 ARCHIVE_DIR = "#{BUILD_DIR}/archive"

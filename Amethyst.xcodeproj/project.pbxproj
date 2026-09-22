@@ -14,6 +14,8 @@
 		AM0000001000000000000005 /* FocusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000005 /* FocusManager.swift */; };
 		AM0000001000000000000006 /* FocusManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000006 /* FocusManagerTests.swift */; };
 		AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */; };
+		AM0000001000000000000008 /* FocusedWindowBorderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000008 /* FocusedWindowBorderTests.swift */; };
+		AM0000001000000000000009 /* WindowManagerBorderLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */; };
 		BA8155C25C8B41A0A230D629 /* Validators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EDD98625B1473396B76236 /* Validators.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ConfigurationValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E1D0C9B8A7F6E5D4C3B2A1 /* ConfigurationValidator.swift */; };
 		EBACB8576D7F4C249B4B8DE7 /* ConfigurationValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E0EE38474C4208941499F8 /* ConfigurationValidatorTests.swift */; };
@@ -264,6 +266,8 @@
 		AM0000002000000000000005 /* FocusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManager.swift; sourceTree = "<group>"; };
 		AM0000002000000000000006 /* FocusManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManagerTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementIntegrationTests.swift; sourceTree = "<group>"; };
+		AM0000002000000000000008 /* FocusedWindowBorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedWindowBorderTests.swift; sourceTree = "<group>"; };
+		AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagerBorderLifecycleTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -523,6 +527,8 @@
 				AM0000002000000000000002 /* ApplicationMonitorTests.swift */,
 				AM0000002000000000000004 /* WindowTrackerTests.swift */,
 				AM0000002000000000000006 /* FocusManagerTests.swift */,
+				AM0000002000000000000008 /* FocusedWindowBorderTests.swift */,
+				AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */,
 				4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */,
 				40EC47F323F3A30100048B4F /* ScreenManagerTests.swift */,
 				56D75164303C5BD178EF7901 /* SpaceIndicatorManagerTests.swift */,
@@ -878,6 +884,8 @@
 				AM0000001000000000000004 /* WindowTrackerTests.swift in Sources */,
 				AM0000001000000000000006 /* FocusManagerTests.swift in Sources */,
 				AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */,
+				AM0000001000000000000008 /* FocusedWindowBorderTests.swift in Sources */,
+				AM0000001000000000000009 /* WindowManagerBorderLifecycleTests.swift in Sources */,
 				4085824C1EA673AE0075A2C3 /* HotKeyManagerTests.swift in Sources */,
 				40578C1B232DC607006553A0 /* TestScreen.swift in Sources */,
 				40B0D145232D2E630021E0A7 /* FullscreenLayoutTests.swift in Sources */,
@@ -1077,7 +1085,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11;
-				MARKETING_VERSION = 0.25.3;
+				MARKETING_VERSION = 0.25.4;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"DEBUG\"";
@@ -1120,7 +1128,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11;
-				MARKETING_VERSION = 0.25.3;
+				MARKETING_VERSION = 0.25.4;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++14";
 				ONLY_ACTIVE_ARCH = NO;
