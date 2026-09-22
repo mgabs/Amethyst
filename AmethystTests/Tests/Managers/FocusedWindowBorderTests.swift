@@ -34,6 +34,21 @@ final class FocusedWindowBorderTests: QuickSpec {
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: false, spaceType: CGSSpaceTypeUser)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: nil)).to(beFalse())
             }
+
+            it("configures layer properties instead of CPU drawing") {
+                let border = FocusedWindowBorder()
+                let targetFrame = CGRect(x: 100, y: 100, width: 200, height: 100)
+                border.show(around: targetFrame, below: 1234, in: 1, color: .red, width: 3)
+
+                guard let borderView = border.contentView else {
+                    fail("Missing contentView")
+                    return
+                }
+                expect(borderView.wantsLayer).to(beTrue())
+                expect(borderView.layer?.borderWidth).to(equal(3))
+                expect(border.frame).to(equal(FocusedWindowBorder.borderFrame(around: targetFrame, width: 3)))
+                border.hide()
+            }
         }
     }
 }

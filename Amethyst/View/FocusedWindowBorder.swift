@@ -33,9 +33,14 @@ final class FocusedWindowBorder: NSWindow {
     /// the window with `target`. Main thread only, like every AppKit window call.
     func show(around frame: CGRect, below target: CGWindowID, in spaceID: CGSSpaceID?, color: NSColor, width: CGFloat) {
         dispatchPrecondition(condition: .onQueue(.main))
-        borderView.color = color
-        borderView.width = width
-        setFrame(FocusedWindowBorder.borderFrame(around: frame, width: width), display: true)
+        borderView.update(color: color, width: width)
+        let newFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
+        if self.frame != newFrame {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            setFrame(newFrame, display: true)
+            CATransaction.commit()
+        }
         // A window can only be ordered relative to a window in the same space. A no-op when already there.
         if let spaceID = spaceID, windowNumber > 0 {
             CGSMoveWindowsToManagedSpace(CGSMainConnectionID(), [NSNumber(value: windowNumber)] as CFArray, spaceID)
@@ -70,21 +75,25 @@ final class FocusedWindowBorder: NSWindow {
     }
 }
 
-/// Strokes a rounded rectangle in the outer band of its bounds.
+/// Layer-backed view displaying the focused outline via CALayer border properties.
 private final class BorderView: NSView {
-    var color: NSColor = NSColor(hexString: "#b38115") ?? .systemOrange
-    var width: CGFloat = 4
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.masksToBounds = true
+    }
 
-    override func draw(_ dirtyRect: NSRect) {
-        guard width > 0 else {
-            return
-        }
-        // Inset by half the width so the whole stroke lands inside our bounds; the app window covers the inner half.
-        // macOS window corners are about 10pt; keep the stroke concentric with them.
-        let radius = 10 + width / 2
-        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2), xRadius: radius, yRadius: radius)
-        path.lineWidth = width
-        color.setStroke()
-        path.stroke()
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func update(color: NSColor, width: CGFloat) {
+        guard let layer = layer else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.borderWidth = width
+        layer.borderColor = color.cgColor
+        layer.cornerRadius = 10 + width / 2
+        CATransaction.commit()
     }
 }
