@@ -49,6 +49,21 @@ final class FocusedWindowBorderTests: QuickSpec {
                 expect(border.frame).to(equal(FocusedWindowBorder.borderFrame(around: targetFrame, width: 3)))
                 border.hide()
             }
+
+            it("tracks target window ID and allows conditional hide") {
+                let border = FocusedWindowBorder()
+                let targetID: CGWindowID = 999
+                border.show(around: CGRect(x: 0, y: 0, width: 100, height: 100), below: targetID, in: 1, color: .blue, width: 2)
+                expect(border.targetWindowID).to(equal(targetID))
+
+                // Hiding non-matching target does nothing
+                border.hideIfTargetMatches(888)
+                expect(border.targetWindowID).to(equal(targetID))
+
+                // Hiding matching target resets and hides
+                border.hideIfTargetMatches(999)
+                expect(border.targetWindowID).to(beNil())
+            }
         }
     }
 }

@@ -29,10 +29,13 @@ final class FocusedWindowBorder: NSWindow {
         contentView = borderView
     }
 
+    private(set) var targetWindowID: CGWindowID?
+
     /// Positions the outline around `frame` (AppKit coordinates), moves it into `spaceID` and orders it just beneath
     /// the window with `target`. Main thread only, like every AppKit window call.
     func show(around frame: CGRect, below target: CGWindowID, in spaceID: CGSSpaceID?, color: NSColor, width: CGFloat) {
         dispatchPrecondition(condition: .onQueue(.main))
+        targetWindowID = target
         borderView.update(color: color, width: width)
         let newFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
         if self.frame != newFrame {
@@ -53,7 +56,16 @@ final class FocusedWindowBorder: NSWindow {
     /// Main thread only.
     func hide() {
         dispatchPrecondition(condition: .onQueue(.main))
+        targetWindowID = nil
         orderOut(nil)
+    }
+
+    /// Hides the outline immediately if it is currently displayed around the window with `windowID`.
+    func hideIfTargetMatches(_ windowID: CGWindowID) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        if targetWindowID == windowID {
+            hide()
+        }
     }
 
     // MARK: Geometry
