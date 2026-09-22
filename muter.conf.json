@@ -1,0 +1,18 @@
+{
+  "arguments": [
+    "-workspace",
+    "Amethyst.xcworkspace",
+    "-scheme",
+    "Amethyst",
+    "-testPlan",
+    "Amethyst",
+    "test",
+    "-only-testing:AmethystTests/FocusedWindowBorderTests",
+    "-only-testing:AmethystTests/WindowManagerBorderLifecycleTests"
+  ],
+  "executable": "/usr/bin/xcodebuild",
+  "excludeList": [],
+  "filesToMutate": [
+    "Amethyst/View/FocusedWindowBorder.swift"
+  ]
+}
