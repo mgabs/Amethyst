@@ -101,20 +101,12 @@ final class FocusedWindowBorder: NSWindow {
 
 /// Layer-backed view displaying the focused outline via CALayer border properties.
 private final class BorderView: NSView {
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        wantsLayer = true
-        layer?.masksToBounds = true
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
     func update(color: NSColor, width: CGFloat) {
+        wantsLayer = true
         guard let layer = layer else { return }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        layer.masksToBounds = true
         layer.borderWidth = width
         layer.borderColor = color.cgColor
         layer.cornerRadius = 10 + width / 2
