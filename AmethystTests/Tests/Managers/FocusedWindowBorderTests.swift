@@ -71,6 +71,22 @@ final class FocusedWindowBorderTests: QuickSpec {
                 border.hideIfTargetMatches(999)
                 expect(border.targetWindowID).to(beNil())
             }
+
+            it("handles calls safely from background threads") {
+                let border = FocusedWindowBorder()
+                let targetID: CGWindowID = 456
+                border.show(around: CGRect(x: 0, y: 0, width: 100, height: 100), below: targetID, in: 1, color: .purple, width: 2)
+
+                waitUntil(timeout: .seconds(2)) { done in
+                    DispatchQueue.global().async {
+                        border.hideIfTargetMatches(targetID)
+                        DispatchQueue.main.async {
+                            expect(border.targetWindowID).to(beNil())
+                            done()
+                        }
+                    }
+                }
+            }
         }
     }
 }

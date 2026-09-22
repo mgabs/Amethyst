@@ -32,9 +32,12 @@ final class FocusedWindowBorder: NSWindow {
     private(set) var targetWindowID: CGWindowID?
 
     /// Positions the outline around `frame` (AppKit coordinates), moves it into `spaceID` and orders it just beneath
-    /// the window with `target`. Main thread only, like every AppKit window call.
+    /// the window with `target`. Safe to call from any thread; dispatches to main queue if needed.
     func show(around frame: CGRect, below target: CGWindowID, in spaceID: CGSSpaceID?, color: NSColor, width: CGFloat) {
-        dispatchPrecondition(condition: .onQueue(.main))
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.show(around: frame, below: target, in: spaceID, color: color, width: width) }
+            return
+        }
         targetWindowID = target
         borderView.update(color: color, width: width)
         let newFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
@@ -53,16 +56,23 @@ final class FocusedWindowBorder: NSWindow {
         order(.below, relativeTo: Int(target))
     }
 
-    /// Main thread only.
+    /// Safe to call from any thread; dispatches to main queue if needed.
     func hide() {
-        dispatchPrecondition(condition: .onQueue(.main))
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.hide() }
+            return
+        }
         targetWindowID = nil
         orderOut(nil)
     }
 
     /// Hides the outline immediately if it is currently displayed around the window with `windowID`.
+    /// Safe to call from any thread; dispatches to main queue if needed.
     func hideIfTargetMatches(_ windowID: CGWindowID) {
-        dispatchPrecondition(condition: .onQueue(.main))
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.hideIfTargetMatches(windowID) }
+            return
+        }
         if targetWindowID == windowID {
             hide()
         }
