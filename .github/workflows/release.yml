@@ -41,6 +41,7 @@ jobs:
     env:
       VERSION: ${{ needs.version.outputs.tag }}
       HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
+      HAS_TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
       - uses: actions/checkout@v7
@@ -84,3 +85,56 @@ jobs:
           files: |
             build/artifacts/Amethyst-*.zip
             build/appcast.xml
+
+      - name: Update Homebrew Tap
+        if: env.HAS_TAP_TOKEN == 'true' && !contains(env.VERSION, '-')
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          ZIP_FILE=$(ls build/artifacts/Amethyst-v*-b*.zip | head -1)
+          ZIP_NAME=$(basename "$ZIP_FILE")
+          SEMVER=$(echo "$ZIP_NAME" | sed -E 's/Amethyst-v([0-9.]+)-b([0-9]+)\.zip/\1/')
+          BUILD_NUM=$(echo "$ZIP_NAME" | sed -E 's/Amethyst-v([0-9.]+)-b([0-9]+)\.zip/\2/')
+          SHA256=$(shasum -a 256 "$ZIP_FILE" | awk '{print $1}')
+
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/mgabs/homebrew-tap.git" tap-repo
+          mkdir -p tap-repo/Casks
+          cat <<EOF > tap-repo/Casks/amethyst.rb
+cask "amethyst" do
+  version "${SEMVER},${BUILD_NUM}"
+  sha256 "${SHA256}"
+
+  url "https://github.com/mgabs/Amethyst/releases/download/v#{version.csv.first}/Amethyst-v#{version.csv.first}-b#{version.csv.second}.zip"
+  name "Amethyst"
+  desc "Automatic tiling window manager similar to xmonad (mgabs fork)"
+  homepage "https://github.com/mgabs/Amethyst"
+
+  livecheck do
+    url "https://raw.githubusercontent.com/mgabs/Amethyst/master/build/appcast.xml"
+    strategy :sparkle
+  end
+
+  auto_updates true
+  depends_on macos: ">= :big_sur"
+
+  app "Amethyst.app"
+
+  zap trash: [
+    "~/Library/Application Support/Amethyst",
+    "~/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/com.amethyst.amethyst.sfl*",
+    "~/Library/Caches/com.amethyst.Amethyst",
+    "~/Library/Cookies/com.amethyst.Amethyst.binarycookies",
+    "~/Library/HTTPStorages/com.amethyst.Amethyst",
+    "~/Library/Preferences/com.amethyst.Amethyst.plist",
+  ]
+end
+EOF
+
+          cd tap-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/amethyst.rb
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(cask): update amethyst to ${SEMVER},${BUILD_NUM}"
+            git push origin HEAD
+          fi
