@@ -18,11 +18,16 @@ If you want to learn more about tiling window managers and the features of Ameth
 
 Download `Amethyst-vX.Y.Z-bNNNN.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
 
-The build is signed but not notarized, so on first launch macOS will say it could not verify the app. Click **Done**, then allow it under System Settings → Privacy & Security → **Open Anyway** (right-click → Open no longer bypasses this on macOS 15+). See [Troubleshooting](docs/troubleshooting.md#amethyst-wont-open-after-download) if it still refuses.
+The build is signed but not notarized, so on first launch macOS will block it with a malware warning (or error -128). To bypass:
+```bash
+xattr -dr com.apple.quarantine /Applications/Amethyst.app
+```
+Alternatively, click **Done** on the alert, then go to **System Settings → Privacy & Security → Open Anyway**. See [Troubleshooting](docs/troubleshooting.md#amethyst-wont-open-after-download) for details.
 
 In-app updates ("Check for Updates…" in the menu bar) are delivered from this fork's GitHub releases via Sparkle, starting with v0.24.4. Builds older than that still check upstream for updates, so replace them by hand once.
 
-`brew install --cask amethyst` installs the **upstream** Amethyst, not this fork.
+> [!NOTE]
+> `brew install --cask amethyst` installs the **upstream** Amethyst, not this fork. To distribute via Homebrew, a custom tap (`brew tap mgabs/tap && brew install --cask amethyst`) is required.
 
 Requires macOS 11+.
 

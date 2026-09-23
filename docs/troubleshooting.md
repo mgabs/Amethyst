@@ -24,16 +24,25 @@ To change this setting you can right click (or control click or whatever gesture
 
 ## Amethyst won't open after download!
 
-### "Apple could not verify Amethyst is free of malware"
+### "Apple could not verify Amethyst is free of malware" / Error -128
 
-Releases of this fork are signed but not notarized, so Gatekeeper blocks the first launch. Either right-click `Amethyst.app` and choose **Open**, or open System Settings → Privacy & Security, scroll to the Security section, and click **Open Anyway**. This is needed once per fresh download; in-app updates are not affected.
+Releases of this fork are signed but not notarized, so macOS Gatekeeper blocks the first launch. On macOS 15+ (Sequoia), right-click → Open no longer bypasses this, and launching via CLI or Finder triggers `_LSOpenURLsWithCompletionHandler() failed with error -128`.
+
+Either:
+1. Strip the quarantine attribute recursively via Terminal:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Amethyst.app
+   ```
+2. Or go to **System Settings → Privacy & Security**, scroll down to the **Security** section, and click **Open Anyway**.
+
+This is only needed once per manual download; in-app updates delivered via Sparkle are not affected.
 
 ### "Amethyst is damaged and can't be opened"
 
-Some browsers and archive tools leave a quarantine flag that Gatekeeper treats as damage. Clear it and launch again:
+Some browsers and archive tools leave a quarantine flag that Gatekeeper treats as damage. Clear it recursively and launch again:
 
 ```bash
-xattr -d com.apple.quarantine /Applications/Amethyst.app
+xattr -dr com.apple.quarantine /Applications/Amethyst.app
 ```
 
 ## Updates aren't working!
