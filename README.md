@@ -11,23 +11,32 @@ Tiling window manager for macOS along the lines of [xmonad](https://xmonad.org/)
 ![Windows](https://ianyh.com/amethyst/images/windows.png)
 
 If you want to learn more about tiling window managers and the features of Amethyst there are some great community resources on YouTube.
-
 [Boost your MacOS PRODUCTIVITY with Amethyst | Tiling Window Manager](https://www.youtube.com/watch?v=7Z9-Ry4yGNc)
 
 ## Getting Amethyst
 
+### Via Homebrew (Recommended)
+
+```bash
+brew install --cask mgabs/tap/amethyst
+```
+
+> [!NOTE]
+> `brew install --cask amethyst` installs the **upstream** Amethyst, not this fork. Always use `mgabs/tap/amethyst`.
+
+### Direct Download
+
 Download `Amethyst-vX.Y.Z-bNNNN.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
 
-The build is signed but not notarized, so on first launch macOS will block it with a malware warning (or error -128). To bypass:
+The build is signed but not notarized, so macOS Gatekeeper will block the first launch with a malware warning (error `-128`). To unblock, remove the quarantine flag in Terminal:
+
 ```bash
 xattr -dr com.apple.quarantine /Applications/Amethyst.app
 ```
-Alternatively, click **Done** on the alert, then go to **System Settings → Privacy & Security → Open Anyway**. See [Troubleshooting](docs/troubleshooting.md#amethyst-wont-open-after-download) for details.
+
+Alternatively, click **Done** on the dialog, then go to **System Settings → Privacy & Security → Open Anyway**. See [Troubleshooting](docs/troubleshooting.md#amethyst-wont-open-after-download) for details.
 
 In-app updates ("Check for Updates…" in the menu bar) are delivered from this fork's GitHub releases via Sparkle, starting with v0.24.4. Builds older than that still check upstream for updates, so replace them by hand once.
-
-> [!NOTE]
-> `brew install --cask amethyst` installs the **upstream** Amethyst, not this fork. To distribute via Homebrew, a custom tap (`brew tap mgabs/tap && brew install --cask amethyst`) is required.
 
 Requires macOS 11+.
 

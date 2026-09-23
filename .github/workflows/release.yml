@@ -127,6 +127,11 @@ cask "amethyst" do
     "~/Library/HTTPStorages/com.amethyst.Amethyst",
     "~/Library/Preferences/com.amethyst.Amethyst.plist",
   ]
+
+  caveats <<~EOS
+    If macOS blocks launch with a malware warning or error -128, run:
+      xattr -dr com.apple.quarantine /Applications/Amethyst.app
+  EOS
 end
 EOF
 
