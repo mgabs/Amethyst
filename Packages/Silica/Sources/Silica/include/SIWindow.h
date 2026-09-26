@@ -124,6 +124,16 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)moveToSpaceWithEvent:(NSEvent *)event;
 
+/**
+ *  Calculates the mouse drag point and modifier flags for throwing a window between spaces.
+ *  When hasButton is YES, targets the toolbar above the button with no modifier flags.
+ *  When hasButton is NO (e.g. borderless/hidden titlebar), targets the top border with Option modifier.
+ */
++ (CGPoint)dragPointForWindowFrame:(CGRect)windowFrame
+                       buttonFrame:(CGRect)buttonFrame
+                         hasButton:(BOOL)hasButton
+                          outFlags:(nullable CGEventFlags *)outFlags NS_SWIFT_NAME(dragPoint(windowFrame:buttonFrame:hasButton:outFlags:));
+
 #pragma mark Window Actions
 
 /**

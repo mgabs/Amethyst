@@ -21,4 +21,38 @@ final class SIWindowTests: XCTestCase {
         XCTAssertEqual(SIWindow.windowIDs(at: CGPoint(x: 120, y: 120), in: descriptions), [11] as [NSNumber])
         XCTAssertEqual(SIWindow.windowIDs(at: CGPoint(x: 1000, y: 1000), in: descriptions), [])
     }
+
+    func testDragPointWithStandardButton() {
+        let windowFrame = CGRect(x: 100, y: 50, width: 800, height: 600)
+        let buttonFrame = CGRect(x: 130, y: 56, width: 14, height: 14)
+        var flags: CGEventFlags = .maskCommand
+
+        let point = SIWindow.dragPoint(windowFrame: windowFrame, buttonFrame: buttonFrame, hasButton: true, outFlags: &flags)
+
+        XCTAssertEqual(point.x, 137, accuracy: 0.001)
+        XCTAssertEqual(point.y, 53, accuracy: 0.001)
+        XCTAssertEqual(flags.rawValue, 0)
+    }
+
+    func testDragPointWithoutButtonFallsBackToTopBorderWithOption() {
+        let windowFrame = CGRect(x: 100, y: 50, width: 800, height: 600)
+        var flags: CGEventFlags = []
+
+        let point = SIWindow.dragPoint(windowFrame: windowFrame, buttonFrame: .zero, hasButton: false, outFlags: &flags)
+
+        XCTAssertEqual(point.x, 500, accuracy: 0.001)
+        XCTAssertEqual(point.y, 52, accuracy: 0.001)
+        XCTAssertEqual(flags, .maskAlternate)
+    }
+
+    func testDragPointHandlesZeroOrigin() {
+        let windowFrame = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        var flags: CGEventFlags = []
+
+        let point = SIWindow.dragPoint(windowFrame: windowFrame, buttonFrame: .zero, hasButton: false, outFlags: &flags)
+
+        XCTAssertEqual(point.x, 500, accuracy: 0.001)
+        XCTAssertEqual(point.y, 2, accuracy: 0.001)
+        XCTAssertEqual(flags, .maskAlternate)
+    }
 }

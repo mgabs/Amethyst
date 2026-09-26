@@ -190,6 +190,29 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 
 #pragma mark Space
 
++ (CGPoint)dragPointForWindowFrame:(CGRect)windowFrame
+                       buttonFrame:(CGRect)buttonFrame
+                         hasButton:(BOOL)hasButton
+                          outFlags:(nullable CGEventFlags *)outFlags {
+    if (hasButton) {
+        if (outFlags) {
+            *outFlags = 0;
+        }
+        return CGPointMake(
+            CGRectGetMidX(buttonFrame),
+            windowFrame.origin.y + fabs(windowFrame.origin.y - CGRectGetMinY(buttonFrame)) / 2.0
+        );
+    } else {
+        if (outFlags) {
+            *outFlags = kCGEventFlagMaskAlternate;
+        }
+        return CGPointMake(
+            CGRectGetMidX(windowFrame),
+            windowFrame.origin.y + 2.0
+        );
+    }
+}
+
 - (void)moveToSpace:(NSUInteger)space {
     NSEvent *event = [SISystemWideElement eventForSwitchingToSpace:space];
     if (event == nil) return;
@@ -198,22 +221,27 @@ AXError _AXUIElementGetWindow(AXUIElementRef element, CGWindowID *idOut);
 }
 
 - (void)moveToSpaceWithEvent:(NSEvent *)event {
-    SIAccessibilityElement *minimizeButtonElement = [self elementForKey:kAXMinimizeButtonAttribute];
-    CGRect minimizeButtonFrame = minimizeButtonElement.frame;
+    SIAccessibilityElement *buttonElement = [self elementForKey:kAXMinimizeButtonAttribute]
+                                         ?: [self elementForKey:kAXCloseButtonAttribute]
+                                         ?: [self elementForKey:kAXFullScreenButtonAttribute]
+                                         ?: [self elementForKey:kAXZoomButtonAttribute];
+    CGRect buttonFrame = buttonElement ? buttonElement.frame : CGRectZero;
     CGRect windowFrame = self.frame;
+    CGEventFlags dragFlags = 0;
 
-    CGPoint mouseCursorPoint = {
-        .x = (minimizeButtonElement ? CGRectGetMidX(minimizeButtonFrame) : windowFrame.origin.x + 5.0),
-        .y = windowFrame.origin.y + fabs(windowFrame.origin.y - CGRectGetMinY(minimizeButtonFrame)) / 2.0
-    };
+    CGPoint mouseCursorPoint = [SIWindow dragPointForWindowFrame:windowFrame
+                                                     buttonFrame:buttonFrame
+                                                       hasButton:(buttonElement != nil)
+                                                        outFlags:&dragFlags];
 
     CGEventRef mouseMoveEvent = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved, mouseCursorPoint, kCGMouseButtonLeft);
     CGEventRef mouseDragEvent = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseDragged, mouseCursorPoint, kCGMouseButtonLeft);
     CGEventRef mouseDownEvent = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseDown, mouseCursorPoint, kCGMouseButtonLeft);
     CGEventRef mouseUpEvent = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseUp, mouseCursorPoint, kCGMouseButtonLeft);
     
-    CGEventSetFlags(mouseMoveEvent, 0);
-    CGEventSetFlags(mouseDownEvent, 0);
+    CGEventSetFlags(mouseMoveEvent, dragFlags);
+    CGEventSetFlags(mouseDownEvent, dragFlags);
+    CGEventSetFlags(mouseDragEvent, dragFlags);
     CGEventSetFlags(mouseUpEvent, 0);
 
     // Move the mouse into place at the window's toolbar
