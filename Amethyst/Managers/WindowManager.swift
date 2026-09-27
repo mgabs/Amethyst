@@ -860,7 +860,6 @@ extension WindowManager: ApplicationObservationDelegate {
             completeTabDetection(for: window, on: screen)
         } else if windows.isWindowTracked(window) {
             distributeEventToScreen(screen, change: .focusChanged(window: window))
-            markScreenForReflow(screen)
         } else {
             // Focus notification arrived before the creation notification.
             // Record this so swapInTab can call completeTabDetection immediately

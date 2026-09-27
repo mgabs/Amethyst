@@ -96,13 +96,16 @@ extension WindowManager {
         }
 
         private func activeWindows(matchingScreenID screenID: String, spaceID: CGSSpaceID) -> [Window] {
+            let activeSpaceIDs = Set(Screen.availableScreens.compactMap { $0.currentSpace()?.id })
+            let isSpaceActiveOnAnyScreen = activeSpaceIDs.isEmpty ? true : activeSpaceIDs.contains(spaceID)
+
             return windows.filter { window in
                 // In-memory checks first.
                 guard !isWindowFloating(window), !isWindowHidden(window) else {
                     return false
                 }
 
-                if !activeIDCache.isEmpty && !activeIDCache.contains(window.cgID()) {
+                if isSpaceActiveOnAnyScreen && !activeIDCache.isEmpty && !activeIDCache.contains(window.cgID()) {
                     return false
                 }
 

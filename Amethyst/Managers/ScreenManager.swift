@@ -72,9 +72,12 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
 
     private var lastWindowCount: Int = 0
 
-    /// When true, the next reflow will not recommend main pane ratio 0.5 on 1→2 window transition.
+    /// Spaces (by ID) where the next reflow will not recommend main pane ratio 0.5 on 1→2 window transition.
     /// Used for space-only switches so windows don't resize to 50% without a window move or floating toggle.
-    private var skipRatioRecommendation: Bool = false
+    private var skipRatioRecommendationSpaceIDs: Set<CGSSpaceID> = []
+
+    /// Inactive spaces that received reflow requests while off-screen, deferred until made active.
+    private var dirtySpaceIDs: Set<CGSSpaceID> = []
 
     /// Spaces (by ID; 0 stands for "the manager's current space") with a reflow already queued on the main queue.
     private var pendingReflowSpaceIDs: Set<CGSSpaceID> = []
@@ -173,6 +176,10 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             self.layouts = LayoutType.layoutsWithConfiguration(userConfiguration)
             layoutsBySpaceUUID[space.uuid] = layouts
         }
+
+        if dirtySpaceIDs.remove(space.id) != nil {
+            setNeedsReflow(on: space)
+        }
     }
 
     func distributeEvent(_ change: Change<Window>, on space: Space? = nil) {
@@ -213,15 +220,22 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             return
         }
 
-        if skipMainPaneRatioRecommendation {
-            skipRatioRecommendation = true
-        }
-
         // Resolved now, not when the block runs: the first request for a space decides which `Space` value is reflowed.
         let targetSpace = space ?? self.space
         log.debug("Screen: \(screen?.screenID() ?? "unknown") reflow on space: \(targetSpace?.id ?? 0)")
 
         let spaceKey = targetSpace?.id ?? 0
+
+        if skipMainPaneRatioRecommendation {
+            skipRatioRecommendationSpaceIDs.insert(spaceKey)
+        }
+
+        // If target space is off-screen on this screen, mark it dirty and defer reflow until it becomes active.
+        if let currentSpace = screen?.currentSpace(), let targetSpace = targetSpace, currentSpace.id != targetSpace.id {
+            dirtySpaceIDs.insert(spaceKey)
+            return
+        }
+
         guard pendingReflowSpaceIDs.insert(spaceKey).inserted else {
             return
         }
@@ -290,8 +304,7 @@ private func reflow(on targetSpace: Space? = nil) {
 
     let currentWindowCount = windows.windows.count
 
-    let shouldRecommendRatio = !skipRatioRecommendation
-    skipRatioRecommendation = false
+    let shouldRecommendRatio = skipRatioRecommendationSpaceIDs.remove(space.id) == nil
 
     let spaceLayouts = layoutsBySpaceUUID[space.uuid] ?? []
     let spaceLayoutIndex = currentLayoutIndexBySpaceUUID[space.uuid] ?? 0
