@@ -46,6 +46,14 @@ protocol ApplicationObservationDelegate: AnyObject {
     func application(_ application: AnyApplication<Application>, didFocusWindow window: Window)
 
     /**
+     Called when the application has lost focus or has no focused window.
+     
+     - Parameters:
+         - application: The application the event occurred in.
+     */
+    func applicationDidLoseFocus(_ application: AnyApplication<Application>)
+
+    /**
      Called when the application has encountered a window that is potentially new.
      
      - Parameters:
@@ -278,6 +286,19 @@ struct ApplicationObservation<Delegate: ApplicationObservationDelegate> {
                     self.handle(notification: notification, window: window)
                 }
             }
+        case .focusedWindowChanged:
+            success = application.observe(notification: notification.string) { element in
+                let window = Window(element: element)
+                DispatchQueue.main.async {
+                    self.handle(notification: notification, window: window)
+                }
+            }
+        case .applicationActivated:
+            success = application.observe(notification: notification.string) { _ in
+                DispatchQueue.main.async {
+                    self.handle(notification: notification, window: nil)
+                }
+            }
         default:
             success = application.observe(notification: notification.string) { element in
                 guard let window = Window(element: element) else {
@@ -321,33 +342,41 @@ struct ApplicationObservation<Delegate: ApplicationObservationDelegate> {
         notifications.forEach { application.unobserve(notification: $0.string, window: window) }
     }
 
-    private func handle(notification: Notification, window: Window) {
+    private func handle(notification: Notification, window: Window?) {
         log.debug("""
-        Received notification for window: \(window)
+        Received notification for window: \(String(describing: window))
             notification: \(notification)
-            \(window.title() ?? "no title") (\(window.id()))
+            \(window?.title() ?? "no title") (\(String(describing: window?.id())))
         """)
         switch notification {
         case .created:
+            guard let window = window else { return }
             delegate?.application(application, didFindPotentiallyNewWindow: window)
         case .windowDeminiaturized:
+            guard let window = window else { return }
             delegate?.application(application, didAddWindow: window)
         case .windowMiniaturized:
+            guard let window = window else { return }
             delegate?.application(application, didRemoveWindow: window)
         case .focusedWindowChanged:
-            guard let focusedWindow = Window.currentlyFocused() else {
-                return
+            if let focusedWindow = Window.currentlyFocused() {
+                delegate?.application(application, didFocusWindow: focusedWindow)
+            } else {
+                delegate?.applicationDidLoseFocus(application)
             }
-            delegate?.application(application, didFocusWindow: focusedWindow)
         case .applicationActivated:
             delegate?.applicationDidActivate(application)
         case .windowMoved:
+            guard let window = window else { return }
             delegate?.application(application, didMoveWindow: window)
         case .windowResized:
+            guard let window = window else { return }
             delegate?.application(application, didResizeWindow: window)
         case .mainWindowChanged:
+            guard let window = window else { return }
             delegate?.application(application, didFindPotentiallyNewWindow: window)
         case .elementDestroyed:
+            guard let window = window else { return }
             delegate?.application(application, didRemoveWindow: window)
         }
     }

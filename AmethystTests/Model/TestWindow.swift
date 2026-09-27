@@ -88,8 +88,10 @@ final class TestWindow: WindowType {
 
     }
 
+    var mockIsOnScreen: Bool = true
+
     func isOnScreen() -> Bool {
-        return true
+        return mockIsOnScreen
     }
 
     func spaceID() -> CGSSpaceID? {

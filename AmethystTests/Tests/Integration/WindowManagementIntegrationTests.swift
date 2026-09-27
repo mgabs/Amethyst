@@ -118,6 +118,24 @@ class WindowManagementIntegrationTests: QuickSpec {
                 // Focus state is still consistent for window2
                 expect(focusManager.lastFocusedWindow).to(equal(window2))
             }
+
+            it("testFocusLoss_clearsFocusManagerState") {
+                let window = TestWindow(element: nil)!
+                focusManager.setFocused(window: window)
+                expect(focusManager.isFocused(window: window)).to(beTrue())
+
+                focusManager.clearFocus()
+                expect(focusManager.isFocused(window: window)).to(beFalse())
+                expect(focusManager.lastFocusedWindow).to(beNil())
+            }
+
+            it("testWindowOffScreen_reportsCorrectOnScreenState") {
+                let window = TestWindow(element: nil)!
+                expect(window.isOnScreen()).to(beTrue())
+
+                window.mockIsOnScreen = false
+                expect(window.isOnScreen()).to(beFalse())
+            }
         }
 
         describe("Windows") {
