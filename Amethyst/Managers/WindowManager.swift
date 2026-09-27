@@ -841,11 +841,6 @@ extension WindowManager: ApplicationObservationDelegate {
         remove(window: window)
     }
 
-    func applicationDidLoseFocus(_ application: AnyApplication<Application>) {
-        focusManager.clearFocus()
-        updateFocusedWindowBorder()
-    }
-
     func application(_ application: AnyApplication<Application>, didFocusWindow window: Window) {
         guard let screen = window.screen() else {
             return

@@ -91,13 +91,6 @@ protocol ApplicationObservationDelegate: AnyObject {
      */
     func applicationDidActivate(_ application: AnyApplication<Application>)
 
-    /**
-     Called when the application has lost window focus.
-     
-     - Parameters:
-         - application: The application that lost focus.
-     */
-    func applicationDidLoseFocus(_ application: AnyApplication<Application>)
 }
 
 extension ApplicationObservationDelegate {
