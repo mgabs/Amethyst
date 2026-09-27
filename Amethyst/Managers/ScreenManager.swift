@@ -230,8 +230,8 @@ final class ScreenManager<Delegate: ScreenManagerDelegate>: NSObject, Codable {
             skipRatioRecommendationSpaceIDs.insert(spaceKey)
         }
 
-        // If target space is off-screen on this screen, mark it dirty and defer reflow until it becomes active.
-        if let currentSpace = screen?.currentSpace(), let targetSpace = targetSpace, currentSpace.id != targetSpace.id {
+        // If target space is explicitly specified and off-screen on this screen, mark it dirty and defer reflow until it becomes active.
+        if let space = space, let currentSpace = screen?.currentSpace(), currentSpace.id != space.id {
             dirtySpaceIDs.insert(spaceKey)
             return
         }

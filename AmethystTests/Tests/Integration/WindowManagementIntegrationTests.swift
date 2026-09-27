@@ -211,6 +211,15 @@ class WindowManagementIntegrationTests: QuickSpec {
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeFullscreen)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: nil)).to(beFalse())
             }
+
+            it("calculates border frame and converts accessibility frame to appkit coordinates") {
+                let axFrame = CGRect(x: 100, y: 50, width: 800, height: 600)
+                let appKitFrame = FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: axFrame, primaryScreenHeight: 1080)
+                expect(appKitFrame).to(equal(CGRect(x: 100, y: 1080 - 650, width: 800, height: 600)))
+
+                let borderFrame = FocusedWindowBorder.borderFrame(around: appKitFrame, width: 4)
+                expect(borderFrame).to(equal(appKitFrame.insetBy(dx: -4, dy: -4)))
+            }
         }
     }
 }
