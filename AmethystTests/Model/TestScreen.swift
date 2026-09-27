@@ -52,8 +52,10 @@ final class TestScreen: ScreenType {
         return []
     }
 
+    var mockCurrentSpace: Space?
+
     func currentSpace() -> Space? {
-        return nil
+        return mockCurrentSpace
     }
 
     func focusScreen() {

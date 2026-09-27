@@ -343,6 +343,9 @@ extension WindowManager {
 
         pendingTabDetection.removeValue(forKey: window.id())
         earlyFocusedWindows.remove(window.id())
+        if let application = applicationWithPID(window.pid()) {
+            ApplicationObservation(application: application, delegate: self).removeObserversForWindow(window)
+        }
         // Delegate to WindowTracker (dual tracking)
         windowTracker.remove(window: window)
         // Delegate to FocusManager — clear focus if this window was focused (dual tracking)
@@ -852,7 +855,6 @@ extension WindowManager: ApplicationObservationDelegate {
             completeTabDetection(for: window, on: screen)
         } else if windows.isWindowTracked(window) {
             distributeEventToScreen(screen, change: .focusChanged(window: window))
-            markScreenForReflow(screen)
         } else {
             // Focus notification arrived before the creation notification.
             // Record this so swapInTab can call completeTabDetection immediately
@@ -1153,12 +1155,18 @@ extension WindowManager {
     /// (Firefox, kitty) report accessibility focus late or not at all.
     private func frontmostManagedWindow() -> Window? {
         guard let frontPID = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
-            return Window.currentlyFocused()
+            if let focused = Window.currentlyFocused(), focused.isOnScreen() {
+                return focused
+            }
+            return nil
         }
-        if let focused = Window.currentlyFocused(), focused.pid() == frontPID {
+        if let focused = Window.currentlyFocused(), focused.pid() == frontPID, focused.isOnScreen() {
             return focused
         }
-        return windows.frontmostTrackedWindow(forApplicationWithPID: frontPID)
+        guard let candidate = windows.frontmostTrackedWindow(forApplicationWithPID: frontPID), candidate.isOnScreen() else {
+            return nil
+        }
+        return candidate
     }
 
     /// Repositions the outline around the focused managed window, or hides it. Safe to call from any hook.
@@ -1174,6 +1182,7 @@ extension WindowManager {
               // In-memory checks first: they say no for untracked or hidden windows before any accessibility call.
               windows.isWindowTracked(window),
               !windows.isWindowHidden(window),
+              window.isOnScreen(),
               FocusedWindowBorder.isEligible(
                   tracked: true,
                   managed: window.shouldBeManaged(),

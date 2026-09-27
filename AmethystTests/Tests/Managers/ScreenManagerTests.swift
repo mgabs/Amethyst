@@ -222,6 +222,31 @@ class ScreenManagerTests: QuickSpec {
 
                 expect(delegate.activeWindowSetCalls).toEventually(equal(2))
             }
+
+            it("defers reflow for off-screen space and triggers when space becomes active") {
+                let configuration = UserConfiguration(storage: TestConfigurationStorage())
+                let delegate = TestDelegate()
+                let screen = TestScreen()
+                let space1 = Space(id: 1, type: CGSSpaceTypeUser, uuid: "space-1")
+                let space2 = Space(id: 2, type: CGSSpaceTypeUser, uuid: "space-2")
+                screen.mockCurrentSpace = space1
+
+                let screenManager = ScreenManager<TestDelegate>(screen: screen, delegate: delegate, userConfiguration: configuration)
+                screenManager.updateSpace(to: space1)
+
+                screenManager.setNeedsReflow()
+                expect(delegate.activeWindowSetCalls).toEventually(equal(1))
+
+                // Request reflow on off-screen space 2: should be deferred
+                screenManager.setNeedsReflow(on: space2)
+                expect(delegate.activeWindowSetCalls).to(equal(1))
+
+                // Switch to space 2: deferred reflow fires
+                screen.mockCurrentSpace = space2
+                screenManager.updateSpace(to: space2)
+
+                expect(delegate.activeWindowSetCalls).toEventually(equal(2))
+            }
         }
 
         describe("screen identity") {

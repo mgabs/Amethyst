@@ -118,6 +118,24 @@ class WindowManagementIntegrationTests: QuickSpec {
                 // Focus state is still consistent for window2
                 expect(focusManager.lastFocusedWindow).to(equal(window2))
             }
+
+            it("testFocusLoss_clearsFocusManagerState") {
+                let window = TestWindow(element: nil)!
+                focusManager.setFocused(window: window)
+                expect(focusManager.isFocused(window: window)).to(beTrue())
+
+                focusManager.clearFocus()
+                expect(focusManager.isFocused(window: window)).to(beFalse())
+                expect(focusManager.lastFocusedWindow).to(beNil())
+            }
+
+            it("testWindowOffScreen_reportsCorrectOnScreenState") {
+                let window = TestWindow(element: nil)!
+                expect(window.isOnScreen()).to(beTrue())
+
+                window.mockIsOnScreen = false
+                expect(window.isOnScreen()).to(beFalse())
+            }
         }
 
         describe("Windows") {
@@ -192,6 +210,15 @@ class WindowManagementIntegrationTests: QuickSpec {
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: false, spaceType: CGSSpaceTypeUser)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeFullscreen)).to(beFalse())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: nil)).to(beFalse())
+            }
+
+            it("calculates border frame and converts accessibility frame to appkit coordinates") {
+                let axFrame = CGRect(x: 100, y: 50, width: 800, height: 600)
+                let appKitFrame = FocusedWindowBorder.appKitFrame(fromAccessibilityFrame: axFrame, primaryScreenHeight: 1080)
+                expect(appKitFrame).to(equal(CGRect(x: 100, y: 1080 - 650, width: 800, height: 600)))
+
+                let borderFrame = FocusedWindowBorder.borderFrame(around: appKitFrame, width: 4)
+                expect(borderFrame).to(equal(appKitFrame.insetBy(dx: -4, dy: -4)))
             }
         }
     }

@@ -4,11 +4,15 @@
 //
 
 import Cocoa
+import QuartzCore
 import Silica
 
 /// A click-through outline drawn just outside the focused window, ordered directly beneath it.
 final class FocusedWindowBorder: NSWindow {
     private let borderView = BorderView()
+    private var currentTarget: CGWindowID?
+    private var currentSpaceID: CGSSpaceID?
+    private var currentBorderFrame: CGRect = .zero
 
     init() {
         super.init(contentRect: .zero, styleMask: .borderless, backing: .buffered, defer: false)
@@ -25,7 +29,6 @@ final class FocusedWindowBorder: NSWindow {
         // window's space explicitly in `show` rather than every space: with "Displays have separate Spaces" each display
         // has its own current space, and a `.canJoinAllSpaces` outline did not follow focus to a second display.
         collectionBehavior = [.stationary, .ignoresCycle]
-        borderView.wantsLayer = true
         contentView = borderView
     }
 
@@ -38,22 +41,32 @@ final class FocusedWindowBorder: NSWindow {
             DispatchQueue.main.async { self.show(around: frame, below: target, in: spaceID, color: color, width: width) }
             return
         }
+
         targetWindowID = target
+        let targetFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
+
         borderView.update(color: color, width: width)
-        let newFrame = FocusedWindowBorder.borderFrame(around: frame, width: width)
-        if self.frame != newFrame {
+
+        if currentBorderFrame != targetFrame {
             CATransaction.begin()
             CATransaction.setDisableActions(true)
-            setFrame(newFrame, display: true)
+            setFrame(targetFrame, display: true)
             CATransaction.commit()
+            currentBorderFrame = targetFrame
         }
+
+        let spaceChanged = (spaceID != nil && spaceID != currentSpaceID)
         // A window can only be ordered relative to a window in the same space. A no-op when already there.
-        if let spaceID = spaceID, windowNumber > 0 {
+        if spaceChanged, let spaceID = spaceID, windowNumber > 0 {
             CGSMoveWindowsToManagedSpace(CGSMainConnectionID(), [NSNumber(value: windowNumber)] as CFArray, spaceID)
+            currentSpaceID = spaceID
         }
-        // Foreign window numbers are accepted and this also orders the window on screen on its first call. If the
-        // target sits at another level the call has no effect and the outline stays wherever it last was.
-        order(.below, relativeTo: Int(target))
+
+        // Only re-order if target changed, space changed, or window is not yet visible.
+        if currentTarget != target || spaceChanged || !isVisible {
+            order(.below, relativeTo: Int(target))
+            currentTarget = target
+        }
     }
 
     /// Safe to call from any thread; dispatches to main queue if needed.
@@ -62,8 +75,15 @@ final class FocusedWindowBorder: NSWindow {
             DispatchQueue.main.async { self.hide() }
             return
         }
-        targetWindowID = nil
+        guard isVisible else {
+            targetWindowID = nil
+            return
+        }
         orderOut(nil)
+        targetWindowID = nil
+        currentTarget = nil
+        currentSpaceID = nil
+        currentBorderFrame = .zero
     }
 
     /// Hides the outline immediately if it is currently displayed around the window with `windowID`.
