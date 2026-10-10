@@ -21,7 +21,7 @@ jobs:
       tag: ${{ steps.v.outputs.tag }}
       released: ${{ steps.v.outputs.released }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - id: v
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,7 +44,7 @@ jobs:
       HAS_TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # build number = commit count
 
@@ -54,7 +54,8 @@ jobs:
           bundler-cache: true
 
       - name: Import signing certificate
-        uses: apple-actions/import-codesign-certs@v7.0.0
+        if: ${{ secrets.CERTIFICATES_P12 != '' }}
+        uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
           p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
@@ -77,7 +78,7 @@ jobs:
             -o build/appcast.xml build/appcast
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           tag_name: ${{ env.VERSION }}
