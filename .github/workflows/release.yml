@@ -6,6 +6,7 @@ name: Release
 on:
   push:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -40,6 +41,7 @@ jobs:
     runs-on: macos-latest
     env:
       VERSION: ${{ needs.version.outputs.tag }}
+      HAS_CERT: ${{ secrets.CERTIFICATES_P12 != '' }}
       HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
       HAS_TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
@@ -48,30 +50,44 @@ jobs:
         with:
           fetch-depth: 0 # build number = commit count
 
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true
-
       - name: Import signing certificate
-        if: ${{ secrets.CERTIFICATES_P12 != '' }}
+        if: env.HAS_CERT == 'true'
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
           p12-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
 
-      # Same lane as a local release build: signed archive + export, zips app and dSYMs into build/artifacts
-      - name: Build
-        run: bundle exec fastlane mac
+      - name: Archive
+        run: |
+          if [[ "$HAS_CERT" == true ]]; then
+            LINE=$(security find-identity -v -p codesigning | head -1)
+            IDENTITY=$(sed -nE 's/.*\) ([0-9A-F]{40}) .*/\1/p' <<<"$LINE")
+            TEAM=$(sed -nE 's/.*\(([A-Z0-9]+)\)"$/\1/p' <<<"$LINE")
+          else
+            IDENTITY=-
+            TEAM=
+          fi
+          echo "Signing as: ${IDENTITY} (team: ${TEAM:-none})"
+          xcodebuild -quiet archive \
+            -workspace Amethyst.xcworkspace -scheme Amethyst -configuration Release \
+            -destination 'platform=macOS' -derivedDataPath build/dd -archivePath build/Amethyst.xcarchive \
+            MARKETING_VERSION="${VERSION#v}" CURRENT_PROJECT_VERSION="$(git rev-list --count HEAD)" \
+            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_IDENTITY="$IDENTITY"
+
+      - name: Package
+        run: |
+          mkdir -p build/artifacts
+          BUILD_NUM=$(git rev-list --count HEAD)
+          ditto -c -k --keepParent build/Amethyst.xcarchive/Products/Applications/Amethyst.app "build/artifacts/Amethyst-$VERSION-b$BUILD_NUM.zip"
+          ditto -c -k build/Amethyst.xcarchive/dSYMs "build/artifacts/Amethyst-$VERSION-b$BUILD_NUM.dSYM.zip"
 
       - name: Generate Sparkle appcast
         if: env.HAS_SPARKLE_KEY == 'true'
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          mkdir build/appcast && cp build/artifacts/Amethyst-v*-b*.zip build/appcast/
-          # generate_appcast ships with the Sparkle SwiftPM artifact, so the tool version always matches the framework
-          echo "$SPARKLE_PRIVATE_KEY" | build/derived_data/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
+          mkdir -p build/appcast && cp build/artifacts/Amethyst-v*-b*.zip build/appcast/
+          echo "$SPARKLE_PRIVATE_KEY" | build/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_appcast \
             --ed-key-file - \
             --download-url-prefix "$REPO_URL/releases/download/$VERSION/" \
             --link "$REPO_URL/releases" \
