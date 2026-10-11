@@ -129,36 +129,40 @@ jobs:
 
           git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/mgabs/homebrew-tap.git" tap-repo
           mkdir -p tap-repo/Casks
-          cat <<EOF > tap-repo/Casks/amethyst.rb
-          cask "amethyst" do
-            version "\${SEMVER},\${BUILD_NUM}"
-            sha256 "\${SHA256}"
+          ruby -e '
+            semver, build_num, sha256 = ARGV
+            template = <<~RUBY
+              cask "amethyst" do
+                version "#{semver},#{build_num}"
+                sha256 "#{sha256}"
 
-            url "https://github.com/mgabs/Amethyst/releases/download/v#{version.csv.first}/Amethyst-v#{version.csv.first}-b#{version.csv.second}.zip"
-            name "Amethyst"
-            desc "Automatic tiling window manager similar to xmonad (mgabs fork)"
-            homepage "https://github.com/mgabs/Amethyst"
+                url "https://github.com/mgabs/Amethyst/releases/download/v\#{version.csv.first}/Amethyst-v\#{version.csv.first}-b\#{version.csv.second}.zip"
+                name "Amethyst"
+                desc "Automatic tiling window manager similar to xmonad (mgabs fork)"
+                homepage "https://github.com/mgabs/Amethyst"
 
-            livecheck do
-              url "https://raw.githubusercontent.com/mgabs/Amethyst/master/build/appcast.xml"
-              strategy :sparkle
-            end
+                livecheck do
+                  url "https://raw.githubusercontent.com/mgabs/Amethyst/master/build/appcast.xml"
+                  strategy :sparkle
+                end
 
-            auto_updates true
-            depends_on macos: ">= :monterey"
+                auto_updates true
+                depends_on macos: ">= :monterey"
 
-            app "Amethyst.app"
+                app "Amethyst.app"
 
-            zap trash: [
-              "~/Library/Application Support/Amethyst",
-              "~/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/com.amethyst.amethyst.sfl*",
-              "~/Library/Caches/com.amethyst.Amethyst",
-              "~/Library/Cookies/com.amethyst.Amethyst.binarycookies",
-              "~/Library/HTTPStorages/com.amethyst.Amethyst",
-              "~/Library/Preferences/com.amethyst.Amethyst.plist",
-            ]
-          end
-          EOF
+                zap trash: [
+                  "~/Library/Application Support/Amethyst",
+                  "~/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/com.amethyst.amethyst.sfl*",
+                  "~/Library/Caches/com.amethyst.Amethyst",
+                  "~/Library/Cookies/com.amethyst.Amethyst.binarycookies",
+                  "~/Library/HTTPStorages/com.amethyst.Amethyst",
+                  "~/Library/Preferences/com.amethyst.Amethyst.plist",
+                ]
+              end
+            RUBY
+            File.write("tap-repo/Casks/amethyst.rb", template)
+          ' "$SEMVER" "$BUILD_NUM" "$SHA256"
 
           cd tap-repo
           git config user.name "github-actions[bot]"
