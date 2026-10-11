@@ -1,0 +1,95 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Wiki Content
+        run: |
+          mkdir -p wiki-staging
+          # Copy all markdown files from docs/ into wiki-staging root
+          cp docs/*.md wiki-staging/
+          
+          # Create Home.md as the wiki entry point
+          cat << 'EOF' > wiki-staging/Home.md
+# Amethyst Documentation
+
+Welcome to the Amethyst documentation wiki.
+
+## Guides & Reference
+- [[Configuration Files|configuration-files]] - Full YAML configuration reference (`~/.amethyst.yml`).
+- [[Custom Layouts|custom-layouts]] - Implementing custom window layouts via JavaScript.
+- [[Window Limit|window-limit]] - Setting up maximum window count and iPad-like multitasking.
+- [[Troubleshooting|troubleshooting]] - Common issues, permissions, and Gatekeeper solutions.
+
+For project overview and source code, visit the [Amethyst repository](https://github.com/mgabs/Amethyst).
+EOF
+
+          # Create _Sidebar.md for navigation
+          cat << 'EOF' > wiki-staging/_Sidebar.md
+### Documentation
+* [[Home]]
+* [[Configuration Files|configuration-files]]
+* [[Custom Layouts|custom-layouts]]
+* [[Window Limit|window-limit]]
+* [[Troubleshooting|troubleshooting]]
+
+---
+* [GitHub Repository](https://github.com/mgabs/Amethyst)
+EOF
+
+          # Copy images if any exist
+          if [ -d "docs/images" ]; then
+            mkdir -p wiki-staging/images
+            cp -r docs/images/* wiki-staging/images/
+          fi
+
+          # Rewrite relative image links in Markdown files for wiki display:
+          # <img src="./images/foo.png"> -> <img src="images/foo.png">
+          # [foo](docs/foo.md) -> [foo](foo)
+          sed -i -E 's|\./images/|images/|g' wiki-staging/*.md
+          sed -i -E 's|\.\./\.amethyst\.sample\.yml|https://github.com/mgabs/Amethyst/blob/master/.amethyst.sample.yml|g' wiki-staging/*.md
+
+      - name: Push to Wiki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO_WIKI="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
+          
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone existing wiki repo; if empty or fails, initialize new wiki branch
+          if git clone "$REPO_WIKI" wiki-repo 2>/dev/null; then
+            cd wiki-repo
+            rm -rf *
+            cp -r ../wiki-staging/* .
+          else
+            echo "Wiki repo not cloned. Initializing local clone target..."
+            mkdir wiki-repo && cd wiki-repo
+            git init -b master
+            git remote add origin "$REPO_WIKI"
+            cp -r ../wiki-staging/* .
+          fi
+
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(wiki): sync from docs/ [skip ci]"
+            git push -u origin HEAD:master
+          else
+            echo "No wiki changes to sync."
+          fi
