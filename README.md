@@ -29,14 +29,14 @@ In-app updates ("Check for Updates…" in the menu bar) are delivered from this 
 > [!NOTE]
 > `brew install --cask amethyst` installs the **upstream** Amethyst, not this fork. To distribute via Homebrew, a custom tap (`brew tap mgabs/tap && brew install --cask amethyst`) is required.
 
-Requires macOS 11+.
+Requires macOS 12+.
 
 ## Using Amethyst
 
 Amethyst must be given permissions to use the accessibility APIs in the Privacy & Security tab, Privacy -> Accessibilty.
 
 <p align="center">
-  <img style="text-align: center; border-radius:4px;" width="500px" src="docs/images/accessibility-permission.png" alt="Give Accessibility permission to Amethyst under Privicay and Security." />
+  <img style="text-align: center; border-radius:4px;" width="500px" src="docs/images/accessibility-permission.png" alt="Give Accessibility permission to Amethyst under Privacy and Security." />
 </p>
 
 **_Important note_**: You will probably want to disable `Automatically rearrange Spaces based on most recent use` (found under Mission Control in System Preferences). This setting is enabled by default, and will cause your Spaces to swap places based on use. This makes keyboard navigation between Spaces unpredictable.
