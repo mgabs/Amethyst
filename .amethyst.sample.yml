@@ -365,9 +365,9 @@ space-indicator-color-style: 0
 # Draw an outline just outside the focused window (default true). Only windows Amethyst manages get one.
 focused-window-border: true
 
-# Outline colour as #RRGGBB or #RRGGBBAA (default #006400, dark green).
+# Outline colour as #RRGGBB or #RRGGBBAA (default #b38115, amber).
 # Keep the quotes: an unquoted # starts a YAML comment and the value is silently dropped.
-focused-window-border-color: "#006400"
+focused-window-border-color: "#b38115"
 
 # Outline width in points (default 4). 0 disables the outline.
 focused-window-border-width: 4

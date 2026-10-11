@@ -20,6 +20,6 @@ To create an iPad-like experience:
 * Enable "Swap windows using mouse" & "Resize windows using mouse".
 * Float windows to put them in slide-over mode.
 
-##　Limitations
+## Limitations
 
 * The window limit may not be enforced when windows are moved between screens. Creating a new window will correct the issue.  
