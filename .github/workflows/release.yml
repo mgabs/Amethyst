@@ -77,8 +77,21 @@ jobs:
       - name: Package
         run: |
           mkdir -p build/artifacts
+          APP_PATH="build/Amethyst.xcarchive/Products/Applications/Amethyst.app"
+
+          if [[ "$HAS_CERT" == true ]]; then
+            LINE=$(security find-identity -v -p codesigning | head -1)
+            SIGN_ID=$(sed -nE 's/.*\) ([0-9A-F]{40}) .*/\1/p' <<<"$LINE")
+          else
+            SIGN_ID="-"
+          fi
+
+          codesign --force --deep --sign "$SIGN_ID" \
+            --entitlements Amethyst/Amethyst.entitlements \
+            --options runtime "$APP_PATH"
+
           BUILD_NUM=$(git rev-list --count HEAD)
-          ditto -c -k --keepParent build/Amethyst.xcarchive/Products/Applications/Amethyst.app "build/artifacts/Amethyst-$VERSION-b$BUILD_NUM.zip"
+          ditto -c -k --keepParent "$APP_PATH" "build/artifacts/Amethyst-$VERSION-b$BUILD_NUM.zip"
           ditto -c -k build/Amethyst.xcarchive/dSYMs "build/artifacts/Amethyst-$VERSION-b$BUILD_NUM.dSYM.zip"
 
       - name: Generate Sparkle appcast
