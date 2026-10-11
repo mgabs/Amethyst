@@ -16,6 +16,21 @@ If you want to learn more about tiling window managers and the features of Ameth
 
 ## Getting Amethyst
 
+### Homebrew (Recommended)
+
+```bash
+brew install --cask mgabs/tap/amethyst
+```
+
+> [!NOTE]
+> `brew install --cask amethyst` installs the **upstream** Amethyst, not this fork. Make sure to specify the tap:
+> ```bash
+> brew install --cask mgabs/tap/amethyst
+> ```
+> Or tap first: `brew tap mgabs/tap && brew install --cask amethyst`.
+
+### Direct Download
+
 Download `Amethyst-vX.Y.Z-bNNNN.zip` from this fork's [releases page](https://github.com/mgabs/Amethyst/releases/latest), unzip, and move `Amethyst.app` to `/Applications`.
 
 The build is signed but not notarized, so on first launch macOS will block it with a malware warning (or error -128). To bypass:
