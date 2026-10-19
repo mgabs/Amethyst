@@ -121,7 +121,7 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
     }
 
     func swapFocusedWindowScreenClockwise() {
-        guard let focusedWindow = Window.currentlyFocused(), target?.isWindowFloating(focusedWindow) == false else {
+        guard let focusedWindow = Window.currentlyFocused() else {
             target?.executeTransition(.resetFocus)
             return
         }
@@ -138,7 +138,7 @@ class WindowTransitionCoordinator<Target: WindowTransitionTarget> {
     }
 
     func swapFocusedWindowScreenCounterClockwise() {
-        guard let focusedWindow = Window.currentlyFocused(), target?.isWindowFloating(focusedWindow) == false else {
+        guard let focusedWindow = Window.currentlyFocused() else {
             target?.executeTransition(.resetFocus)
             return
         }

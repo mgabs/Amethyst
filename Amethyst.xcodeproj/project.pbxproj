@@ -13,6 +13,7 @@
 		AM0000001000000000000004 /* WindowTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000004 /* WindowTrackerTests.swift */; };
 		AM0000001000000000000005 /* FocusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000005 /* FocusManager.swift */; };
 		AM0000001000000000000006 /* FocusManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000006 /* FocusManagerTests.swift */; };
+		AM000000100000000000000B /* WindowTransitionCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM000000200000000000000B /* WindowTransitionCoordinatorTests.swift */; };
 		AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */; };
 		AM0000001000000000000008 /* FocusedWindowBorderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000008 /* FocusedWindowBorderTests.swift */; };
 		AM0000001000000000000009 /* WindowManagerBorderLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */; };
@@ -265,6 +266,7 @@
 		AM0000002000000000000004 /* WindowTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTrackerTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000005 /* FocusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManager.swift; sourceTree = "<group>"; };
 		AM0000002000000000000006 /* FocusManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusManagerTests.swift; sourceTree = "<group>"; };
+		AM000000200000000000000B /* WindowTransitionCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTransitionCoordinatorTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000007 /* WindowManagementIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementIntegrationTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000008 /* FocusedWindowBorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedWindowBorderTests.swift; sourceTree = "<group>"; };
 		AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagerBorderLifecycleTests.swift; sourceTree = "<group>"; };
@@ -527,6 +529,7 @@
 				AM0000002000000000000002 /* ApplicationMonitorTests.swift */,
 				AM0000002000000000000004 /* WindowTrackerTests.swift */,
 				AM0000002000000000000006 /* FocusManagerTests.swift */,
+				AM000000200000000000000B /* WindowTransitionCoordinatorTests.swift */,
 				AM0000002000000000000008 /* FocusedWindowBorderTests.swift */,
 				AM0000002000000000000009 /* WindowManagerBorderLifecycleTests.swift */,
 				4085824B1EA673AE0075A2C3 /* HotKeyManagerTests.swift */,
@@ -883,6 +886,7 @@
 				AM0000001000000000000002 /* ApplicationMonitorTests.swift in Sources */,
 				AM0000001000000000000004 /* WindowTrackerTests.swift in Sources */,
 				AM0000001000000000000006 /* FocusManagerTests.swift in Sources */,
+				AM000000100000000000000B /* WindowTransitionCoordinatorTests.swift in Sources */,
 				AM0000001000000000000007 /* WindowManagementIntegrationTests.swift in Sources */,
 				AM0000001000000000000008 /* FocusedWindowBorderTests.swift in Sources */,
 				AM0000001000000000000009 /* WindowManagerBorderLifecycleTests.swift in Sources */,
