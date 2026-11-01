@@ -1278,7 +1278,7 @@
 			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
+				minimumVersion = 5.0.2;
 			};
 		};
 		400D48FE2A92B0A00082750F /* XCRemoteSwiftPackageReference "Yams" */ = {
