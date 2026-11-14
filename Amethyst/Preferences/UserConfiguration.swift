@@ -90,6 +90,7 @@ enum ConfigurationKey: String {
     case focusedWindowBorder = "focused-window-border"
     case focusedWindowBorderColor = "focused-window-border-color"
     case focusedWindowBorderWidth = "focused-window-border-width"
+    case smartFocusedWindowBorder = "smart-focused-window-border"
     case useCanaryBuild = "use-canary-build"
     case newWindowsToMain = "new-windows-to-main"
     case followSpaceThrownWindows = "follow-space-thrown-windows"
@@ -722,6 +723,11 @@ class UserConfiguration: NSObject {
             return fallback
         }
         return color
+    }
+
+    /// Hide the focused window border when only one tiled window is on the screen's current space or in FullscreenLayout.
+    func smartFocusedWindowBorder() -> Bool {
+        return storage.bool(forKey: .smartFocusedWindowBorder)
     }
 
     func useCanaryBuild() -> Bool {

@@ -40,6 +40,19 @@ final class FocusedWindowBorderTests: QuickSpec {
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: nil, screenSpaceID: 1)).to(beTrue())
                 expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 1, screenSpaceID: nil)).to(beTrue())
                 expect(FocusedWindowBorder.isEligible(tracked: false, managed: true, spaceType: CGSSpaceTypeUser, windowSpaceID: 1, screenSpaceID: 1)).to(beFalse())
+
+                // Smart border disabled preserves eligibility even for single window or FullscreenLayout
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: false, isFullscreenLayout: true, tiledWindowCount: 1)).to(beTrue())
+
+                // Smart border enabled: FullscreenLayout hides border regardless of window count
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: true, tiledWindowCount: 2)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: true, tiledWindowCount: 1)).to(beFalse())
+
+                // Smart border enabled: single or zero tiled windows hide border; 2+ show it
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: false, tiledWindowCount: 0)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: false, tiledWindowCount: 1)).to(beFalse())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: false, tiledWindowCount: 2)).to(beTrue())
+                expect(FocusedWindowBorder.isEligible(tracked: true, managed: true, spaceType: CGSSpaceTypeUser, smartBorder: true, isFullscreenLayout: false, tiledWindowCount: nil)).to(beTrue())
             }
 
             it("configures layer properties instead of CPU drawing") {

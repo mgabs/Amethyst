@@ -121,7 +121,7 @@ jobs:
         env:
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
         run: |
-          ZIP_FILE=$(ls build/artifacts/Amethyst-v*-b*.zip | head -1)
+          ZIP_FILE=$(ls build/artifacts/Amethyst-v*-b*.zip | grep -v '\.dSYM\.zip' | head -1)
           ZIP_NAME=$(basename "$ZIP_FILE")
           SEMVER=$(echo "$ZIP_NAME" | sed -E 's/Amethyst-v([0-9.]+)-b([0-9]+)\.zip/\1/')
           BUILD_NUM=$(echo "$ZIP_NAME" | sed -E 's/Amethyst-v([0-9.]+)-b([0-9]+)\.zip/\2/')
@@ -147,7 +147,7 @@ jobs:
                 end
 
                 auto_updates true
-                depends_on macos: ">= :monterey"
+                depends_on macos: :monterey
 
                 app "Amethyst.app"
 

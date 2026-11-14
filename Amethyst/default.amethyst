@@ -231,6 +231,7 @@
     "focused-window-border": true,
     "focused-window-border-color": "#b38115",
     "focused-window-border-width": 4,
+    "smart-focused-window-border": false,
     "window-margin-size": 0,
     "window-resize-step": 5,
     "window-margins": false,

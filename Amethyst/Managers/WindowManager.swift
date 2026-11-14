@@ -21,11 +21,11 @@ enum TrackingError: Error {
 
 /**
  The tolerant interval between the click and the application of a mouse move from focus.
- 
+
  - Note:
- 
+
  At the time of the check we confirm that the mouse is not _currently_ clicked. However, it is possible that the click happened faster than the focus notification could be processed so that when we process the focus the mouse is no longer clicked. In this case we could incorrectly move the mouse to the center of the focused window.
- 
+
  This value is an approximation of the time between a fast click and the focus event being processed. For values larger than this we would expect the mouse to still be clicked.
  */
 private let mouseMoveClickSpeedTolerance: TimeInterval = 0.3
@@ -599,10 +599,10 @@ extension WindowManager {
 
     /**
      This function is a best effort to detect changes between native macOS tabs.
-     
+
      - Description:
         Each "tab" is an independent window, but the underlying system relates them in some way that we do not have access to. The heuristic is to find a window from the same application that has recently left the screen, and swap them.
-     
+
         This performs pretty well in steady state, but can be a bit wonky when finding the existing tabs depending on how quick the transitions are.
 
      - Parameters:
@@ -1182,13 +1182,26 @@ extension WindowManager {
               // In-memory checks first: they say no for untracked or hidden windows before any accessibility call.
               windows.isWindowTracked(window),
               !windows.isWindowHidden(window),
-              window.isOnScreen(),
-              FocusedWindowBorder.isEligible(
+              window.isOnScreen()
+        else {
+            focusedWindowBorder.hide()
+            return
+        }
+
+        let screen = window.screen()
+        let smartBorder = userConfiguration.smartFocusedWindowBorder()
+        let isFullscreenLayout = smartBorder && (screen.flatMap { screenManager(for: $0)?.currentLayout } is FullscreenLayout<Application.Window>)
+        let tiledWindowCount: Int? = (smartBorder && !isFullscreenLayout) ? screen.map { activeWindows(on: $0).count } : nil
+
+        guard FocusedWindowBorder.isEligible(
                   tracked: true,
                   managed: window.shouldBeManaged(),
-                  spaceType: window.screen()?.currentSpace()?.type,
+                  spaceType: screen?.currentSpace()?.type,
                   windowSpaceID: window.spaceID(),
-                  screenSpaceID: window.screen()?.currentSpace()?.id
+                  screenSpaceID: screen?.currentSpace()?.id,
+                  smartBorder: smartBorder,
+                  isFullscreenLayout: isFullscreenLayout,
+                  tiledWindowCount: tiledWindowCount
               ),
               let primaryScreen = NSScreen.screens.first
         else {
