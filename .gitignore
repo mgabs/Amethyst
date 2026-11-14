@@ -36,11 +36,12 @@ vendor/
 plan/
 .genie/
 debates/
-debates/
-debates
-debates/
 build_output.txt
 docs/superpowers/
+.serena/
+.lgtm/
 
 # SwiftPM local packages
 Packages/*/.build/
+
+.worktrees/

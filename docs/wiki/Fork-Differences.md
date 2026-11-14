@@ -19,5 +19,5 @@ Small bug fixes independent of the above (throw-to-space bounds checks, main-thr
 - Automatic realign on maximize/zoom
 - Menu-bar Space Indicator
 - Resize of floating windows via main-pane shortcuts
-- Focused window border (`focused-window-border*` keys)
+- Focused window border (`focused-window-border*` and `smart-focused-window-border` keys)
 - `smart-window-margins` (drop margins with a single tiled window)

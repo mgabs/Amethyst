@@ -1270,7 +1270,7 @@
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.10.0;
+				minimumVersion = 2.10.1;
 			};
 		};
 		400D48FB2A92B06A0082750F /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
@@ -1278,7 +1278,7 @@
 			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
+				minimumVersion = 5.0.2;
 			};
 		};
 		400D48FE2A92B0A00082750F /* XCRemoteSwiftPackageReference "Yams" */ = {
@@ -1302,7 +1302,7 @@
 			repositoryURL = "https://github.com/SwiftyBeaver/SwiftyBeaver";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.9.5;
+				minimumVersion = 2.1.1;
 			};
 		};
 		40AE15E42A92EA7400E14536 /* XCRemoteSwiftPackageReference "RxSwift" */ = {

@@ -38,6 +38,7 @@ Amethyst will pick up a config file located at `~/.amethyst.yml` or `~/.config/a
 | `focused-window-border` | Draw an outline just outside the focused window (default `true`). Only windows Amethyst manages get one; Spotlight and ignored apps do not. |
 | `focused-window-border-color` | Outline colour as `#RRGGBB` or `#RRGGBBAA` (default `#b38115`, amber). |
 | `focused-window-border-width` | Outline width in points (default `4`). `0` disables the outline. |
+| `smart-focused-window-border` | With `focused-window-border` enabled, hide the outline when only one tiled window is on a screen's current space or when the `Fullscreen` layout is active (default `false`). Floating windows do not count. |
 | `use-canary-build` | `true` to get updates to beta versions of the software (default `false`). |
 | `new-windows-to-main` | `true` to insert new windows into the first position and `false` to insert new windows into the last position (default `false`). |
 | `follow-space-thrown-windows` | `true` to automatically move to a space when throwing a window to it (default `true`). |
