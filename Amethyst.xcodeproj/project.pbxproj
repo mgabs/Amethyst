@@ -1302,7 +1302,7 @@
 			repositoryURL = "https://github.com/SwiftyBeaver/SwiftyBeaver";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.9.5;
+				minimumVersion = 2.1.1;
 			};
 		};
 		40AE15E42A92EA7400E14536 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
