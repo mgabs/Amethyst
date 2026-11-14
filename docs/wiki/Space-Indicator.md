@@ -25,5 +25,6 @@ Separate feature: an outline around the active managed window.
 | `focused-window-border` | `true` |
 | `focused-window-border-color` | `"#b38115"` (amber; keep the quotes) |
 | `focused-window-border-width` | `4` (`0` disables) |
+| `smart-focused-window-border` | `false` (`true` hides on single tiled window or Fullscreen layout) |
 
 See [Configuration Files](configuration-files).

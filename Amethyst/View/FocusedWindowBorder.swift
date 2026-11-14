@@ -117,13 +117,24 @@ final class FocusedWindowBorder: NSWindow {
         managed: Bool,
         spaceType: CGSSpaceType?,
         windowSpaceID: CGSSpaceID? = nil,
-        screenSpaceID: CGSSpaceID? = nil
+        screenSpaceID: CGSSpaceID? = nil,
+        smartBorder: Bool = false,
+        isFullscreenLayout: Bool = false,
+        tiledWindowCount: Int? = nil
     ) -> Bool {
         guard tracked && managed && spaceType == CGSSpaceTypeUser else {
             return false
         }
-        if let windowSpaceID = windowSpaceID, let screenSpaceID = screenSpaceID {
-            return windowSpaceID == screenSpaceID
+        if let windowSpaceID = windowSpaceID, let screenSpaceID = screenSpaceID, windowSpaceID != screenSpaceID {
+            return false
+        }
+        if smartBorder {
+            if isFullscreenLayout {
+                return false
+            }
+            if let tiledWindowCount = tiledWindowCount, tiledWindowCount <= 1 {
+                return false
+            }
         }
         return true
     }

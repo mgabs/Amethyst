@@ -328,6 +328,21 @@ class UserConfigurationTests: QuickSpec {
             }
         }
 
+        describe("smart focused window border") {
+            it("defaults to false") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+                expect(configuration.smartFocusedWindowBorder()).to(beFalse())
+            }
+
+            it("can be enabled via configuration") {
+                let storage = TestConfigurationStorage()
+                let configuration = UserConfiguration(storage: storage)
+                storage.set(true, forKey: .smartFocusedWindowBorder)
+                expect(configuration.smartFocusedWindowBorder()).to(beTrue())
+            }
+        }
+
         describe("floating application") {
             it("is not floating by default") {
                 let storage = TestConfigurationStorage()
